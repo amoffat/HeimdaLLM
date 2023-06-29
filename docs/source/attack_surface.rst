@@ -39,6 +39,7 @@ to see the value of that column if they are allowed to use it in a condition. To
 understand how this works, consider the following query:
 
 .. code-block:: sql
+
     SELECT user.username
     FROM users
     WHERE
@@ -53,6 +54,7 @@ know the full contents of the column.
 Conditions can also appear appended to a `JOIN` condition:
 
 .. code-block:: sql
+
     SELECT user.username
     FROM users
     JOIN rentals
@@ -64,6 +66,7 @@ Conditions can also appear appended to a `JOIN` condition:
 The same goes with `HAVING` and `GROUP BY`:
 
 .. code-block:: sql
+
     SELECT user.username
     FROM users
     WHERE
@@ -74,6 +77,7 @@ The same goes with `HAVING` and `GROUP BY`:
 They can also be effective in the `ORDER BY`:
 
 .. code-block:: sql
+    
     SELECT user.user_id
     FROM users
     ORDER BY (substr(user.secret, 1, 1)='a') DESC

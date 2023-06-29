@@ -54,6 +54,7 @@ example, if we ask it to assume that the requester is
 `customer.customer_id=:customer_id`, you might expect the following:
 
 .. code-block:: sql
+
     SELECT c.email
     FROM customer c
     JOIN rental r
@@ -63,6 +64,7 @@ example, if we ask it to assume that the requester is
 But in fact, you may get:
 
 .. code-block:: sql
+    
     SELECT c.email
     FROM customer c
     JOIN rental r
