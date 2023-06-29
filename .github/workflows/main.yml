@@ -127,12 +127,12 @@ jobs:
         run: |
           find coverage-artifacts -name .coverage | xargs coverage combine -a
 
-      # - name: Report coverage
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   run: |
-      #     coverage report
-      #     coveralls --service=github
+      - name: Report coverage
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          coverage report
+          coveralls --service=github
 
   deploy:
     name: Deploy
