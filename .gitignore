@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+/.venv
+/.env
+/test_grammar.py
+/dist
+/.coverage
+/TODO.md

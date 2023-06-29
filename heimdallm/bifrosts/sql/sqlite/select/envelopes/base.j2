@@ -1,0 +1,42 @@
+{% block schema -%}
+Consider the following sqlite SQL schema:
+```
+{{db_schema}}
+```
+{%- endblock %}
+
+{% block requester_context -%}
+A requester has written a free-form query that they want translated into a SQL query, compatible with sqlite that operates on the above database schema.
+{%- endblock %}
+
+{% block requester_identities -%}
+    {%- if id_constraints -%}
+If possible, constrain the query to the data that the requester has access to by using one of the following conditions: {{id_constraints}}.
+    {%- else -%}
+Assume that the requester that wrote the query has unrestricted access to all data.
+    {%- endif -%}
+{%- endblock %}
+
+{% block current_time -%}
+If the current time is needed, assume that the placeholder `:timestamp` holds the current unix timestamp.
+{%- endblock %}
+
+{% block delimiters -%}
+Only respond with the SQL query. Delimit the query in the response with "```"
+{%- endblock %}
+
+{% block general_constraints -%}
+Use fully-qualified column names in the form table.column, even if selecting from a single table. Avoid using subqueries.
+{%- endblock %}
+
+{% block quirks -%}
+Sqlite cannot add or subtract dates directly, and must use the available sqlite datetime functions.
+{%- endblock %}
+
+{% block extras -%}
+{%- endblock %}
+
+{% block untrusted_query -%}
+The free-form query:
+{{query}}
+{%- endblock %}
