@@ -120,6 +120,7 @@ LLM to produce a query that includes the condition as part of an `OR` clause. Fo
 example:
 
 .. code-block:: sql
+
     SELECT user.email
     FROM users
     WHERE
@@ -131,6 +132,7 @@ true. This simplified example is easy to spot, but it can be more difficult to s
 when the condition is more complex with nested expressions, for example:
 
 .. code-block:: sql
+
     SELECT user.email
     FROM users
     WHERE
@@ -178,6 +180,7 @@ reveal information that should not be visible to the requester. Consider the fol
 query:
 
 .. code-block:: sql
+    
     SELECT user.user_id
     FROM users
     RIGHT JOIN purchases
