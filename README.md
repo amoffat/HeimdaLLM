@@ -3,9 +3,9 @@
 > Heimdall, the watchman of the gods, dwelt at its entrance, where he guarded Bifrost,
 > the shimmering path connecting the realms.
 
-[![Heimdall](./docs/source/images/heimdall.png)](https://heimdallm.ai)
+[![Heimdall](./docs/source/images/heimdall.png)](https://docs.heimdallm.ai)
 [![Build status](https://github.com/amoffat/HeimdaLLM/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/amoffat/HeimdaLLM/actions)
-[![Docs](https://img.shields.io/badge/Documentation-purple.svg)](https://heimdallm.ai)
+[![Docs](https://img.shields.io/badge/Documentation-purple.svg)](https://docs.heimdallm.ai)
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/amoffat)](https://github.com/sponsors/amoffat)
 [![PyPI](https://img.shields.io/pypi/v/heimdallm)](https://pypi.org/project/heimdallm/)
 [![License: Commercial](https://img.shields.io/badge/License-Commercial-blue.svg)](https://forms.gle/frEPeeJx81Cmwva78)
