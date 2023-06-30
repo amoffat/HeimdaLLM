@@ -11,9 +11,24 @@ LOG = structlog.get_logger(__name__)
 
 
 class Bifrost:
-    """the bifrost is the bridge between the outside world and your secure
-    systems that you want to expose to the outside world. it is responsible for
-    a rigorous validation of the output of the LLM"""
+    """The Bifrost is the bridge from the outside world to your secure systems. It is
+    responsible for a rigorous parsing and validation of the output of the LLM. This
+    class is not used directly, but is subclassed to provide a Bifrost for a specific
+    problem, like constructing trusted SQL queries. It is general enough to be adapted
+    to other problems.
+
+    :param llm: The LLM integration to use.
+    :param prompt_envelope: The prompt envelope used to wrap the untrusted human input
+        and unwrap the untrusted LLM output.
+    :param grammar: The grammar that defines the structured output that we expect from
+        the LLM.
+    :param tree_producer: A callable that takes a grammar and the untrusted input and
+        returns a parse tree. Using a callback allows us to do Bifrost-specific parsing,
+        for example, to collapse ambiguous parse trees into a single parse tree.
+    :param constraint_validators: A sequence of constraint validators that will be used
+        to validate the parse tree returned by the ``tree_producer``. Only one validator
+        needs to succeed for validation to pass.
+    """
 
     def __init__(
         self,
@@ -29,12 +44,6 @@ class Bifrost:
         self.grammar = grammar
         self.tree_producer = tree_producer
         self.constraint_validators = constraint_validators
-
-    def parse(self, untrusted_llm_output: str) -> ParseTree:
-        """converts the llm output into a parse tree. override it in a subclass
-        to throw custom exceptions, based on the grammar and parse state, if the
-        parse fails."""
-        return self.tree_producer(self.grammar, untrusted_llm_output)
 
     def traverse(
         self,
@@ -128,6 +137,8 @@ class Bifrost:
         untrusted_llm_input: str,
         tree: ParseTree,
     ) -> str:
+        """Attempt validation with an individual constraint validator."""
+
         if autofix:
             log.info("Autofixing parse tree and reconstructing the input")
             try:
@@ -149,3 +160,13 @@ class Bifrost:
         log.info("Validation succeeded")
 
         return untrusted_llm_output
+
+    def parse(self, untrusted_llm_output: str) -> ParseTree:
+        """Converts the llm output into a parse tree. Override it in a subclass
+        to throw custom exceptions based on the grammar and parse state.
+
+        :param untrusted_llm_output: The unwrapped output from the LLM.
+
+        :return: The Lark parse tree.
+        """
+        return self.tree_producer(self.grammar, untrusted_llm_output)

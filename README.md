@@ -14,7 +14,7 @@
 
 HeimdaLLM safely bridges the gap between untrusted human input and trusted machine input
 by augmenting LLMs with a robust validation framework. It allows you to construct
-trusted SQL queries from untrusted input.
+trusted SQL queries from untrusted input, **using validation that you control.**
 
 To accomplish this, HeimdaLLM introduces a new technology, the 🌈✨ Bifrost, composed of
 4 parts: an LLM prompt envelope, an LLM integration, a grammar, and a constraint

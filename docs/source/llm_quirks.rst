@@ -1,5 +1,7 @@
-LLM Quirks
-==========
+.. _llm-quirks:
+
+🃏 LLM Quirks
+=============
 
 While experimenting with getting the LLM to produce the desired output, we've noticed a
 few quirks that we've had to work around.
