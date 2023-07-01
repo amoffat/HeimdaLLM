@@ -16,6 +16,9 @@ confidence that they will bring.
     <a class="github-button" href="https://github.com/sponsors/amoffat" data-icon="octicon-heart" data-size="large" aria-label="Sponsor @amoffat on GitHub">Sponsor</a>
     <div style="margin-bottom:2rem"></div>
 
+If you are a business, please show your interest by `inquiring about a commercial
+license. <https://forms.gle/frEPeeJx81Cmwva78>`_ This will help me prioritize the audit.
+
 
 What databases are supported?
 *****************************
@@ -43,3 +46,17 @@ indefinitely.
 .. raw:: html
 
     <script async defer src="https://buttons.github.io/buttons.js"></script>
+
+Why AGPLv3?
+***********
+
+I chose the AGPLv3 license because I want to provide a license that is as permissive as
+possible to the OSS community while also strongly encouraging businesses to purchase a
+commercial license to support development.
+
+The AGPLv3 license has restrictions that make it difficult for businesses to use in
+production, but it is still a permissive license in that it allows you to use the
+software for free. The AGPLv3 license also ensures that if if someone modifies the
+software and distributes it, they must also distribute the source code of the modified
+software. This is important to me because I want to ensure that the OSS community can
+benefit from any improvements that people make to the software.

@@ -114,7 +114,7 @@ Mitigations
 
 HeimdaLLM does not allow ``*`` as a selectable column. It does, however, allow ``COUNT(*)``,
 since that is a very common way of counting rows, and it does not reveal any additional
-information.
+information when a required constraint is applied.
 
 Optional conditions
 -------------------

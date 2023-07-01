@@ -4,19 +4,25 @@ HeimdaLLM
    Heimdall, the watchman of the gods, dwelt at its entrance, where he guarded Bifrost,
    the shimmering path connecting the realms.
 
-Welcome to the HeimdaLLM documentation.
+.. ATTENTION::
 
-HeimdaLLM safely bridges the gap between untrusted human input and trusted machine input
-by augmenting LLMs with a robust validation framework. It allows you to construct
-trusted SQL queries from untrusted input, **using validation that you control.**
+   These docs are under active development. Want to make sure something is included?
+   Please request it `here. <https://github.com/amoffat/HeimdaLLM/discussions/3>`_
+
+Welcome to the HeimdaLLM documentation!
+
+HeimdaLLM safely bridges the gap between untrusted human input and trusted
+machine-readable input by augmenting LLMs with a robust validation framework. It allows
+you to do things like construct trusted SQL queries from untrusted input, **using
+validation that you have full control over.**
 
 .. image:: images/heimdall.png
    :target: https://docs.heimdallm.ai
    :alt: Heimdall guarding the Bifrost
 
-.. image:: https://img.shields.io/github/stars/amoffat/HeimdaLLM.svg?style=social&label=Star
-   :target: https://github.com/amoffat/HeimdaLLM
-   :alt: GitHub Repo stars
+.. .. image:: https://img.shields.io/github/stars/amoffat/HeimdaLLM.svg?style=social&label=Star
+..    :target: https://github.com/amoffat/HeimdaLLM
+..    :alt: GitHub Repo stars
 
 .. image:: https://github.com/amoffat/HeimdaLLM/actions/workflows/main.yml/badge.svg?branch=main
    :target: https://github.com/amoffat/HeimdaLLM/actions
@@ -46,11 +52,15 @@ trusted SQL queries from untrusted input, **using validation that you control.**
 .. toctree::
    :hidden:
    :glob:
+   :maxdepth: 5
 
-   api/
+   quickstart
+   api/index
    validation
    reconstruction
    prompt_engineering
    attack_surface
+   tutorials
    llm_quirks
+   hints
    faq

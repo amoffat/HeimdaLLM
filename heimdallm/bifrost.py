@@ -167,6 +167,6 @@ class Bifrost:
 
         :param untrusted_llm_output: The unwrapped output from the LLM.
 
-        :return: The Lark parse tree.
+        :return: The parse tree.
         """
         return self.tree_producer(self.grammar, untrusted_llm_output)

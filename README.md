@@ -12,9 +12,10 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Coverage Status](https://coveralls.io/repos/github/amoffat/HeimdaLLM/badge.svg?branch=dev)](https://coveralls.io/github/amoffat/HeimdaLLM?branch=dev)
 
-HeimdaLLM safely bridges the gap between untrusted human input and trusted machine input
-by augmenting LLMs with a robust validation framework. It allows you to construct
-trusted SQL queries from untrusted input, **using validation that you control.**
+HeimdaLLM safely bridges the gap between untrusted human input and trusted
+machine-readable input by augmenting LLMs with a robust validation framework. It allows
+you to do things like construct trusted SQL queries from untrusted input, **using
+validation that you have full control over.**
 
 To accomplish this, HeimdaLLM introduces a new technology, the 🌈✨ Bifrost, composed of
 4 parts: an LLM prompt envelope, an LLM integration, a grammar, and a constraint

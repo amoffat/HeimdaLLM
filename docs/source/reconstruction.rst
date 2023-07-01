@@ -52,8 +52,8 @@ Will become:
     WHERE u.id=:user_id
     LIMIT 100
 
-Removing disallowed columns
-************************
+Disallowed column removal
+*************************
 
 The :ref:`prompt envelope <prompt-envelope>` (and consequently, the LLM) doesn't know
 what columns are allowlisted. This means that an LLM may produce a ``SELECT`` query that
