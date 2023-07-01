@@ -1,4 +1,4 @@
-from typing import Any, Callable, Sequence
+from typing import Callable, Sequence
 
 import structlog
 from lark import Lark, ParseTree
@@ -49,15 +49,15 @@ class Bifrost:
         self,
         untrusted_human_input: str,
         autofix: bool = True,
-    ) -> Any:
+    ) -> str:
         """Run the full chain of the bifrost, from untrusted input to trusted
         input.
 
         :param untrusted_human_input: The untrusted input from the user.
-        :param autofix: Whether or not to attempt to reconstruct the input to satisfy
-            the constraint validator.
+        :param autofix: Whether or not to attempt to :doc:`reconstruct
+            </reconstruction>` the input to satisfy the constraint validator.
 
-        :return: The LLM output that has passed the constraint validator.
+        :return: The trusted LLM output.
         """
 
         log = LOG.bind(input=untrusted_human_input, autofix=autofix)

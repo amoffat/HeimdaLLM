@@ -1,7 +1,8 @@
 Select
 ======
 
-The Bifrost components:
+The SQL Select Bifrost produces a trusted SQL Select statement. It uses the following
+components:
 
 * :class:`SQLPromptEnvelope <heimdallm.bifrosts.sql.sqlite.select.envelope.SQLPromptEnvelope>`
 * :class:`SQLConstraintValidator <heimdallm.bifrosts.sql.sqlite.select.validator.SQLConstraintValidator>`

@@ -5,7 +5,7 @@
 
 [![Heimdall](https://raw.githubusercontent.com/amoffat/HeimdaLLM/main/docs/source/images/heimdall.png)](https://docs.heimdallm.ai)
 [![Build status](https://github.com/amoffat/HeimdaLLM/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/amoffat/HeimdaLLM/actions)
-[![Docs](https://img.shields.io/badge/Docs-purple.svg)](https://docs.heimdallm.ai)
+[![Docs](https://img.shields.io/badge/Documentation-purple.svg)](https://docs.heimdallm.ai)
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/amoffat)](https://github.com/sponsors/amoffat)
 [![PyPI](https://img.shields.io/pypi/v/heimdallm)](https://pypi.org/project/heimdallm/)
 [![License: Commercial](https://img.shields.io/badge/License-Commercial-blue.svg)](https://forms.gle/frEPeeJx81Cmwva78)
@@ -15,7 +15,7 @@
 HeimdaLLM safely bridges the gap between untrusted human input and trusted
 machine-readable input by augmenting LLMs with a robust validation framework. It allows
 you to do things like construct trusted SQL queries from untrusted input, **using
-validation that you have full control over.**
+validation under your full control.**
 
 To accomplish this, HeimdaLLM introduces a new technology, the 🌈✨ Bifrost, composed of
 4 parts: an LLM prompt envelope, an LLM integration, a grammar, and a constraint
@@ -30,20 +30,20 @@ Sample
 Database](https://www.kaggle.com/datasets/atanaskanev/sqlite-sakila-sample-database):
 
 ```python
-traverse("Show me the 5 movies I rented the longest, and the number of days I had them for.")
+traverse("Show me the movies I rented the longest, and the number of days I had them for.")
 ```
 
-|     | Title           | Rental Date             | Return Date             | Rental Days |
-| --- | --------------- | ----------------------- | ----------------------- | ----------- |
-| 0   | OUTLAW HANKY    | 2005-08-19 05:48:12.000 | 2005-08-28 10:10:12.000 | 9.181944    |
-| 1   | BOULEVARD MOB   | 2005-08-19 07:06:51.000 | 2005-08-28 10:35:51.000 | 9.145139    |
-| 2   | MINDS TRUMAN    | 2005-08-02 17:42:49.000 | 2005-08-11 18:14:49.000 | 9.022222    |
-| 3   | AMERICAN CIRCUS | 2005-07-12 16:37:55.000 | 2005-07-21 16:04:55.000 | 8.977083    |
-| 4   | LADY STAGE      | 2005-07-28 10:07:04.000 | 2005-08-06 08:16:04.000 | 8.922917    |
+| Title           | Rental Date             | Return Date             | Rental Days |
+| --------------- | ----------------------- | ----------------------- | ----------- |
+| OUTLAW HANKY    | 2005-08-19 05:48:12.000 | 2005-08-28 10:10:12.000 | 9.181944    |
+| BOULEVARD MOB   | 2005-08-19 07:06:51.000 | 2005-08-28 10:35:51.000 | 9.145139    |
+| MINDS TRUMAN    | 2005-08-02 17:42:49.000 | 2005-08-11 18:14:49.000 | 9.022222    |
+| AMERICAN CIRCUS | 2005-07-12 16:37:55.000 | 2005-07-21 16:04:55.000 | 8.977083    |
+| LADY STAGE      | 2005-07-28 10:07:04.000 | 2005-08-06 08:16:04.000 | 8.922917    |
 
 You can safely run this example here:
 
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/amoffat/heimdallm/main)
+[![Open in GitHub Codespaces](https://img.shields.io/badge/Open%20in-Codespaces-purple.svg)](https://codespaces.new/amoffat/heimdallm/main)
 
 or [view the read-only notebook](./notebooks/demo.ipynb)
 

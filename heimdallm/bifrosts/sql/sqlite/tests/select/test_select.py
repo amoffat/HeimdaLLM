@@ -1,8 +1,10 @@
+from typing import Sequence
+
 import pytest
 
 from heimdallm.bifrosts.sql import exc
 from heimdallm.bifrosts.sql.sqlite.select.bifrost import SQLBifrost
-from heimdallm.bifrosts.sql.utils import FqColumn, RequiredConstraint
+from heimdallm.bifrosts.sql.utils import FqColumn, JoinCondition, RequiredConstraint
 
 from .utils import PermissiveConstraints
 
@@ -163,4 +165,18 @@ def test_select_column_arith():
 def test_select_expr(query):
     """select a non-column expression"""
     bifrost = SQLBifrost.mocked(PermissiveConstraints())
+    bifrost.traverse(query)
+
+
+def test_conflicting_validations():
+    query = "select t1.col from t1"
+
+    class MyConstraints(PermissiveConstraints):
+        def select_column_allowed(self, column: FqColumn) -> bool:
+            return column.name in {"t1.col"}
+
+        def allowed_joins(self) -> Sequence[JoinCondition]:
+            return []
+
+    bifrost = SQLBifrost.mocked(MyConstraints())
     bifrost.traverse(query)
