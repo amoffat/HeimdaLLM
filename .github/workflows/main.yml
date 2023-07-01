@@ -151,7 +151,7 @@ jobs:
         run: |
           version=$(sed -n 's/^version = "\(.*\)"/\1/p' pyproject.toml)
           git tag "$version" "${{github.ref_name}}"
-          git push -f origin "$version"
+          git push origin "$version"
 
       - name: Set up Python
         uses: actions/setup-python@v2
