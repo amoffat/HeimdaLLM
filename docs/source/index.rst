@@ -16,7 +16,7 @@ machine-readable input by augmenting LLMs with a robust validation framework. It
 you to do things like construct trusted SQL queries from untrusted input, **using
 validation that you have full control over.**
 
-.. image:: images/heimdall.png
+.. image:: https://raw.githubusercontent.com/amoffat/HeimdaLLM/main/docs/source/images/heimdall.png
    :target: https://docs.heimdallm.ai
    :alt: Heimdall guarding the Bifrost
 
