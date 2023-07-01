@@ -1,5 +1,7 @@
-SQL Query Attack Surface
-========================
+.. _attack-surface:
+
+🛡️ SQL Query Attack Surface
+===========================
 
 Below are some of the ways that a SQL query can be vulnerable to attack in HeimdaLLM.
 This is not intended to be an exhaustive list, but rather a starting point for
@@ -9,17 +11,20 @@ has in place to mitigate these attacks.
 The two primary points of mitigation are the SQL grammar, which defines if a query is
 syntactically correct, and the constraint validator, which defines the constraints that
 the query must satisfy. Some controls are implemented in the grammar, and some are in
-the constraint validator. For example, outer joins are stopped at the grammar, while
-required conditions are checked at the constraint validator.
+the constraint validator. They work together to provide validation. For example, outer
+joins are stopped at the grammar, while required conditions are checked at the
+constraint validator.
 
 .. DANGER::
+
     Have a concern about the topics on this page? Take a look at our
     `security policy <https://github.com/amoffat/HeimdaLLM/security/policy>`_ if you
     wish to contribute.
 
 .. TIP::
+
     Want to test these attacks yourself? See the `Penetration Testing Notebook
-    <https://github.com/amoffat/HeimdaLLM/blob/main/heimdallm/examples/pentest.ipynb>`_
+    <https://github.com/amoffat/HeimdaLLM/blob/main/notebooks/pentest.ipynb>`_
 
 Side-channel attacks
 ********************
@@ -34,9 +39,9 @@ information.
 Condition injection
 -------------------
 
-For example, even if a requester is not allowed to select a column, it is still possible
-to see the value of that column if they are allowed to use it in a condition. To
-understand how this works, consider the following query:
+Even if a requester is not allowed to select a column, it is still possible to see the
+value of that column if they are allowed to use it in a condition. To understand how
+this works, consider the following query:
 
 .. code-block:: sql
 
@@ -46,12 +51,12 @@ understand how this works, consider the following query:
         user.secret LIKE 'a%'
         AND user.user_id=123
 
-Assume the attacker cannot select the `secret` column, but can use it in a condition.
-This query allows them to determine the first letter of the `secret` column by observing
+Assume the attacker cannot select the ``secret`` column, but can use it in a condition.
+This query allows them to determine the first letter of the ``secret`` column by observing
 the results. They can then refine their query to discover subsequent letters until they
 know the full contents of the column.
 
-Conditions can also appear appended to a `JOIN` condition:
+Conditions can also appear appended to a ``JOIN`` condition:
 
 .. code-block:: sql
 
@@ -63,7 +68,7 @@ Conditions can also appear appended to a `JOIN` condition:
     WHERE
         user.user_id=123
 
-The same goes with `HAVING` and `GROUP BY`:
+The same goes with ``HAVING`` and ``GROUP BY``:
 
 .. code-block:: sql
 
@@ -74,7 +79,7 @@ The same goes with `HAVING` and `GROUP BY`:
     GROUP BY user.secret
     HAVING user.secret LIKE 'a%'
 
-They can also be effective in the `ORDER BY`:
+They can also be effective in the ``ORDER BY``:
 
 .. code-block:: sql
     
@@ -89,34 +94,34 @@ By default, HeimdaLLM will not allow the use of a column in a condition that is 
 also allowed to be selected. This means that if they can't see it, they can't use it.
 While this is a good default, but it can be overly restrictive. You may choose to
 separate these two allowlists, in which case your constraint validator would define one
-predicate for `select_column_allowed` and another for `condition_column_allowed`.
+predicate for ``select_column_allowed`` and another for ``condition_column_allowed``.
 
 HeimdaLLM takes an overzealous approach to this problem by examining the parse tree for
-any usage of a table column in `WHERE`, `HAVING`, `GROUP BY`, `ORDER BY`, and `JOIN`.
+any usage of a table column in ``WHERE``, ``HAVING``, ``GROUP BY``, ``ORDER BY``, and ``JOIN``.
 Whether they are nested deep in an expression or not, HeimdaLLM will find them. The
-resulting columns are then sent to the constraint validator's `condition_column_allowed`
+resulting columns are then sent to the constraint validator's ``condition_column_allowed``
 predicate and either allowed or denied. By using a broad application of the allowlist,
 we can prevent the use of columns that can be used in side-channel attacks.
 
 Star select
 -----------
 
-An attacker could trick the LLM to `SELECT *` from a table. This could reveal more
+An attacker could trick the LLM to ``SELECT *`` from a table. This could reveal more
 columns than you intended.
 
 Mitigations
 ^^^^^^^^^^^
 
-HeimdaLLM does not allow `*` as a selectable column. It does, however, allow `COUNT(*)`,
+HeimdaLLM does not allow ``*`` as a selectable column. It does, however, allow ``COUNT(*)``,
 since that is a very common way of counting rows, and it does not reveal any additional
-information.
+information when a required constraint is applied.
 
 Optional conditions
 -------------------
 
 When required conditions are defined, either as a requester identity, or as some other
 required condition, an attacker may attempt to bypass the condition by coaxing the
-LLM to produce a query that includes the condition as part of an `OR` clause. For
+LLM to produce a query that includes the condition as part of an ``OR`` clause. For
 example:
 
 .. code-block:: sql
@@ -127,7 +132,7 @@ example:
         user.user_id=123
         OR 1=1
 
-This query will return all rows in the table, because the `OR 1=1` condition is always
+This query will return all rows in the table, because the ``OR 1=1`` condition is always
 true. This simplified example is easy to spot, but it can be more difficult to spot
 when the condition is more complex with nested expressions, for example:
 
@@ -147,19 +152,19 @@ when the condition is more complex with nested expressions, for example:
         )
         AND 1=1
 
-Here, the `OR` condition occurs at a different level than the required condition, making
+Here, the ``OR`` condition occurs at a different level than the required condition, making
 the required condition's entire branch optional.
 
 Mitigations
 ^^^^^^^^^^^
 
 HeimdaLLM takes careful steps to ensure that required conditions are not executed
-optionally. We do this by examining the tree of `WHERE` conditions and walking the tree
+optionally. We do this by examining the tree of ``WHERE`` conditions and walking the tree
 according to the following rules:
 
-#. Start at the root of the `WHERE` clause.
+#. Start at the root of the ``WHERE`` clause.
 #. Examine the immediate child conditions.
-#. If any of the immediate child conditions are connected via `OR`, all sibling nodes
+#. If any of the immediate child conditions are connected via ``OR``, all sibling nodes
    are tainted. Abort the current level and move to the previous level, or stop if the
    current level is the root.
 #. If any of the immediate child conditions satisfy a required condition, mark that
@@ -168,7 +173,7 @@ according to the following rules:
    goto step 2.
 
 Another way to think about it is: the required condition and all of its sibling
-conditions must be connected to the tree of `WHERE` conditions via `AND`, and the same
+conditions must be connected to the tree of ``WHERE`` conditions via ``AND``, and the same
 for every ancestor node of the required condition. This ensures that the requried
 condition is always evaluated.
 
@@ -187,9 +192,9 @@ query:
         ON purchases.user_id = user.user_id
         AND user.user_id=123
 
-Although the `JOIN` is an equi-join, and we have a required condition, it is not
+Although the ``JOIN`` is an equi-join, and we have a required condition, it is not
 sufficient to prevent the user from seeing rows they should not be able to see. This is
-because the `RIGHT JOIN` will include every unmatched row in the right table.
+because the ``RIGHT JOIN`` will include every unmatched row in the right table.
 
 Mitigations
 ^^^^^^^^^^^
@@ -204,39 +209,39 @@ Mutating queries
 ----------------
 
 This is where an attacker causes an LLM to produce a query that mutates the database,
-such as an `UPDATE` or `DELETE` query.
+such as an ``UPDATE`` or ``DELETE`` query.
 
-You could also have a trigger that mutates the database on `SELECT`, or a stored
-function that a `SELECT` query calls. Both of those would have a side-effect.
+You could also have a trigger that mutates the database on ``SELECT``, or a stored
+function that a ``SELECT`` query calls. Both of those would have a side-effect.
 
 Mitigations
 ^^^^^^^^^^^
 
 HeimdaLLM's SQL grammar does not define support for any other query type besides
-`SELECT`. This means that any other query type will be rejected by the parser. A
+``SELECT``. This means that any other query type will be rejected by the parser. A
 vulnerability would need to be present in the grammar that could allow for a mutation
-inside a `SELECT` query. The grammar also does not support `SELECT INTO`.
+inside a ``SELECT`` query. The grammar also does not support ``SELECT INTO``.
 
 You will want to audit your database to ensure that no triggers are present on the
 selectable tables. You will also want to audit your stored functions to ensure that
-they are not allowlisted via the `can_use_function` predicate.
+they are not allowlisted via the ``can_use_function`` predicate.
 
 Acquiring locks
 ---------------
 
-An attacker could cause a query to contain `SELECT FOR UPDATE`, which would result in
+An attacker could cause a query to contain ``SELECT FOR UPDATE``, which would result in
 the database acquiring a lock on the rows that are returned. This can also happen
-implicitly if your transaction isolation level is set to `SERIALIZABLE` or `REPEATABLE
+implicitly if your transaction isolation level is set to ``SERIALIZABLE`` or `REPEATABLE
 READ`.
 
-Acquiring locks during a `SELECT` could cause problems if your connections are recycled
+Acquiring locks during a ``SELECT`` could cause problems if your connections are recycled
 without rolling back or committing the transaction, because the lock would remain in
 place.
 
 Mitigations
 ^^^^^^^^^^^
 
-HeimdaLLM's SQL grammar does not define the `SELECT FOR UPDATE` syntax, so explicit lock
+HeimdaLLM's SQL grammar does not define the ``SELECT FOR UPDATE`` syntax, so explicit lock
 acquisition is not possible. However, implicit lock acquisition is still possible based
 on your isolation level, so you will want to ensure that your connection pool is
 configured to rollback or commit connections that are returned to the pool.
@@ -244,8 +249,8 @@ configured to rollback or commit connections that are returned to the pool.
 Function execution
 ------------------
 
-An attacker could execute a `SELECT` query that contains function that has side-effects,
-such as `sleep()`. This could be used to cause a denial of service attack or other
+An attacker could execute a ``SELECT`` query that contains function that has side-effects,
+such as ``sleep()``. This could be used to cause a denial of service attack or other
 harmful behavior.
 
 Mitigations

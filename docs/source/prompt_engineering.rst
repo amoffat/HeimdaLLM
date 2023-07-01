@@ -1,5 +1,7 @@
-Prompt Engineering
-==================
+.. _prompt-engineering:
+
+🛠️ Prompt Engineering
+=====================
 
 The problem
 ***********

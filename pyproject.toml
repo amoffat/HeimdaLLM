@@ -50,6 +50,8 @@ flake8 = "^6.0.0"
 ipykernel = "^6.23.3"
 sphinx = ">=1.6,<7"
 sphinx-rtd-theme = "^1.2.2"
+toml = "^0.10.2"
+types-toml = "^0.10.8.6"
 
 [build-system]
 requires = ["poetry-core"]

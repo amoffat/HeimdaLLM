@@ -16,8 +16,9 @@ from .visitors import FacetCollector, Facets
 
 
 class SQLConstraintValidator(_ConstraintValidator):
-    """almost all methods are abstract because we want to force the developer
-    to implement them. the cost of not implementing them by accident is high."""
+    """
+    Validate different aspects of a SQL query. You are intended to derive this class and
+    implement methods."""
 
     @abstractmethod
     def requester_identities(self) -> Sequence[RequiredConstraint]:
@@ -26,8 +27,8 @@ class SQLConstraintValidator(_ConstraintValidator):
         that it generates. only one of these identities needs to match.
 
         the reason that we return a sequence, and not a single identity, is that
-        sometimes an LLM will specify the constraint as part of a JOIN
-        condition, and not a WHERE condition. in that case, the column in the
+        sometimes an LLM will specify the constraint as part of a ``JOIN``
+        condition, and not a ``WHERE`` condition. in that case, the column in the
         JOIN condition may not match the column you expect, for example,
 
             Invoice.CustomerId vs Customer.CustomerId
@@ -42,7 +43,7 @@ class SQLConstraintValidator(_ConstraintValidator):
 
     @abstractmethod
     def required_constraints(self) -> Sequence[RequiredConstraint]:
-        """Returns a sequence of secure constraints that must exist in the WHERE
+        """Returns a sequence of secure constraints that must exist in the ``WHERE``
         clause of the query"""
         raise NotImplementedError(
             "You must explicitly provide a sequence of required constraints, "
@@ -51,16 +52,16 @@ class SQLConstraintValidator(_ConstraintValidator):
 
     @abstractmethod
     def select_column_allowed(self, column: FqColumn) -> bool:
-        """Ensures that the column is allowed to be selected in the `SELECT` clause"""
+        """Ensures that the column is allowed to be selected in the ``SELECT`` clause"""
         return False
 
     @abstractmethod
     def allowed_joins(self) -> Sequence[JoinCondition]:
         """Returns all of the tables allowed to be connected to the query,
-        either via a JOIN, or via a FROM. this encompasses both cases because
+        either via a ``JOIN``, or via a ``FROM``. this encompasses both cases because
         LLMs frequently produce queries that select unpredictable tables with
-        "FROM", even if that table is valid to be connected via "JOIN". so to
-        handle this, we consider a table selected with FROM as a JOIN with no
+        ``FROM``, even if that table is valid to be connected via ``JOIN``. so to
+        handle this, we consider a table selected with ``FROM`` as a ``JOIN`` with no
         explicit conditions. in practice, if there are other joins in the query,
         the selected table will have an explicit condition via the ON clause. if
         there are no other joins, the selected table will have no join
@@ -74,12 +75,16 @@ class SQLConstraintValidator(_ConstraintValidator):
         None, there is no limit."""
         return None
 
-    def can_use_function(self, function):
-        """Ensures that the function is allowed to be used in the query"""
+    def can_use_function(self, function: str) -> bool:
+        """Ensures that the function is allowed to be used in the query
+
+        :param function: the name of the function
+        """
         return function in presets.safe_functions
 
     def condition_column_allowed(self, fq_column: FqColumn) -> bool:
-        """Checks if a column is allowed in a WHERE, JOIN, HAVING, or ORDER BY"""
+        """Checks if a column is allowed in a ``WHERE``, ``JOIN``, ``HAVING``, or
+        ``ORDER BY``"""
         # let's default to "if you can see it, you can use it"
         return self.select_column_allowed(fq_column)
 
