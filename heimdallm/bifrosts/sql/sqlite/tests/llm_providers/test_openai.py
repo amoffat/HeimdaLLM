@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from munch import munchify
+from munch import munchify  # type: ignore
 
 from heimdallm.llm_providers.openai import Client, OpenAIMethod
 
