@@ -13,9 +13,10 @@
 [![Coverage Status](https://coveralls.io/repos/github/amoffat/HeimdaLLM/badge.svg?branch=dev)](https://coveralls.io/github/amoffat/HeimdaLLM?branch=dev)
 
 HeimdaLLM safely bridges the gap between untrusted human input and trusted
-machine-readable input by augmenting LLMs with a robust validation framework. It allows
-you to do things like construct trusted SQL queries from untrusted input, **using
-validation under your full control.**
+machine-readable input by augmenting LLMs with a robust validation framework. This
+allows you externalize LLM technology to your users, for example, to do things like
+construct trusted SQL queries from untrusted input, **using validation under your full
+control.**
 
 To accomplish this, HeimdaLLM introduces a new technology, the 🌈✨ Bifrost, composed of
 4 parts: an LLM prompt envelope, an LLM integration, a grammar, and a constraint
@@ -31,6 +32,18 @@ Database](https://www.kaggle.com/datasets/atanaskanev/sqlite-sakila-sample-datab
 
 ```python
 traverse("Show me the movies I rented the longest, and the number of days I had them for.")
+```
+
+```
+✅ Resolving column and table aliases...
+✅ Allowlisting selectable columns...
+   ✅ Removing 4 forbidden columns...
+✅ Ensuring correct row LIMIT exists...
+   ✅ Lowering row LIMIT to 5...
+✅ Checking JOINed tables and conditions...
+✅ Checking required WHERE conditions...
+✅ Ensuring query is constrained to requester's identity...
+✅ Allowlisting SQL functions...
 ```
 
 | Title           | Rental Date             | Return Date             | Rental Days |
@@ -63,10 +76,10 @@ So, what is actually happening above?
 1. Different features of the parsed query are extracted for validation.
 1. A soft validation pass is performed on the extracted features, and we potentially
    modify the query to be compliant, for example, to add a `LIMIT` clause, or to remove
-   disallowed columns. See [reconstruction](TODO).
+   disallowed columns.
 1. A hard validation pass is performed with your custom constraints to ensure that the
    query is only accessing allowed tables, columns, and functions, while containing
-   required conditions. See [validation](TODO).
+   required conditions.
 1. If validation succeeds, the resulting SQL query can then be sent to the database.
 1. If validation fails, you'll see a helpful exception explaining exactly why.
 
@@ -79,8 +92,9 @@ value from the confidence that they bring, consider [sponsoring
 me](https://github.com/sponsors/amoffat) or [inquire about interest in a commercial
 license](https://forms.gle/frEPeeJx81Cmwva78).
 
-To understand some of the potential vulnerabilities, take a look at the [attack surface
-area](TODO) to see the risks and the mitigations.
+To understand some of the potential vulnerabilities, take a look at the [attack
+surface](https://docs.heimdallm.ai/en/latest/attack_surface.html) to see the risks and
+the mitigations.
 
 # 📚 Database support
 
