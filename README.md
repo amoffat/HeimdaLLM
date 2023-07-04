@@ -43,7 +43,7 @@ traverse("Show me the movies I rented the longest, and the number of days I had 
 
 You can safely run this example here:
 
-[![Open in GitHub Codespaces](https://img.shields.io/badge/Open%20in-Codespaces-purple.svg)](https://codespaces.new/amoffat/HeimdaLLM/main)
+[![Open in GitHub Codespaces](https://img.shields.io/badge/Open%20in-Codespaces-purple.svg)](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=656570421)
 
 or [view the read-only notebook](./notebooks/demo.ipynb)
 

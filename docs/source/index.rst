@@ -105,4 +105,4 @@ browse the navigation on the left.
    faq
 
 .. |CodespacesLink| image:: https://img.shields.io/badge/Open%20in-Codespaces-purple.svg
-.. _CodespacesLink: https://codespaces.new/amoffat/HeimdaLLM/main
+.. _CodespacesLink: https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=656570421
