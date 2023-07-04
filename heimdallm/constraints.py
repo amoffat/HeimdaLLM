@@ -14,6 +14,7 @@ class ConstraintValidator(ABC):
             often used by :class:`lark.reconstruct.Reconstructor` to fix the parse tree.
         :param tree: The resulting parse tree of the untrusted input.
         """
+        raise NotImplementedError
 
     @abstractmethod
     def validate(self, untrusted_input: str, tree: ParseTree):
@@ -24,3 +25,4 @@ class ConstraintValidator(ABC):
             context if we need to raise an exception.
         :param tree: The resulting parse tree of the untrusted input.
         """
+        raise NotImplementedError

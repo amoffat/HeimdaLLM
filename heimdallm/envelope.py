@@ -26,7 +26,7 @@ class PromptEnvelope(ABC):
 
         :param untrusted_input: The untrusted input from the user.
         :return: The wrapped input to send to the LLM."""
-        return untrusted_input
+        raise NotImplementedError
 
     @abstractmethod
     def unwrap(self, untrusted_llm_output: str) -> str:
@@ -36,4 +36,4 @@ class PromptEnvelope(ABC):
 
         :param untrusted_llm_output: The untrusted output from the LLM.
         :return: The structured response, unwrapped from the LLM's output."""
-        return untrusted_llm_output
+        raise NotImplementedError
