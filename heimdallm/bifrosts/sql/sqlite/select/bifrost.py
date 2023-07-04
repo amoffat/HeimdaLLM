@@ -6,9 +6,9 @@ import lark
 from lark import Lark, ParseTree
 from lark.exceptions import VisitError
 
-from heimdallm.bifrost import Bifrost as _Bifrost
+from heimdallm.bifrost import Bifrost
 from heimdallm.bifrosts.sql import exc
-from heimdallm.envelope import PromptEnvelope as _PromptEnvelope
+from heimdallm.envelope import PromptEnvelope
 from heimdallm.llm import LLMIntegration
 from heimdallm.llm_providers.mock import EchoMockLLM
 
@@ -69,8 +69,11 @@ def get_schema(conn: sqlite3.Connection):
     return "\n".join(schema)
 
 
-class SQLBifrost(_Bifrost):
-    """A Bifrost for traversing SQL ``SELECT`` queries."""
+class SQLBifrost(Bifrost):
+    """A Bifrost for traversing SQL ``SELECT`` queries.
+
+    :vartype value: str
+    """
 
     # for tests
     @classmethod
@@ -86,6 +89,8 @@ class SQLBifrost(_Bifrost):
 
         :param constraint_validators: A constraint validator or sequence of constraint
             validators to run on the untrusted input.
+
+        :meta private:
         """
         if not isinstance(constraint_validators, Sequence):
             constraint_validators = [constraint_validators]
@@ -105,7 +110,7 @@ class SQLBifrost(_Bifrost):
         self,
         *,
         llm: LLMIntegration,
-        prompt_envelope: _PromptEnvelope,
+        prompt_envelope: PromptEnvelope,
         constraint_validators: Sequence[SQLConstraintValidator],
     ):
         super().__init__(
@@ -122,6 +127,10 @@ class SQLBifrost(_Bifrost):
 
         :param untrusted_llm_output: The output from the LLM, which should be a SQL
             query. If it isn't, then our :meth:`SQLPromptEnvelope.unwrap` method failed.
+        :raises InvalidQuery: If the query is not valid.
+        :return: The Lark parse tree for the query.
+
+        :meta private:
         """
         try:
             return super().parse(untrusted_llm_output)

@@ -4,7 +4,7 @@ from typing import Dict
 from ..llm import LLMIntegration
 
 
-class LookupMockLLM(LLMIntegration):
+class LookupMockLLM(LLMIntegration):  # pragma: no cover
     """a mock LLM integration that simply returns a canned response for the
     hash of some input"""
 
@@ -16,7 +16,7 @@ class LookupMockLLM(LLMIntegration):
         return self.responses[hash_id]
 
 
-class EchoMockLLM(LLMIntegration):
+class EchoMockLLM(LLMIntegration):  # pragma: no cover
     """a mock LLM integration that simply returns the provided response. useful
     in our tests where we know the query that we want to attempt to parse +
     validate."""

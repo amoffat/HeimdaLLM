@@ -27,6 +27,7 @@ class Client(llm.LLMIntegration):
 
     def __init__(
         self,
+        *,
         api_key: str,
         model: str = "gpt-3.5-turbo-16k",
         method: OpenAIMethod = OpenAIMethod.CHAT,
