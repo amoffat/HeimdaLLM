@@ -35,9 +35,9 @@ HeimdaLLM
 .. ATTENTION::
 
    These docs are under active development. See an issue? Report it `here.
-   <https://github.com/amoffat/HeimdaLLM/issues/new?title=Documentation%20fix&labels=documentation>`_
+   <https://github.com/amoffat/HeimdaLLM/issues/new?title=Documentation%20fix&labels=documentation>`__
    Want to make sure something is included? Please request it `here.
-   <https://github.com/amoffat/HeimdaLLM/discussions/3>`_
+   <https://github.com/amoffat/HeimdaLLM/discussions/3>`__
 
 Welcome to the HeimdaLLM documentation!
 
@@ -95,7 +95,6 @@ browse the navigation on the left.
    quickstart
    bifrost
    api/index
-   validation
    reconstruction
    attack_surface
    tutorials
