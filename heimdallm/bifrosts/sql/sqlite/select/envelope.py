@@ -18,6 +18,23 @@ _TMPL_ENV = jinja2.Environment(
 
 
 class SQLPromptEnvelope(_PromptEnvelope):
+    """The purpose of the prompt envelope is to wrap the untrusted input in additional
+    context for the LLM to produce the correct output. We do not do validation in the
+    envelope, because it is impossible to prevent prompt injection.
+
+    While not necessary to subclass, you are recommended to do so if you want to
+    customize the envelope.
+
+    :param llm: The LLM integration being sent the human input. This can be used to
+        tweak the :meth:`wrap` and :meth`unwrap` methods to account for quirks of the
+        specific LLM.
+    :param db_schema: The database schema of the database being queried. It is passed to
+        the LLM so that the LLM knows how the tables and columns are connected.
+    :param validators: The validators to use to validate the output of the LLM. They
+        aren't used to validate here, but some of the validator's properties are added
+        to the envelope to help guide the LLM to produce the correct output.
+    """
+
     def __init__(
         self,
         *,
@@ -30,16 +47,29 @@ class SQLPromptEnvelope(_PromptEnvelope):
         super().__init__(llm=llm)
 
     def template(self, env: jinja2.Environment) -> jinja2.Template:
+        """Returns the template to use for the envelope. Override in a subclass for
+        complete customization.
+
+        :param env: The Jinja2 environment to use to load the template.
+        :return: The Jinja2 template to use for the envelope."""
         return env.get_template("base.j2")
 
     @property
     def params(self) -> dict:
+        """Returns a dictionary of additional parameters to be passed to the template.
+        Override in a subclass for complete control over values that you want in the
+        envelope.
+
+        :return: The extra parameters to pass to the template."""
         return {}
 
     def wrap(self, untrusted_input: str) -> str:
         """Performs the wrapping of the untrusted input with the envelope. Not
         intended to be overridden, but not foribben either. Consider overriding the
-        :meth:`envelope` and :meth:`params` properties instead."""
+        :meth:`template` and :meth:`params` properties first instead.
+
+        :param untrusted_input: The untrusted input from the user.
+        :return: The wrapped input to send to the LLM."""
         all_idents = chain.from_iterable(
             v.requester_identities() for v in self.validators
         )
@@ -56,6 +86,11 @@ class SQLPromptEnvelope(_PromptEnvelope):
         return prompt
 
     def unwrap(self, untrusted_llm_output: str) -> str:
+        """Unpack the SQL query from the LLM output by finding it (hopefully) among the
+        delimiters.
+
+        :param untrusted_llm_output: The output from the LLM.
+        :return: The SQL query."""
         # assume the LLM did what we said and delimited the output with ```
         if "```" in untrusted_llm_output:
             # sometimes the LLM is silly and likes to include the word "sql" inside

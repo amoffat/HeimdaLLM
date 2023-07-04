@@ -1,0 +1,7 @@
+Sqlite
+======
+
+.. toctree::
+    :glob:
+
+    select/*

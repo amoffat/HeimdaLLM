@@ -1,5 +1,7 @@
-Writing a validator
-===================
+.. _validation:
+
+📋 Validation
+=============
 
 What columns is the requester allowed to see.
 How do you constrain to the requester's identity.

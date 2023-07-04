@@ -5,11 +5,7 @@ def _dict_to_qs(params):
     """Converts a dict to a query string, with values url-encoded"""
     qs = []
     for k, v in params.items():
-        if isinstance(v, list):
-            for i in v:
-                qs.append(f"{quote(k)}={quote(str(i))}")
-        else:
-            qs.append(f"{quote(k)}={quote(str(v))}")
+        qs.append(f"{quote(k)}={quote(str(v))}")
     return "&".join(qs)
 
 

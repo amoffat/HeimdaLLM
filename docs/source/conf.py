@@ -1,13 +1,23 @@
 # Configuration file for the Sphinx documentation builder.
 
+from pathlib import Path
+
+import toml
+
+_THIS_DIR = Path(__file__).parent
+_REPO = _THIS_DIR.parent.parent
+_PYPROJECT = _REPO / "pyproject.toml"
+
+pyproject = toml.load(_PYPROJECT)
+
+version = pyproject["tool"]["poetry"]["version"]
+release = version
+
 # -- Project information
 
 project = "HeimdaLLM"
 copyright = "2023, Andrew Moffat"
 author = "Andrew Moffat"
-
-release = "0.1"
-version = "0.1.0"
 
 # -- General configuration
 
@@ -17,11 +27,13 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.intersphinx",
+    "sphinx.ext.todo",
 ]
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3/", None),
     "sphinx": ("https://www.sphinx-doc.org/en/master/", None),
+    "lark": ("https://lark-parser.readthedocs.io/en/latest/", None),
 }
 intersphinx_disabled_domains = ["std"]
 
@@ -33,3 +45,7 @@ html_theme = "sphinx_rtd_theme"
 
 # -- Options for EPUB output
 epub_show_urls = "footnote"
+
+autodoc_typehints = "both"
+
+add_module_names = False

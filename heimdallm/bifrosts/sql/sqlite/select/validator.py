@@ -16,24 +16,50 @@ from .visitors import FacetCollector, Facets
 
 
 class SQLConstraintValidator(_ConstraintValidator):
-    """almost all methods are abstract because we want to force the developer
-    to implement them. the cost of not implementing them by accident is high."""
+    """
+    This validator checks different of a SQL query. You are intended to derive this
+    class and implement its methods."""
 
     @abstractmethod
     def requester_identities(self) -> Sequence[RequiredConstraint]:
-        """Returns the identity of the requester, as represented in the
-        database. this is used to instruct the LLM how to constrain the query
-        that it generates. only one of these identities needs to match.
+        """Returns the possible identities of the requester, as represented in the
+        database. This is used to instruct the LLM how to constrain the query that it
+        generates. Only one of these identities needs to match for the query to be
+        compliant.
 
-        the reason that we return a sequence, and not a single identity, is that
-        sometimes an LLM will specify the constraint as part of a JOIN
-        condition, and not a WHERE condition. in that case, the column in the
-        JOIN condition may not match the column you expect, for example,
+        The reason that we return a sequence, and not a single identity, is that
+        sometimes an LLM will specify the constraint as part of a ``JOIN`` condition,
+        and not a ``WHERE`` condition. In that case, the column in the JOIN condition
+        may not match the column you expect.
 
-            Invoice.CustomerId vs Customer.CustomerId
+        For example, consider selecting films for a customer, constrained by the
+        customer id. The LLM may give you a query like this:
 
-        although they represent the same identity, they are different tables and
-        columns, but constraining on one of them is sufficient.
+        .. code-block:: sql
+
+            SELECT f.title
+            FROM film f
+            JOIN inventory i ON f.film_id=i.film_id
+            JOIN rental r ON i.inventory_id=r.inventory_id
+            JOIN customer c ON r.customer_id=c.customer_id
+            WHERE c.customer_id=:customer_id
+
+        Or you may receive a query like this:
+
+        .. code-block:: sql
+
+            SELECT f.title
+            FROM film f
+            JOIN inventory i ON f.film_id=i.film_id
+            JOIN rental r
+                ON i.inventory_id=r.inventory_id
+                AND r.customer_id=:customer_id
+
+        Both ``rental.customer_id`` and ``customer.customer_id`` are valid requester
+        identities, so ou need to specify both of them by returning a
+        :class:`RequiredConstraint` for each of them.
+
+        :return: The sequence of possible requester identities.
         """
         raise NotImplementedError(
             "You must explicitly provide the requester identity, "
@@ -42,8 +68,13 @@ class SQLConstraintValidator(_ConstraintValidator):
 
     @abstractmethod
     def required_constraints(self) -> Sequence[RequiredConstraint]:
-        """Returns a sequence of secure constraints that must exist in the WHERE
-        clause of the query"""
+        """Returns a sequence of secure constraints that must exist in either the
+        ``WHERE`` clause of the query or in a ``JOIN`` condition. It doesn't matter
+        where the constraint is, as long as it exists and is required (i.e. not part of
+        an optional condition).
+
+        :return: The sequence of required constraints.
+        """
         raise NotImplementedError(
             "You must explicitly provide a sequence of required constraints, "
             "or an empty list for no constraints"
@@ -51,35 +82,53 @@ class SQLConstraintValidator(_ConstraintValidator):
 
     @abstractmethod
     def select_column_allowed(self, column: FqColumn) -> bool:
-        """Ensures that the column is allowed to be selected in the `SELECT` clause"""
+        """Check that a fully-qualified column is allowed to be selected in the
+        ``SELECT`` clause. Use this to restrict the columns and tables that can be
+        selected.
+
+        This value is also used to inform :doc:`/reconstruction`. Columns that do not
+        pass this check will be removed from the query.
+
+        :param column: The fully-qualified column.
+        :return: Whether or not the column is allowed to be selected.
+        """
         return False
 
     @abstractmethod
     def allowed_joins(self) -> Sequence[JoinCondition]:
-        """Returns all of the tables allowed to be connected to the query,
-        either via a JOIN, or via a FROM. this encompasses both cases because
-        LLMs frequently produce queries that select unpredictable tables with
-        "FROM", even if that table is valid to be connected via "JOIN". so to
-        handle this, we consider a table selected with FROM as a JOIN with no
-        explicit conditions. in practice, if there are other joins in the query,
-        the selected table will have an explicit condition via the ON clause. if
-        there are no other joins, the selected table will have no join
-        conditions.
+        """Returns all of the tables allowed to be connected to the query via a
+        ``JOIN`` and the equi-join conditions that must be met for the join to be valid.
+
+        :return: The sequence of allowed joins.
         """
         return []
 
     @abstractmethod
     def max_limit(self) -> Optional[int]:
         """Return the maximum number of rows that can be returned by a query. if
-        None, there is no limit."""
+        None, there is no limit.
+
+        This value is also used to inform :doc:`/reconstruction`. If this function
+        provides a limit, but the query does not, or the query provides a higher limit,
+        the query will be reconstructed to include the correct limit.
+
+        :return: The maximum number of rows that can be returned by a query, or None if
+            unlimited.
+        """
         return None
 
-    def can_use_function(self, function):
-        """Ensures that the function is allowed to be used in the query"""
+    def can_use_function(self, function: str) -> bool:
+        """Returns whether or not a SQL function is allowed to be used anywhere in the
+        query.
+
+        :param function: The *lowercase* name of the function.
+        :return: Whether or not the function is allowed.
+        """
         return function in presets.safe_functions
 
     def condition_column_allowed(self, fq_column: FqColumn) -> bool:
-        """Checks if a column is allowed in a WHERE, JOIN, HAVING, or ORDER BY"""
+        """Checks if a column is allowed in a ``WHERE``, ``JOIN``, ``HAVING``, or
+        ``ORDER BY``"""
         # let's default to "if you can see it, you can use it"
         return self.select_column_allowed(fq_column)
 
@@ -87,7 +136,10 @@ class SQLConstraintValidator(_ConstraintValidator):
         """A parse tree may be valid SQL, but it may not be valid according to
         the validator's constraints. we may be able to make intelligent
         decisions about those constraints, and fix the parse tree though, for
-        example, by adding a limit to a query."""
+        example, by adding a limit to a query.
+
+        :meta private:
+        """
 
         # gets around a circular import issue
         from heimdallm.bifrosts.sql.sqlite.select import reconstruct
@@ -107,7 +159,14 @@ class SQLConstraintValidator(_ConstraintValidator):
         return output
 
     def validate(self, untrusted_input: str, tree: ParseTree):
-        """Analyze the tree and validate it against our SQL constraints"""
+        """Analyze the parsed tree and validate it against our SQL constraints
+
+        :param untrusted_input: The original query string. This is passed in so that if
+            we need to raise an exception that references it, we can.
+        :param tree: The parsed tree from the original query string.
+
+        :meta private:
+        """
         try:
             alias_collector = AliasCollector()
             alias_collector.visit(tree)

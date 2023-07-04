@@ -47,3 +47,15 @@ def test_disallowed_in_join():
     with pytest.raises(exc.IllegalFunction) as e:
         bifrost.traverse(query)
     assert e.value.function == "nope"
+
+
+def test_case_insensitive():
+    bifrost = SQLBifrost.mocked(MyConstraints())
+
+    query = "select YEP(t1.col) from t1"
+    bifrost.traverse(query)
+
+    query = "select NOPE(t1.col) from t1"
+    with pytest.raises(exc.IllegalFunction) as e:
+        bifrost.traverse(query)
+    assert e.value.function == "nope"
