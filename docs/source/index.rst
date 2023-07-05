@@ -45,7 +45,7 @@ HeimdaLLM safely bridges the gap between untrusted human input and trusted
 machine-readable output by augmenting :term:`LLMs <LLM>` with a robust validation
 framework. This enables you to :term:`externalize <externalizing>` LLM technology to
 your users, so that you can do things like execute trusted SQL queries from their
-untrusted output.
+untrusted input.
 
 Imagine giving your users natural language access to their data in your database,
 without having to worry about dangerous queries.
