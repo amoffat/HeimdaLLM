@@ -2,6 +2,5 @@ Sqlite
 ======
 
 .. toctree::
-    :glob:
 
-    select/*
+    select/index

@@ -47,11 +47,13 @@ class SQLPromptEnvelope(_PromptEnvelope):
         super().__init__(llm=llm)
 
     def template(self, env: jinja2.Environment) -> jinja2.Template:
-        """Returns the template to use for the envelope. Override in a subclass for
+        """
+        Returns the template to use for the envelope. Override in a subclass for
         complete customization.
 
-        :param env: The Jinja2 environment to use to load the template.
-        :return: The Jinja2 template to use for the envelope."""
+        :param env: The environment to use to load the template.
+        :return: The template to use for the envelope.
+        """
         return env.get_template("base.j2")
 
     @property

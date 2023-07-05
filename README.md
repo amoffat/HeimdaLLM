@@ -13,15 +13,15 @@
 [![Coverage Status](https://coveralls.io/repos/github/amoffat/HeimdaLLM/badge.svg?branch=dev)](https://coveralls.io/github/amoffat/HeimdaLLM?branch=dev)
 
 HeimdaLLM safely bridges the gap between untrusted human input and trusted
-machine-readable input by augmenting LLMs with a robust validation framework. This
-allows you externalize LLM technology to your users, for example, to do things like
-construct trusted SQL queries from untrusted input, **using validation under your full
-control.**
+machine-readable output by augmenting LLMs with a robust validation framework. This
+enables you externalize LLM technology to your users, so that you can do things like
+execute trusted SQL queries from their untrusted input.
 
-To accomplish this, HeimdaLLM introduces a new technology, the 🌈✨ Bifrost, composed of
-4 parts: an LLM prompt envelope, an LLM integration, a grammar, and a constraint
-validator. These 4 components operate as a single unit—a Bifrost—which is capable of
-translating untrusted human input into trusted machine input.
+To accomplish this, HeimdaLLM introduces a new technology, the 🌈✨
+[Bifrost](https://docs.heimdallm.ai/en/latest/bifrost.html), composed of 4 parts: an LLM
+prompt envelope, an LLM integration, a grammar, and a constraint validator. These 4
+components operate as a single unit—a Bifrost—which is capable of translating untrusted
+human input into trusted machine output.
 
 ✨ **This allows you to perform magic** ✨
 
@@ -35,6 +35,7 @@ traverse("Show me the movies I rented the longest, and the number of days I had 
 ```
 
 ```
+✅ Ensuring SELECT statement...
 ✅ Resolving column and table aliases...
 ✅ Allowlisting selectable columns...
    ✅ Removing 4 forbidden columns...

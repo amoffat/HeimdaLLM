@@ -12,10 +12,10 @@ LOG = structlog.get_logger(__name__)
 
 class Bifrost:
     """The Bifrost is the bridge from the outside world to your secure systems. It is
-    responsible for a rigorous parsing and validation of the output of the LLM. This
-    class is not used directly, but is subclassed to provide a Bifrost for a specific
-    problem, like constructing trusted SQL queries. It is general enough to be adapted
-    to other problems.
+    responsible for a rigorous parsing and validation of the output of the :term:`LLM`.
+    This class is not used directly, but is subclassed to provide a Bifrost for a
+    specific problem, like constructing trusted SQL queries. It is general enough to be
+    adapted to other problems.
 
     :param llm: The LLM integration to use.
     :param prompt_envelope: The prompt envelope used to wrap the untrusted human input
@@ -50,8 +50,11 @@ class Bifrost:
         untrusted_human_input: str,
         autofix: bool = True,
     ) -> str:
-        """Run the full chain of the bifrost, from untrusted input to trusted
-        input.
+        """Run the full chain of the Bifrost, from untrusted input to trusted
+        input. Traversing the Bifrost means successfully returning a value from this
+        function, which is only possible if every step succeeds.
+
+        This is the main entry point for the Bifrost API.
 
         :param untrusted_human_input: The untrusted input from the user.
         :param autofix: Whether or not to attempt to :doc:`reconstruct
@@ -162,7 +165,7 @@ class Bifrost:
         return untrusted_llm_output
 
     def parse(self, untrusted_llm_output: str) -> ParseTree:
-        """Converts the llm output into a parse tree. Override it in a subclass
+        """Converts the :term:`LLM` output into a parse tree. Override it in a subclass
         to throw custom exceptions based on the grammar and parse state.
 
         :param untrusted_llm_output: The unwrapped output from the LLM.

@@ -1,5 +1,5 @@
-Select
-======
+SQL Select Bifrost
+==================
 
 The SQL Select Bifrost produces a trusted SQL Select statement. It uses the following
 components:

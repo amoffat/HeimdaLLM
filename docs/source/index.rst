@@ -42,10 +42,10 @@ HeimdaLLM
 Welcome to the HeimdaLLM documentation!
 
 HeimdaLLM safely bridges the gap between untrusted human input and trusted
-machine-readable input by augmenting :term:`LLMs <LLM>` with a robust validation
-framework. This allows you to :term:`externalize <externalizing>` LLM technology to your
-users, for example, to do things like execute trusted SQL queries from untrusted input,
-**using validation under your full control.**
+machine-readable output by augmenting :term:`LLMs <LLM>` with a robust validation
+framework. This enables you to :term:`externalize <externalizing>` LLM technology to
+your users, so that you can do things like execute trusted SQL queries from their
+untrusted output.
 
 Imagine giving your users natural language access to their data in your database,
 without having to worry about dangerous queries.
@@ -56,6 +56,7 @@ without having to worry about dangerous queries.
 
 .. code-block:: text
 
+   ✅ Ensuring SELECT statement...
    ✅ Resolving column and table aliases... 
    ✅ Allowlisting selectable columns...
       ✅ Removing 4 forbidden columns...

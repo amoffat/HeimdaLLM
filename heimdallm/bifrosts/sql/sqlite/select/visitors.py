@@ -1,4 +1,3 @@
-import math
 from collections import defaultdict as dd
 from typing import MutableMapping, Optional
 
@@ -34,7 +33,7 @@ class Facets:
         # all of the functions used in the query
         self.functions: set[str] = set()
         # the row limit of the query
-        self.limit = math.inf
+        self.limit: Optional[int] = None
 
 
 class FacetCollector(Visitor):
@@ -300,7 +299,7 @@ class FacetCollector(Visitor):
     order_column = _collect_condition_column
 
     def limit(self, node):
-        self._facets.limit = float(node.children[0].value)
+        self._facets.limit = int(node.children[0].value)
 
     def function_name(self, node):
         self._facets.functions.add(node.children[0].value.lower())

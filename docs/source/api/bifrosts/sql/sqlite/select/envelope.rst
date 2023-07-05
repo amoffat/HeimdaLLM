@@ -1,5 +1,3 @@
-.. _bifrost-sql-sqlite-select-envelope:
-
 SQL Select Envelope
 ===================
 
