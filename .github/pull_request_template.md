@@ -14,7 +14,7 @@ Confirm that all of following are true:
 - [ ] I have written docstrings for any new code
 - [ ] All non-obvious additions and changes have been clearly commented
 - [ ] I have added test coverage for any code changes
-- [ ] I have added or updated the [docs](/docs) where applicable
+- [ ] I have added or updated the `/docs` where applicable
 
 ## Compatibility
 
