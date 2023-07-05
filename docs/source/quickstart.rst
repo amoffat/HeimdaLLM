@@ -1,7 +1,7 @@
 🚀 Quickstart
 =============
 
-This quickstart will walk you through setting up an SQL Bifrost with OpenAI's LLM. The
+This quickstart will walk you through setting up a SQL Bifrost with OpenAI's LLM. The
 end result is a function that takes natural language input and returns a trusted SQL
 ``SELECT`` query, constrained to your requirements.
 
@@ -48,7 +48,7 @@ API token securely.
 Now we'll define our database schema. You can dump this directly from your database, but
 a better method is to dump it out beforehand to a file, manually trim out tables and
 columns that you don't want the LLM to know about, and load it from that file. You can
-also add SQL comments to the file to help guide the LLM.
+also add SQL comments to help explain the schema to the LLM.
 
 .. code-block:: python
 
@@ -68,8 +68,8 @@ also add SQL comments to the file to help guide the LLM.
     );
     """
 
-Let's define our constraint validator(s). These are used to constrain what the SQL query
-so that it only has access to tables and columns that you allow. For more information on
+Let's define our constraint validator(s). These are used to constrain the SQL query so
+that it only has access to tables and columns that you allow. For more information on
 the methods that you can override in the derived class, look :doc:`here.
 </api/bifrosts/sql/sqlite/select/validator>`
 

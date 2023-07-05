@@ -68,10 +68,11 @@ class SQLConstraintValidator(_ConstraintValidator):
 
     @abstractmethod
     def required_constraints(self) -> Sequence[RequiredConstraint]:
-        """Returns a sequence of secure constraints that must exist in either the
-        ``WHERE`` clause of the query or in a ``JOIN`` condition. It doesn't matter
-        where the constraint is, as long as it exists and is required (i.e. not part of
-        an optional condition).
+        """
+        Returns a sequence of constraints that must exist in either the ``WHERE`` clause
+        of the query or in a ``JOIN`` condition. It doesn't matter where the constraint
+        is, as long as it exists and is required (i.e. not part of an optional
+        condition).
 
         :return: The sequence of required constraints.
         """
@@ -118,8 +119,10 @@ class SQLConstraintValidator(_ConstraintValidator):
         return None
 
     def can_use_function(self, function: str) -> bool:
-        """Returns whether or not a SQL function is allowed to be used anywhere in the
-        query.
+        """
+        Returns whether or not a SQL function is allowed to be used anywhere in the
+        query. By default, this checks the function against the list of safe functions
+        that we have curated by hand.
 
         :param function: The *lowercase* name of the function.
         :return: Whether or not the function is allowed.
@@ -127,8 +130,15 @@ class SQLConstraintValidator(_ConstraintValidator):
         return function in presets.safe_functions
 
     def condition_column_allowed(self, fq_column: FqColumn) -> bool:
-        """Checks if a column is allowed in a ``WHERE``, ``JOIN``, ``HAVING``, or
-        ``ORDER BY``"""
+        """
+        Checks if a column is allowed to be used in a ``WHERE``, ``JOIN``, ``HAVING``,
+        or ``ORDER BY``. By default, this calls :meth:`select_column_allowed`, but if
+        you override this method and want to preserve that behavior, you should call
+        yourself.
+
+        :param fq_column: The fully-qualified column.
+        :return: Whether or not the column is allowed to be used in a condition.
+        """
         # let's default to "if you can see it, you can use it"
         return self.select_column_allowed(fq_column)
 
@@ -195,7 +205,7 @@ class SQLConstraintValidator(_ConstraintValidator):
             facets.joined_tables
             and not facets.joined_tables[cast(str, facets.selected_table)]
         ):
-            raise exc.DisconnectedTable(table=facets.selected_table)
+            raise exc.DisconnectedTable(table=cast(str, facets.selected_table))
 
         # ensure that all joins were joined on columns that exist on the joined tables
         if facets.bad_joins:

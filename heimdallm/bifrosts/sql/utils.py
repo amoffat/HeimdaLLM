@@ -6,9 +6,9 @@ from . import exc
 class RequiredConstraint:
     """This represents a constraint that *must* be applied to the query.
 
-    In the query, this comes in the form of ``table.column=:placeholder``. enforced by
+    In the query, this comes in the form of ``table.column=:placeholder``. Enforced by
     the grammar, the comparison is always equality, the left hand side is always a
-    fully-qualified column, and the right hand side is always a placeholder. this
+    fully-qualified column, and the right hand side is always a placeholder. These
     requirements ensure that the query is always constrained by a value that the
     developer specifies at query execution time.
 
@@ -43,7 +43,7 @@ class FqColumn:
     We require that LLM-produced queries from SQL Bifrosts use fully-qualified columns
     in their clauses, because if they didn't, we would need to infer which table owned
     the column, which requires runtime schema analysis. We could do that, but maybe in
-    the future. It's much more straightforward to require the LLM give us
+    the future. It's much more straightforward to instruct that the LLM give us
     fully-qualified names.
 
     :param table: The table name.

@@ -6,7 +6,7 @@ Below is a very high-level roadmap for HeimdaLLM.
 .. TIP::
 
     Want to know when these features get implemented? Add your email to `this form
-    <https://forms.gle/r3HjMPXBYwNjxANp7>`_ and I'll send you an email.
+    <https://forms.gle/r3HjMPXBYwNjxANp7>`_ and I will contact you.
 
 More databases
 **************

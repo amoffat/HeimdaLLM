@@ -1,17 +1,21 @@
 SQL
 ===
 
-Below are some of the ways that a SQL query can be vulnerable to attack in HeimdaLLM.
-This is not intended to be an exhaustive list, but rather a starting point for
-understanding the ways that a query can be vulnerable, and the controls that HeimdaLLM
-has in place to mitigate these attacks.
+.. currentmodule:: heimdallm.bifrosts.sql.sqlite.select
 
-The two primary points of mitigation are the SQL grammar, which defines if a query is
-syntactically correct, and the constraint validator, which defines the constraints that
-the query must satisfy. Some controls are implemented in the grammar, and some are in
-the constraint validator. They work together to provide validation. For example, outer
-joins are stopped at the grammar, while required conditions are checked at the
-constraint validator.
+Below are some of the ways that a SQL ``SELECT`` query can be vulnerable to attack in
+HeimdaLLM. This is not intended to be an exhaustive list, but rather a starting point
+for understanding the ways that a query can be vulnerable, and the controls that
+HeimdaLLM has in place to mitigate these attacks.
+
+The two primary points of mitigation are `the grammar
+<https://github.com/amoffat/HeimdaLLM/blob/dev/heimdallm/bifrosts/sql/sqlite/select/sqlite.lark>`_,
+which defines if a query is syntactically correct, and the :class:`constraint validator
+<validator.SQLConstraintValidator>`, which defines the constraints that the query must
+satisfy. Some controls are implemented in the grammar, and some are in the constraint
+validator. They work together to provide validation. For example, outer joins are
+stopped at the grammar, while required conditions are checked at the constraint
+validator.
 
 .. DANGER::
 
@@ -88,18 +92,23 @@ They can also be effective in the ``ORDER BY``:
 Mitigations
 ^^^^^^^^^^^
 
-By default, HeimdaLLM will not allow the use of a column in a condition that is not
-also allowed to be selected. This means that if they can't see it, they can't use it.
-While this is a good default, but it can be overly restrictive. You may choose to
-separate these two allowlists, in which case your constraint validator would define one
-predicate for ``select_column_allowed`` and another for ``condition_column_allowed``.
-
 HeimdaLLM takes an overzealous approach to this problem by examining the parse tree for
-any usage of a table column in ``WHERE``, ``HAVING``, ``GROUP BY``, ``ORDER BY``, and ``JOIN``.
-Whether they are nested deep in an expression or not, HeimdaLLM will find them. The
-resulting columns are then sent to the constraint validator's ``condition_column_allowed``
-predicate and either allowed or denied. By using a broad application of the allowlist,
-we can prevent the use of columns that can be used in side-channel attacks.
+any usage of a column in ``WHERE``, ``HAVING``, ``GROUP BY``, ``ORDER BY``, and
+``JOIN``. Whether they are nested deep in an expression or not, HeimdaLLM will find
+them. The resulting columns are then sent to the constraint validator's
+:meth:`SQLConstraintValidator.condition_column_allowed
+<validator.SQLConstraintValidator.condition_column_allowed>` predicate and either
+allowed or denied. By using a broad application of the allowlist, we can prevent the use
+of columns that can be used in side-channel attacks.
+
+By default, HeimdaLLM will not allow the use of a column in a condition if it is not
+allowed to be selected. This means that if they can't see it, they can't use it. While
+this is a good default, it can be overly restrictive. You may choose to separate these
+two allowlists, in which case your constraint validator would define one predicate for
+:meth:`SQLConstraintValidator.select_column_allowed
+<validator.SQLConstraintValidator.select_column_allowed>` and another for
+:meth:`SQLConstraintValidator.condition_column_allowed
+<validator.SQLConstraintValidator.condition_column_allowed>`.
 
 Star select
 -----------
@@ -110,17 +119,19 @@ columns than you intended.
 Mitigations
 ^^^^^^^^^^^
 
-HeimdaLLM does not allow ``*`` as a selectable column. It does, however, allow ``COUNT(*)``,
-since that is a very common way of counting rows, and it does not reveal any additional
-information when a required constraint is applied.
+HeimdaLLM does not allow ``*`` as a selectable column. It does, however, allow
+``COUNT(*)``, since that is a very common way of counting rows, and it does not reveal
+any additional information when a :meth:`requester identity
+<validator.SQLConstraintValidator.requester_identities>` is also applied.
 
 Optional conditions
 -------------------
 
-When required conditions are defined, either as a requester identity, or as some other
-required condition, an attacker may attempt to bypass the condition by coaxing the
-LLM to produce a query that includes the condition as part of an ``OR`` clause. For
-example:
+When required conditions are defined, either as a :meth:`requester identity
+<validator.SQLConstraintValidator.requester_identities>`, or as some other
+:meth:`required constraint <validator.SQLConstraintValidator.required_constraints>`, an
+attacker may attempt to bypass the condition by coaxing the LLM to produce a query that
+includes the condition as part of an ``OR`` clause. For example:
 
 .. code-block:: sql
 
@@ -146,7 +157,7 @@ when the condition is more complex with nested expressions, for example:
                 user.user_id=123
                 AND 1=1
             )
-            OR 1=1
+            OR 1=1 /* <------- UH OH */
         )
         AND 1=1
 
@@ -172,8 +183,10 @@ according to the following rules:
 
 Another way to think about it is: the required condition and all of its sibling
 conditions must be connected to the tree of ``WHERE`` conditions via ``AND``, and the same
-for every ancestor node of the required condition. This ensures that the requried
+for every ancestor node of the required condition. This guarantees that the requried
 condition is always evaluated.
+
+.. _outer-joins:
 
 Outer-joins
 -----------
@@ -192,7 +205,8 @@ query:
 
 Although the ``JOIN`` is an equi-join, and we have a required condition, it is not
 sufficient to prevent the user from seeing rows they should not be able to see. This is
-because the ``RIGHT JOIN`` will include every unmatched row in the right table.
+because the ``RIGHT JOIN`` will include every unmatched row in the right table,
+including rows that do not belong to the user.
 
 Mitigations
 ^^^^^^^^^^^
@@ -216,21 +230,22 @@ Mitigations
 ^^^^^^^^^^^
 
 HeimdaLLM's SQL grammar does not define support for any other query type besides
-``SELECT``. This means that any other query type will be rejected by the parser. A
-vulnerability would need to be present in the grammar that could allow for a mutation
-inside a ``SELECT`` query. The grammar also does not support ``SELECT INTO``.
+``SELECT``. This means that any other query type will be rejected by the parser. The
+grammar also does not support ``SELECT INTO``. A vulnerability would need to be present
+in the grammar that could allow for a mutation inside a ``SELECT`` query.
 
 You will want to audit your database to ensure that no triggers are present on the
-selectable tables. You will also want to audit your stored functions to ensure that
-they are not allowlisted via the ``can_use_function`` predicate.
+selectable tables. You will also want to audit your stored functions and ensure that
+they are not allowlisted via the :meth:`SQLConstraintValidator.can_use_function
+<validator.SQLConstraintValidator.can_use_function>` predicate.
 
 Acquiring locks
 ---------------
 
 An attacker could cause a query to contain ``SELECT FOR UPDATE``, which would result in
 the database acquiring a lock on the rows that are returned. This can also happen
-implicitly if your transaction isolation level is set to ``SERIALIZABLE`` or `REPEATABLE
-READ`.
+implicitly if your transaction isolation level is set to ``SERIALIZABLE`` or ``REPEATABLE
+READ``.
 
 Acquiring locks during a ``SELECT`` could cause problems if your connections are recycled
 without rolling back or committing the transaction, because the lock would remain in
@@ -254,9 +269,11 @@ harmful behavior.
 Mitigations
 ^^^^^^^^^^^
 
-HeimdaLLM allows you to configure a function allowlist predicate, which can be used to
-prevent the execution of functions that have side-effects. We have chosen what we
-believe are sensible defaults, but you may customize these in your constraint validator.
+HeimdaLLM allows you to configure a function allowlist predicate, through
+:meth:`SQLConstraintValidator.can_use_function
+<validator.SQLConstraintValidator.can_use_function>`, which can be used to prevent the
+execution of functions. We have chosen what we believe are sensible defaults, but you
+may customize these in your subclassed constraint validator.
 
 The detection of functions is done by examining the parse tree for function calls, and
 the grammar has been defined to easily detect the usage of a function, no matter where

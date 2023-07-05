@@ -4,13 +4,17 @@ from lark import Lark, ParseTree
 
 
 class ConstraintValidator(ABC):
+    """This is the base class for all constraint validators. It is used to validate
+    the parse tree of the untrusted input, and to fix the parse tree if it fails a
+    soft-validation pass."""
+
     @abstractmethod
-    def fix(self, Grammar: Lark, tree: ParseTree) -> str:
+    def fix(self, grammar: Lark, tree: ParseTree) -> str:
         """If the tree fails validation in a soft-pass, attempt to reconstruct it
         to satisfy the constraints. If the tree cannot be reconstructed, throw a
-        bifrost-specific exception
+        Bifrost-specific exception
 
-        :param Grammar: The Lark grammar used to parse the untrusted input. This is
+        :param grammar: The Lark grammar used to parse the untrusted input. This is
             often used by :class:`lark.reconstruct.Reconstructor` to fix the parse tree.
         :param tree: The resulting parse tree of the untrusted input.
         """

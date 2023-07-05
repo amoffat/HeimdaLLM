@@ -10,7 +10,7 @@
         An object that can traverse untrusted human input into untrusted
         machine-readable input.
 
-    :doc:`constraint validator </validation>`
+    :doc:`constraint validator </api/abc/validator>`
         An object that is capable of analyzing an LLM's structured output to determine
         if the output is compliant with a set of constraints.
 

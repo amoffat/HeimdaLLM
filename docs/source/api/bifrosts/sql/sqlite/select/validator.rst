@@ -1,5 +1,3 @@
-.. _bifrost-sql-sqlite-select-validator:
-
 SQL Select Validator
 ====================
 
