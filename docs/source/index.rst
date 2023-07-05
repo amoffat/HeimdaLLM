@@ -5,16 +5,12 @@ HeimdaLLM
    the shimmering path connecting the realms.
 
 .. image:: https://raw.githubusercontent.com/amoffat/HeimdaLLM/main/docs/source/images/heimdall.png
-   :target: https://docs.heimdallm.ai
+   :target: https://github.com/amoffat/HeimdaLLM
    :alt: Heimdall guarding the Bifrost
 
 .. image:: https://github.com/amoffat/HeimdaLLM/actions/workflows/main.yml/badge.svg?branch=main
    :target: https://github.com/amoffat/HeimdaLLM/actions
    :alt: Build status
-
-.. .. image:: https://img.shields.io/github/stars/amoffat/HeimdaLLM.svg?style=social&label=Star
-..    :target: https://github.com/amoffat/HeimdaLLM
-..    :alt: GitHub Repo stars
 
 .. image:: https://img.shields.io/pypi/v/heimdallm
    :target: https://pypi.org/project/heimdallm/
@@ -31,6 +27,10 @@ HeimdaLLM
 .. image:: https://coveralls.io/repos/github/amoffat/HeimdaLLM/badge.svg?branch=dev
    :target: https://coveralls.io/github/amoffat/HeimdaLLM?branch=dev
    :alt: Coverage Status
+
+.. image:: https://img.shields.io/github/stars/amoffat/HeimdaLLM.svg?style=social&label=Star
+   :target: https://github.com/amoffat/HeimdaLLM
+   :alt: GitHub Repo stars
 
 .. ATTENTION::
 
