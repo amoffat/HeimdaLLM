@@ -1,3 +1,5 @@
+from typing import Optional
+
 import lark
 
 from heimdallm.support.github import make_ambiguous_parse_issue
@@ -188,12 +190,13 @@ class TooManyRows(BaseException):
     """
     Thrown when a query returns too many rows and :doc:`/reconstruction` is disabled.
 
-    :param limit: The number of rows that the query wants to return. Can be
-        :py:obj:`math.inf` if unrestricted.
+    :param limit: The number of rows that the query wants to return. Nullable if no
+        limit is specified.
     """
 
-    def __init__(self, *, limit: float):
-        message = f"Attempting to return too many rows ({limit})"
+    def __init__(self, *, limit: Optional[int]):
+        nice_limit = limit if limit is not None else "unlimited"
+        message = f"Attempting to return too many rows ({nice_limit})"
         super().__init__(message)
         self.limit = limit
 

@@ -263,8 +263,8 @@ class SQLConstraintValidator(_ConstraintValidator):
                 raise exc.MissingRequiredIdentity(identities=all_req_identities)
 
         # check that the query limits the rows correctly, if we restrict to a limit
-        if (limit := self.max_limit()) is not None:
-            if facets.limit > limit:
+        if (max_limit := self.max_limit()) is not None:
+            if facets.limit is None or facets.limit > max_limit:
                 raise exc.TooManyRows(limit=facets.limit)
 
         # check that every function used has been allowlisted
