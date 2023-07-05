@@ -33,6 +33,8 @@ extensions = [
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3/", None),
     "sphinx": ("https://www.sphinx-doc.org/en/master/", None),
+    "lark": ("https://lark-parser.readthedocs.io/en/latest/", None),
+    "jinja2": ("https://jinja.palletsprojects.com/en/latest/", None),
 }
 intersphinx_disabled_domains = ["std"]
 

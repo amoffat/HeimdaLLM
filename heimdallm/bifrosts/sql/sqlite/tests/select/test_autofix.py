@@ -1,5 +1,3 @@
-import math
-
 import pytest
 
 from heimdallm.bifrosts.sql import exc
@@ -23,7 +21,7 @@ def test_alter_limit():
     query = "select t1.col from t1"
     with pytest.raises(exc.TooManyRows) as e:
         bifrost.traverse(query, autofix=False)
-    assert e.value.limit == math.inf
+    assert e.value.limit is None
 
     # no limit constraint, so no limit is added when "fixed"
     trusted_query = unlimited_bifrost.traverse(query)

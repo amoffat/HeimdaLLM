@@ -8,18 +8,27 @@ from .utils import FqColumn, JoinCondition, RequiredConstraint
 
 
 class BaseException(Exception):
-    """a convenience class for all heimdallm sql exceptions, to make all of them
-    easier to catch"""
+    """This is a convenience base class for all HeimdaLLM SQL exceptions to them easier
+    to catch.
+
+    :meta private:
+    """
 
 
 class GeneralParseError(BaseException):
-    """thrown from our grammar parser for anything that we want to bubble up as an
+    """
+    Thrown from our grammar parser for anything that we want to bubble up as an
     InvalidQuery exception, but we don't have access to the raw input from within the
-    parser"""
+    parser
+    """
 
 
 class InvalidQuery(BaseException):
-    """thrown when our grammar cannot parse the LLM output"""
+    """
+    Thrown when our grammar cannot parse the unwrapped LLM output.
+
+    :param query: The query that was attempted to be parsed.
+    """
 
     def __init__(self, *, query: str):
         super().__init__(f"\n\n{query}\n")
@@ -27,12 +36,29 @@ class InvalidQuery(BaseException):
 
 
 class ReservedKeyword(BaseException):
+    """
+    Thrown when a the query attempts to use a reserved keyword, unescaped, as an alias
+    for a table or column.
+
+    :param keyword: The reserved keyword that was used as an alias.
+    """
+
     def __init__(self, *, keyword: str):
         super().__init__(f"Alias `{keyword}` is a reserved keyword")
         self.keyword = keyword
 
 
 class AmbiguousParse(BaseException):
+    """
+    Thrown when our grammar parses the unwrapped LLM output, but the query results in
+    multiple parse trees unexpectedly. This is a bug in our grammar, and it should be
+    reported to the author via the link in the exception's output.
+
+    :param trees: The list of parse trees that were generated from parsing the query.
+    :param query: The query that was attempted to be parsed.
+    :ivar issue_link: A link to the GitHub issue that should be opened to report this.
+    """
+
     def __init__(self, *, trees: list[lark.ParseTree], query: str):
         self.issue_link = make_ambiguous_parse_issue(query, trees)
 
@@ -46,9 +72,13 @@ class AmbiguousParse(BaseException):
 
 
 class UnqualifiedColumn(BaseException):
-    """thrown when a column isn't fully qualified with the table prefix"""
+    """
+    Thrown when a column isn't fully qualified in the form ``table.column``.
 
-    def __init__(self, column: Optional[str] = None):
+    :param column: The column that was not fully qualified.
+    """
+
+    def __init__(self, column: str):
         message = "Fully-qualified column name needs to be in the form 'table.column'"
         if column is not None:
             message += f" (got {column!r})"
@@ -58,17 +88,29 @@ class UnqualifiedColumn(BaseException):
 
 
 class IllegalSelectedColumn(BaseException):
+    """
+    Thrown when a column is selected that is not allowed by the constraint validator and
+    it was not automatically removed because :doc:`/reconstruction` is disabled.
+
+    :param column: The column that was selected. This is not a :class:`FqColumn
+        <heimdallm.bifrosts.sql.utils.FqColumn>` because we may not always have a table
+        name.
+    """
+
     def __init__(self, *, column: str):
-        """
-        :param column: The column that was selected. This is not a FqColumn because we
-        may not always have a table name.
-        """
         message = f"Column `{column}` is not allowed in SELECT"
         super().__init__(message)
         self.column = column
 
 
 class IllegalConditionColumn(BaseException):
+    """
+    Thrown when a column is used in a ``JOIN`` condition or a ``WHERE`` condition that
+    is not allowed by the constraint validator.
+
+    :param column: The column that was used in the condition.
+    """
+
     def __init__(self, *, column: FqColumn):
         message = f"Column `{column}` is not allowed in WHERE"
         super().__init__(message)
@@ -90,14 +132,13 @@ class MissingRequiredIdentity(BaseException):
         self.identities = identities
 
 
-class IllegalJoinCondition(BaseException):
-    def __init__(self, message, *, table, condition):
-        super().__init__(message)
-        self.table = table
-        self.condition = condition
-
-
 class IllegalJoinTable(BaseException):
+    """
+    Thrown when a join spec is not allowed by the constraint validator.
+
+    :param join: The join spec that was not allowed.
+    """
+
     def __init__(self, *, join: JoinCondition):
         message = f"Join condition {join} is not allowed"
         super().__init__(message)
@@ -105,6 +146,13 @@ class IllegalJoinTable(BaseException):
 
 
 class IllegalJoinType(BaseException):
+    """
+    Thrown when a non-inner JOIN type is found.
+
+    :param join_type: The type of JOIN that was found. This name comes directly from the
+        grammar rule that captured it.
+    """
+
     def __init__(self, *, join_type: str):
         message = f"JOIN type `{join_type}` is not allowed"
         super().__init__(message)
@@ -112,27 +160,54 @@ class IllegalJoinType(BaseException):
 
 
 class DisconnectedTable(BaseException):
-    def __init__(self, *, table):
+    """
+    Thrown when a table has joins, but the table in the ``FROM`` clause is not connected
+    to any of those joins.
+
+    :param table: The table that is not connected to a join.
+    """
+
+    def __init__(self, *, table: str):
         message = f"Table `{table}` is not connected to the query"
         super().__init__(message)
         self.table = table
 
 
 class BogusJoinedTable(BaseException):
-    def __init__(self, *, table):
+    """
+    Thrown when a table's join condition does not include the table itself.
+
+    :param table: The table that is not referenced in its own join condition.
+    """
+
+    def __init__(self, *, table: str):
         message = f"Join condition for `{table}` does not reference the table"
         super().__init__(message)
         self.table = table
 
 
 class TooManyRows(BaseException):
-    def __init__(self, *, limit):
-        message = f"Attempting to return too many rows ({limit})"
+    """
+    Thrown when a query returns too many rows and :doc:`/reconstruction` is disabled.
+
+    :param limit: The number of rows that the query wants to return. Nullable if no
+        limit is specified.
+    """
+
+    def __init__(self, *, limit: Optional[int]):
+        nice_limit = limit if limit is not None else "unlimited"
+        message = f"Attempting to return too many rows ({nice_limit})"
         super().__init__(message)
         self.limit = limit
 
 
 class IllegalFunction(BaseException):
+    """
+    Thrown when a disallowed SQL function has been used in the query.
+
+    :param function: The lowercase name of the disallowed function.
+    """
+
     def __init__(self, *, function):
         message = f"Function `{function}` is not allowed"
         super().__init__(message)

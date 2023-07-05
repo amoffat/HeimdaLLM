@@ -13,14 +13,15 @@
 [![Coverage Status](https://coveralls.io/repos/github/amoffat/HeimdaLLM/badge.svg?branch=dev)](https://coveralls.io/github/amoffat/HeimdaLLM?branch=dev)
 
 HeimdaLLM safely bridges the gap between untrusted human input and trusted
-machine-readable input by augmenting LLMs with a robust validation framework. It allows
-you to do things like construct trusted SQL queries from untrusted input, **using
-validation that you have full control over.**
+machine-readable output by augmenting LLMs with a robust validation framework. This
+enables you externalize LLM technology to your users, so that you can do things like
+execute trusted SQL queries from their untrusted input.
 
-To accomplish this, HeimdaLLM introduces a new technology, the 🌈✨ Bifrost, composed of
-4 parts: an LLM prompt envelope, an LLM integration, a grammar, and a constraint
-validator. These 4 components operate as a single unit—a Bifrost—which is capable of
-translating untrusted human input into trusted machine input.
+To accomplish this, HeimdaLLM introduces a new technology, the 🌈✨
+[Bifrost](https://docs.heimdallm.ai/en/latest/bifrost.html), composed of 4 parts: an LLM
+prompt envelope, an LLM integration, a grammar, and a constraint validator. These 4
+components operate as a single unit—a Bifrost—which is capable of translating untrusted
+human input into trusted machine output.
 
 ✨ **This allows you to perform magic** ✨
 
@@ -30,20 +31,33 @@ Sample
 Database](https://www.kaggle.com/datasets/atanaskanev/sqlite-sakila-sample-database):
 
 ```python
-traverse("Show me the 5 movies I rented the longest, and the number of days I had them for.")
+traverse("Show me the movies I rented the longest, and the number of days I had them for.")
 ```
 
-|     | Title           | Rental Date             | Return Date             | Rental Days |
-| --- | --------------- | ----------------------- | ----------------------- | ----------- |
-| 0   | OUTLAW HANKY    | 2005-08-19 05:48:12.000 | 2005-08-28 10:10:12.000 | 9.181944    |
-| 1   | BOULEVARD MOB   | 2005-08-19 07:06:51.000 | 2005-08-28 10:35:51.000 | 9.145139    |
-| 2   | MINDS TRUMAN    | 2005-08-02 17:42:49.000 | 2005-08-11 18:14:49.000 | 9.022222    |
-| 3   | AMERICAN CIRCUS | 2005-07-12 16:37:55.000 | 2005-07-21 16:04:55.000 | 8.977083    |
-| 4   | LADY STAGE      | 2005-07-28 10:07:04.000 | 2005-08-06 08:16:04.000 | 8.922917    |
+```
+✅ Ensuring SELECT statement...
+✅ Resolving column and table aliases...
+✅ Allowlisting selectable columns...
+   ✅ Removing 4 forbidden columns...
+✅ Ensuring correct row LIMIT exists...
+   ✅ Lowering row LIMIT to 5...
+✅ Checking JOINed tables and conditions...
+✅ Checking required WHERE conditions...
+✅ Ensuring query is constrained to requester's identity...
+✅ Allowlisting SQL functions...
+```
+
+| Title           | Rental Date             | Return Date             | Rental Days |
+| --------------- | ----------------------- | ----------------------- | ----------- |
+| OUTLAW HANKY    | 2005-08-19 05:48:12.000 | 2005-08-28 10:10:12.000 | 9.181944    |
+| BOULEVARD MOB   | 2005-08-19 07:06:51.000 | 2005-08-28 10:35:51.000 | 9.145139    |
+| MINDS TRUMAN    | 2005-08-02 17:42:49.000 | 2005-08-11 18:14:49.000 | 9.022222    |
+| AMERICAN CIRCUS | 2005-07-12 16:37:55.000 | 2005-07-21 16:04:55.000 | 8.977083    |
+| LADY STAGE      | 2005-07-28 10:07:04.000 | 2005-08-06 08:16:04.000 | 8.922917    |
 
 You can safely run this example here:
 
-[![Open in GitHub Codespaces](https://img.shields.io/badge/Open%20in-Codespaces-purple.svg)](https://codespaces.new/amoffat/heimdallm/main)
+[![Open in GitHub Codespaces](https://img.shields.io/badge/Open%20in-Codespaces-purple.svg)](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=656570421)
 
 or [view the read-only notebook](./notebooks/demo.ipynb)
 
@@ -63,10 +77,10 @@ So, what is actually happening above?
 1. Different features of the parsed query are extracted for validation.
 1. A soft validation pass is performed on the extracted features, and we potentially
    modify the query to be compliant, for example, to add a `LIMIT` clause, or to remove
-   disallowed columns. See [reconstruction](TODO).
+   disallowed columns.
 1. A hard validation pass is performed with your custom constraints to ensure that the
    query is only accessing allowed tables, columns, and functions, while containing
-   required conditions. See [validation](TODO).
+   required conditions.
 1. If validation succeeds, the resulting SQL query can then be sent to the database.
 1. If validation fails, you'll see a helpful exception explaining exactly why.
 
@@ -79,8 +93,9 @@ value from the confidence that they bring, consider [sponsoring
 me](https://github.com/sponsors/amoffat) or [inquire about interest in a commercial
 license](https://forms.gle/frEPeeJx81Cmwva78).
 
-To understand some of the potential vulnerabilities, take a look at the [attack surface
-area](TODO) to see the risks and the mitigations.
+To understand some of the potential vulnerabilities, take a look at the [attack
+surface](https://docs.heimdallm.ai/en/latest/attack_surface.html) to see the risks and
+the mitigations.
 
 # 📚 Database support
 

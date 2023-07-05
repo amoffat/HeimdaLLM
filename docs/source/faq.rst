@@ -51,12 +51,13 @@ Why AGPLv3?
 ***********
 
 I chose the AGPLv3 license because I want to provide a license that is as permissive as
-possible to the OSS community while also strongly encouraging businesses to purchase a
-commercial license to support development.
+possible to the OSS community while also strongly encouraging businesses to `inquire
+about a commercial license <https://forms.gle/frEPeeJx81Cmwva78>`_ to support
+development.
 
-The AGPLv3 license has restrictions that make it difficult for businesses to use in
+The AGPLv3 license has restrictions that make it challenging for businesses to use in
 production, but it is still a permissive license in that it allows you to use the
-software for free. The AGPLv3 license also ensures that if if someone modifies the
-software and distributes it, they must also distribute the source code of the modified
-software. This is important to me because I want to ensure that the OSS community can
-benefit from any improvements that people make to the software.
+software for free. The AGPLv3 license also ensures that if someone modifies the software
+and distributes it, they must also distribute the source code of the modified software.
+This is important to me because I want to ensure that the OSS community can benefit from
+any improvements that people make to the software.
