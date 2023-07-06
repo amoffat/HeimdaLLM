@@ -1,10 +1,10 @@
 from heimdallm.bifrosts.sql import exc
-from heimdallm.bifrosts.sql.sqlite.select.bifrost import _build_grammar
+from heimdallm.bifrosts.sql.sqlite.select.bifrost import Bifrost
 
 
 def test_ambiguous_parse():
     query = "select * from whatever"
-    grammar = _build_grammar()
+    grammar = Bifrost.build_grammar()
     tree = grammar.parse(query)
     trees = [tree, tree, tree]
 

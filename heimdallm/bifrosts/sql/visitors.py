@@ -3,10 +3,10 @@ from typing import MutableMapping, Optional
 
 from lark import Token, Transformer, Tree, Visitor
 
-from ... import exc
-from ...utils import FqColumn, JoinCondition, RequiredConstraint
-from ..utils.identifier import get_identifier
-from ..utils.visitors import AliasCollector
+from . import exc
+from .sqlite.utils.identifier import get_identifier
+from .sqlite.utils.visitors import AliasCollector
+from .utils import FqColumn, JoinCondition, RequiredConstraint
 
 
 class Facets:

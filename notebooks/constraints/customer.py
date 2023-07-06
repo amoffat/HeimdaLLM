@@ -1,10 +1,10 @@
 from typing import Optional, Sequence
 
-from heimdallm.bifrosts.sql.sqlite.select.validator import SQLConstraintValidator
+from heimdallm.bifrosts.sql.sqlite.select.validator import ConstraintValidator
 from heimdallm.bifrosts.sql.utils import FqColumn, JoinCondition, RequiredConstraint
 
 
-class CustomerDataConstraints(SQLConstraintValidator):
+class DataConstraints(ConstraintValidator):
     """A relatively-permissive customer constraints validator for the Sakila database.
     This validator allows the customer to access tables joined by their customer id."""
 
@@ -81,7 +81,7 @@ class CustomerDataConstraints(SQLConstraintValidator):
         return True
 
 
-class CustomerGeneralConstraints(SQLConstraintValidator):
+class GeneralConstraints(ConstraintValidator):
     """A constraints validator for general customer access to data that may not be
     theirs, but is not sensitive."""
 

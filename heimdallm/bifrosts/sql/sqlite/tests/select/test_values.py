@@ -1,10 +1,10 @@
-from heimdallm.bifrosts.sql.sqlite.select.bifrost import SQLBifrost
+from heimdallm.bifrosts.sql.sqlite.select.bifrost import Bifrost
 
 from .utils import PermissiveConstraints
 
 
 def test_is_not_null():
-    bifrost = SQLBifrost.mocked(PermissiveConstraints())
+    bifrost = Bifrost.mocked(PermissiveConstraints())
 
     query = """
 SELECT film.title
@@ -19,7 +19,7 @@ LIMIT 20;
 
 
 def test_is_null():
-    bifrost = SQLBifrost.mocked(PermissiveConstraints())
+    bifrost = Bifrost.mocked(PermissiveConstraints())
 
     query = """
 SELECT
@@ -37,7 +37,7 @@ LIMIT 20;
 
 def test_agg_function_modifier_query():
     """distinct can be added in front of an aggregate function"""
-    bifrost = SQLBifrost.mocked(PermissiveConstraints())
+    bifrost = Bifrost.mocked(PermissiveConstraints())
 
     query = """
 SELECT COUNT(DISTINCT film.film_id) AS family_movies_rented

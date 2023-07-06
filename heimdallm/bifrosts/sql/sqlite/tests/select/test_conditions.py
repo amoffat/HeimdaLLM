@@ -3,7 +3,7 @@ from typing import Sequence
 import pytest
 
 from heimdallm.bifrosts.sql import exc
-from heimdallm.bifrosts.sql.sqlite.select.bifrost import SQLBifrost
+from heimdallm.bifrosts.sql.sqlite.select.bifrost import Bifrost
 from heimdallm.bifrosts.sql.utils import FqColumn, JoinCondition
 
 from .utils import PermissiveConstraints
@@ -18,7 +18,7 @@ class MyConstraints(PermissiveConstraints):
 
 
 def test_allowed_where():
-    bifrost = SQLBifrost.mocked(MyConstraints())
+    bifrost = Bifrost.mocked(MyConstraints())
 
     query = """
     select t1.col from t1
@@ -42,7 +42,7 @@ def test_allowed_where():
 
 
 def test_allowed_join():
-    bifrost = SQLBifrost.mocked(MyConstraints())
+    bifrost = Bifrost.mocked(MyConstraints())
 
     query = """
     select t1.col from t1
@@ -61,7 +61,7 @@ def test_allowed_join():
 
 
 def test_allowed_having():
-    bifrost = SQLBifrost.mocked(MyConstraints())
+    bifrost = Bifrost.mocked(MyConstraints())
 
     query = """
     select t1.name as name, sum(t1.amount) total from t1
@@ -81,7 +81,7 @@ def test_allowed_having():
 
 
 def test_allowed_order_by():
-    bifrost = SQLBifrost.mocked(MyConstraints())
+    bifrost = Bifrost.mocked(MyConstraints())
 
     query = """
     select t1.id from t1

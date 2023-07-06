@@ -1,14 +1,14 @@
 import pytest
 
 from heimdallm.bifrosts.sql import exc
-from heimdallm.bifrosts.sql.sqlite.select.bifrost import SQLBifrost
+from heimdallm.bifrosts.sql.sqlite.select.bifrost import Bifrost
 from heimdallm.bifrosts.sql.utils import RequiredConstraint
 
 from .utils import CustomerConstraints
 
 
 def test_required_identity():
-    bifrost = SQLBifrost.mocked(CustomerConstraints())
+    bifrost = Bifrost.mocked(CustomerConstraints())
 
     query = """select Customer.CustomerId from Customer"""
 
@@ -54,7 +54,7 @@ WHERE
 LIMIT 20;
 """
 
-    bifrost = SQLBifrost.mocked(CustomerConstraints())
+    bifrost = Bifrost.mocked(CustomerConstraints())
 
     with pytest.raises(exc.MissingRequiredIdentity):
         bifrost.traverse(query)
@@ -85,7 +85,7 @@ WHERE
     )
 """
 
-    bifrost = SQLBifrost.mocked(CustomerConstraints())
+    bifrost = Bifrost.mocked(CustomerConstraints())
     bifrost.traverse(query)
 
 
@@ -106,7 +106,7 @@ WHERE
     AND Customer.CustomerId > 0
 """
 
-    bifrost = SQLBifrost.mocked(CustomerConstraints())
+    bifrost = Bifrost.mocked(CustomerConstraints())
     bifrost.traverse(query)
 
     # same query, but with the required constraint circumvented with "OR"
@@ -145,5 +145,5 @@ WHERE
     )
 """
 
-    bifrost = SQLBifrost.mocked(CustomerConstraints())
+    bifrost = Bifrost.mocked(CustomerConstraints())
     bifrost.traverse(query)

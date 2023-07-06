@@ -1,4 +1,4 @@
-from heimdallm.bifrosts.sql.sqlite.select.bifrost import SQLBifrost
+from heimdallm.bifrosts.sql.sqlite.select.bifrost import Bifrost
 
 from .utils import PermissiveConstraints
 
@@ -7,7 +7,7 @@ def test_ambiguous_arith():
     """arith_expr is recursive, so the parser can interpret a long chain of arithmetic
     operations as a single expression, or different groups of sub expressions. our
     ambiguity resolver picks the longest expression"""
-    bifrost = SQLBifrost.mocked(PermissiveConstraints())
+    bifrost = Bifrost.mocked(PermissiveConstraints())
 
     query = """
 SELECT

@@ -4,11 +4,11 @@ from lark import Discard, Token
 from lark import Transformer as _Transformer
 from lark import Tree
 
-from ... import exc
-from ...utils import FqColumn
-from ..utils.identifier import get_identifier
-from ..utils.visitors import AliasCollector
-from .validator import SQLConstraintValidator
+from . import exc
+from .sqlite.utils.identifier import get_identifier
+from .sqlite.utils.visitors import AliasCollector
+from .utils import FqColumn
+from .validator import ConstraintValidator
 
 
 def _build_limit_tree(limit, offset=None):
@@ -68,7 +68,7 @@ class ReconstructTransformer(_Transformer):
         - removing illegal selected columns
     """
 
-    def __init__(self, validator: SQLConstraintValidator):
+    def __init__(self, validator: ConstraintValidator):
         self._validator = validator
         self._collector = AliasCollector()
         self._last_discarded_column = None

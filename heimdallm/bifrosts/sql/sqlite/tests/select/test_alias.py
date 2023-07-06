@@ -1,7 +1,7 @@
 import pytest
 
 from heimdallm.bifrosts.sql import exc
-from heimdallm.bifrosts.sql.sqlite.select.bifrost import SQLBifrost
+from heimdallm.bifrosts.sql.sqlite.select.bifrost import Bifrost
 from heimdallm.bifrosts.sql.utils import FqColumn
 
 from .utils import PermissiveConstraints
@@ -12,7 +12,7 @@ def test_where_alias():
         def condition_column_allowed(self, column: FqColumn) -> bool:
             return column.name == "t1.col"
 
-    bifrost = SQLBifrost.mocked(MyConstraints())
+    bifrost = Bifrost.mocked(MyConstraints())
 
     query = """
     select t1.col as thing from t1
@@ -35,7 +35,7 @@ def test_order_alias():
         def condition_column_allowed(self, column: FqColumn) -> bool:
             return column.name == "t1.col"
 
-    bifrost = SQLBifrost.mocked(MyConstraints())
+    bifrost = Bifrost.mocked(MyConstraints())
 
     query = """
     select t1.col as thing from t1
@@ -54,7 +54,7 @@ def test_order_alias():
 
 
 def test_select_function_alias():
-    bifrost = SQLBifrost.mocked(PermissiveConstraints())
+    bifrost = Bifrost.mocked(PermissiveConstraints())
 
     query = """
     select whatever(col) from t1
@@ -66,7 +66,7 @@ def test_select_function_alias():
 
 
 def test_group_by_alias():
-    bifrost = SQLBifrost.mocked(PermissiveConstraints())
+    bifrost = Bifrost.mocked(PermissiveConstraints())
 
     query = """
     SELECT COUNT(*) num_rented_movies,
@@ -81,7 +81,7 @@ def test_group_by_alias():
 
 
 def test_non_column_alias():
-    bifrost = SQLBifrost.mocked(PermissiveConstraints())
+    bifrost = Bifrost.mocked(PermissiveConstraints())
 
     query = """
 SELECT f.title AS movie_title, COUNT(*) AS rental_days

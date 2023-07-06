@@ -3,7 +3,7 @@ from typing import Sequence
 import pytest
 
 from heimdallm.bifrosts.sql import exc
-from heimdallm.bifrosts.sql.sqlite.select.bifrost import SQLBifrost
+from heimdallm.bifrosts.sql.sqlite.select.bifrost import Bifrost
 from heimdallm.bifrosts.sql.utils import RequiredConstraint
 
 from .utils import PermissiveConstraints
@@ -15,7 +15,7 @@ class MyConstraints(PermissiveConstraints):
 
 
 def test_required_constraint():
-    bifrost = SQLBifrost.mocked(MyConstraints())
+    bifrost = Bifrost.mocked(MyConstraints())
 
     query = """
     select t1.col from t1
@@ -51,7 +51,7 @@ def test_required_constraint():
 
 
 def test_required_constraint_alias():
-    bifrost = SQLBifrost.mocked(MyConstraints())
+    bifrost = Bifrost.mocked(MyConstraints())
 
     query = """
     select t1.col, t1.email email from t1

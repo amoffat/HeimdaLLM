@@ -1,7 +1,7 @@
 import pytest
 
 from heimdallm.bifrosts.sql import exc
-from heimdallm.bifrosts.sql.sqlite.select.bifrost import SQLBifrost
+from heimdallm.bifrosts.sql.sqlite.select.bifrost import Bifrost
 from heimdallm.bifrosts.sql.utils import FqColumn
 
 from .utils import PermissiveConstraints
@@ -14,8 +14,8 @@ def test_alter_limit():
         def max_limit(self):
             return limit
 
-    bifrost = SQLBifrost.mocked(LimitConstraints())
-    unlimited_bifrost = SQLBifrost.mocked(PermissiveConstraints())
+    bifrost = Bifrost.mocked(LimitConstraints())
+    unlimited_bifrost = Bifrost.mocked(PermissiveConstraints())
 
     # no limit
     query = "select t1.col from t1"
@@ -55,7 +55,7 @@ def test_limit_preserve_offset():
         def max_limit(self):
             return limit
 
-    bifrost = SQLBifrost.mocked(LimitConstraints())
+    bifrost = Bifrost.mocked(LimitConstraints())
     query = f"select t1.col from t1 limit {limit *2} offset {offset}"
     trusted_query = bifrost.traverse(query)
     assert f"limit {limit}" in trusted_query.lower()
@@ -65,7 +65,7 @@ def test_limit_preserve_offset():
 def test_good_formatting():
     """verify that the reconstructed query has decent formatting. doesn't have to match
     the original, just look good enough and be semantically the same"""
-    bifrost = SQLBifrost.mocked(PermissiveConstraints())
+    bifrost = Bifrost.mocked(PermissiveConstraints())
 
     query = """
 SELECT f.title,f.rating, f.release_year
@@ -104,7 +104,7 @@ def test_remove_illegal_columns(conn):
         def select_column_allowed(self, column: FqColumn) -> bool:
             return not column.name.endswith("_id")
 
-    bifrost = SQLBifrost.mocked(MyConstraints())
+    bifrost = Bifrost.mocked(MyConstraints())
 
     query = """
 SELECT f.film_id, f.title, f.description, f.release_year, f.language_id, r.rental_date,
@@ -134,7 +134,7 @@ def test_leave_illegal_columns(conn):
         def select_column_allowed(self, column: FqColumn) -> bool:
             return not column.name.endswith("_id")
 
-    bifrost = SQLBifrost.mocked(MyConstraints())
+    bifrost = Bifrost.mocked(MyConstraints())
 
     query = """
 SELECT film.film_id, film.title, COUNT(rental.rental_id) AS rental_count
