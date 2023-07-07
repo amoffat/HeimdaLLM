@@ -5,6 +5,7 @@
 - Refactor sqlite helpers to be general
 - Bugfix where disabling reconstruction resulted in an error
 - Allow counting disallowed columns
+- Bugfix api key not set when using openai completion method
 
 ## 0.1.4 - 7/5/23
 
