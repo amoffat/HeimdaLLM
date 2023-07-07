@@ -102,7 +102,7 @@ class PromptEnvelope(_BasePromptEnvelope):
             match = cast(
                 re.Match,
                 re.search(
-                    r"```(?:sql)?(.*)```",
+                    r"```(?:sql)?(.*?)```",
                     untrusted_llm_output,
                     flags=re.DOTALL | re.IGNORECASE,
                 ),
