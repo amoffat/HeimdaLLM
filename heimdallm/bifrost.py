@@ -137,7 +137,7 @@ class Bifrost:
         log: structlog.BoundLogger,
         validator: ConstraintValidator,
         autofix: bool,
-        untrusted_llm_input: str,
+        untrusted_llm_output: str,
         tree: ParseTree,
     ) -> str:
         """Attempt validation with an individual constraint validator."""
@@ -159,7 +159,7 @@ class Bifrost:
 
         # throws a bifrost-specific exception
         log.info("Validating parse tree")
-        validator.validate(untrusted_llm_input, tree)
+        validator.validate(untrusted_llm_output, tree)
         log.info("Validation succeeded")
 
         return untrusted_llm_output
