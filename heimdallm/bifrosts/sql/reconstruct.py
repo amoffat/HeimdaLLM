@@ -5,7 +5,7 @@ from lark import Transformer as _Transformer
 from lark import Tree
 
 from . import exc
-from .sqlite.utils.identifier import get_identifier
+from .sqlite.utils.identifier import get_identifier, is_count_function
 from .sqlite.utils.visitors import AliasCollector
 from .utils import FqColumn
 from .validator import ConstraintValidator
@@ -104,7 +104,10 @@ class ReconstructTransformer(_Transformer):
     def selected_column(self, children):
         """ensures that every selected column is allowed"""
         selected = children[0]
-        if isinstance(selected, Tree):
+        if is_count_function(selected):
+            pass
+
+        elif isinstance(selected, Tree):
             for fq_column_node in selected.find_data("fq_column"):
                 table_node, column_node = fq_column_node.children
 

@@ -4,7 +4,7 @@ from typing import MutableMapping, Optional
 from lark import Token, Transformer, Tree, Visitor
 
 from . import exc
-from .sqlite.utils.identifier import get_identifier
+from .sqlite.utils.identifier import get_identifier, is_count_function
 from .sqlite.utils.visitors import AliasCollector
 from .utils import FqColumn, JoinCondition, RequiredConstraint
 
@@ -150,6 +150,11 @@ class FacetCollector(Visitor):
 
         elif isinstance(child, Token) and child.type == "ALL_COLUMNS":
             raise exc.IllegalSelectedColumn(column="*")
+
+        # if we're aliasing COUNT(*), it's safe to ignore, since it doesn't
+        # reveal any of the underlying values
+        elif is_count_function(child):
+            return
 
         elif isinstance(child, Tree):
             # if it's an aliased column, we need to ensure that the thing being aliased

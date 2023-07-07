@@ -80,7 +80,7 @@ def test_group_by_alias():
     bifrost.traverse(query)
 
 
-def test_non_column_alias():
+def test_count_star_alias():
     bifrost = Bifrost.mocked(PermissiveConstraints())
 
     query = """
@@ -95,3 +95,27 @@ LIMIT 5;
     """
 
     bifrost.traverse(query)
+
+
+def test_count_disallowed_column_alias():
+    class GeneralConstraints(PermissiveConstraints):
+        def select_column_allowed(self, fq_column: FqColumn) -> bool:
+            return fq_column.name != "film_actor.film_id"
+
+    bifrost = Bifrost.mocked(GeneralConstraints())
+
+    query = """
+SELECT
+    actor.actor_id,
+    actor.first_name,
+    actor.last_name,
+    COUNT(film_actor.film_id) as film_count
+FROM actor
+JOIN film_actor ON actor.actor_id = film_actor.actor_id
+GROUP BY actor.actor_id
+ORDER BY film_count DESC
+    """
+    bifrost.traverse(query, autofix=False)
+
+    # prove that the column isn't stripped by the reconstructor
+    bifrost.traverse(query, autofix=True)

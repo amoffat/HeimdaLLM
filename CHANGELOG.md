@@ -4,6 +4,7 @@
 
 - Refactor sqlite helpers to be general
 - Bugfix where disabling reconstruction resulted in an error
+- Allow counting disallowed columns
 
 ## 0.1.4 - 7/5/23
 
