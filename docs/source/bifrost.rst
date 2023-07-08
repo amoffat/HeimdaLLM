@@ -26,7 +26,7 @@ operate as a function on untrusted input.
 The prompt envelope is responsible for adding additional context to the untrusted input.
 Concretely, this typically involves including specific instructions to the LLM abut the
 original prompt. In the :class:`SQLPromptEnvelope
-<heimdallm.bifrosts.sql.sqlite.select.envelope.SQLPromptEnvelope>`, for example, we add:
+<heimdallm.bifrosts.sql.sqlite.select.envelope.PromptEnvelope>`, for example, we add:
 
 * A copy of the database schema on which the LLM should operate
 * That the LLM should use fully-qualified column names

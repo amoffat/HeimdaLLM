@@ -27,7 +27,7 @@ class PromptEnvelope(_BasePromptEnvelope):
     customize the envelope.
 
     :param llm: The LLM integration being sent the human input. This can be used to
-        tweak the :meth:`wrap` and :meth`unwrap` methods to account for quirks of the
+        tweak the :meth:`wrap` and :meth:`unwrap` methods to account for quirks of the
         specific LLM.
     :param db_schema: The database schema of the database being queried. It is passed to
         the LLM so that the LLM knows how the tables and columns are connected.
@@ -121,8 +121,19 @@ class PromptEnvelope(_BasePromptEnvelope):
 
 class TestSQLPromptEnvelope(PromptEnvelope):
     """
-    A test envelope specifically for :meth:`SQLBifrost.mocked
-    <heimdallm.bifrosts.sql.SQLBifrost.mocked>`
+    A test envelope specifically for :meth:`Bifrost.mocked
+    <heimdallm.bifrosts.sql.bifrost.Bifrost.mocked>`
+
+    :param llm: The LLM integration being sent the human input. This can be used to
+        tweak the :meth:`wrap` and :meth:`unwrap() <PromptEnvelope.unwrap>` methods to
+        account for quirks of the specific LLM.
+    :param db_schema: The database schema of the database being queried. It is passed to
+        the LLM so that the LLM knows how the tables and columns are connected.
+    :param validators: The validators to use to validate the output of the LLM. They
+        aren't used to validate here, but some of the validator's properties are added
+        to the envelope to help guide the LLM to produce the correct output.
+
+    :meta private:
     """
 
     def wrap(self, untrusted_input: str) -> str:

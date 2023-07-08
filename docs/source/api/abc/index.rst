@@ -6,7 +6,9 @@ intended for direct use.
 
 .. toctree::
     
-    llm_integration
+    bifrost
     envelope
     validator
-    bifrost
+    llm_integration
+
+    sql/index

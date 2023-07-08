@@ -56,7 +56,7 @@ class ConstraintValidator(_BaseConstraintValidator):
 
         Both ``rental.customer_id`` and ``customer.customer_id`` are valid requester
         identities, so ou need to specify both of them by returning a
-        :class:`RequiredConstraint` for each of them.
+        :class:`heimdallm.bifrosts.sql.utils.RequiredConstraint` for each of them.
 
         :return: The sequence of possible requester identities.
         """

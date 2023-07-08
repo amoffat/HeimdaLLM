@@ -6,6 +6,8 @@ from .. import presets
 
 
 class ConstraintValidator(_SQLConstraintValidator):
+    __doc__ = _SQLConstraintValidator.__doc__
+
     def can_use_function(self, function: str) -> bool:
         """
         Returns whether or not a SQL function is allowed to be used anywhere in the

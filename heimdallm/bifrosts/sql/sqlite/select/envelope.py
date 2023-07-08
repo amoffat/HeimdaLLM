@@ -4,6 +4,8 @@ from heimdallm.bifrosts.sql.envelope import PromptEnvelope as _SQLPromptEnvelope
 
 
 class PromptEnvelope(_SQLPromptEnvelope):
+    __doc__ = _SQLPromptEnvelope.__doc__
+
     def template(self, env: jinja2.Environment) -> jinja2.Template:
         """
         Returns the template to use for the envelope. Override in a subclass for

@@ -16,9 +16,16 @@ from .visitors import AmbiguityResolver
 
 
 class Bifrost(_BaseBifrost, ABC):
-    """A Bifrost for traversing SQL ``SELECT`` queries.
+    """
+    An abstract Bifrost for traversing SQL ``SELECT`` queries. This is used by the
+    different SQL dialects.
 
-    :vartype value: str
+    :param llm: The LLM integration to use.
+    :param prompt_envelope: The prompt envelope used to wrap the untrusted human input
+        and unwrap the untrusted LLM output.
+    :param constraint_validators: A sequence of constraint validators that will be used
+        to validate the parse tree returned by the ``tree_producer``. Only one validator
+        needs to succeed for validation to pass.
     """
 
     # for tests
@@ -75,6 +82,7 @@ class Bifrost(_BaseBifrost, ABC):
         if you want to do custom ambiguity resolution.
 
         :return: The parse tree producer.
+        :meta private:
         """
 
         def parse(grammar: Lark, untrusted_query: str) -> ParseTree:
@@ -106,7 +114,8 @@ class Bifrost(_BaseBifrost, ABC):
         exception if the query is not valid.
 
         :param untrusted_llm_output: The output from the LLM, which should be a SQL
-            query. If it isn't, then our :meth:`SQLPromptEnvelope.unwrap` method failed.
+            query. If it isn't, then our
+            :meth:`heimdallm.bifrosts.sql.envelope.PromptEnvelope.unwrap` method failed.
         :raises InvalidQuery: If the query is not valid.
         :return: The Lark parse tree for the query.
 

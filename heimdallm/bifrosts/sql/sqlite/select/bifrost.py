@@ -10,6 +10,17 @@ _GRAMMAR_PATH = _THIS_DIR / "sqlite.lark"
 
 
 class Bifrost(_SQLBifrost):
+    """
+    A Bifrost for SQLite ``SELECT`` queries
+
+    :param llm: The LLM integration to use.
+    :param prompt_envelope: The prompt envelope used to wrap the untrusted human input
+        and unwrap the untrusted LLM output.
+    :param constraint_validators: A sequence of constraint validators that will be used
+        to validate the parse tree returned by the ``tree_producer``. Only one validator
+        needs to succeed for validation to pass.
+    """
+
     @staticmethod
     def build_grammar() -> Lark:
         """
