@@ -20,9 +20,9 @@ First let's set up our imports.
 
     import structlog
 
-    from heimdallm.bifrosts.sql.sqlite.select.bifrost import SQLBifrost
-    from heimdallm.bifrosts.sql.sqlite.select.envelope import SQLPromptEnvelope
-    from heimdallm.bifrosts.sql.sqlite.select.validator import SQLConstraintValidator
+    from heimdallm.bifrosts.sql.sqlite.select.bifrost import Bifrost
+    from heimdallm.bifrosts.sql.sqlite.select.envelope import PromptEnvelope
+    from heimdallm.bifrosts.sql.sqlite.select.validator import ConstraintValidator 
     from heimdallm.bifrosts.sql.utils import FqColumn, JoinCondition, RequiredConstraint
     from heimdallm.llm_providers import openai
 
@@ -75,7 +75,7 @@ the methods that you can override in the derived class, look :doc:`here.
 
 .. code-block:: python
 
-    class ConstraintValidator(SQLConstraintValidator):
+    class CustomerConstraintValidator(SQLConstraintValidator):
         def requester_identities(self) -> Sequence[RequiredConstraint]:
             return [
                 RequiredConstraint(
@@ -97,14 +97,14 @@ the methods that you can override in the derived class, look :doc:`here.
             return None
 
 
-    validator = ConstraintValidator()
+    validator = CustomerConstraintValidator()
 
 We'll define our prompt envelope. This adds additional context to any human input so
 that the LLM is guided to produce a correct response.
 
 .. code-block:: python
 
-    envelope = SQLPromptEnvelope(
+    envelope = PromptEnvelope(
         llm=llm,
         db_schema=db_schema,
         validators=[validator],
@@ -114,7 +114,7 @@ Now we can bring everything together into a :doc:`/bifrost`
 
 .. code-block:: python
 
-    bifrost = SQLBifrost(
+    bifrost = Bifrost(
         prompt_envelope=envelope,
         llm=llm,
         constraint_validators=[validator],
