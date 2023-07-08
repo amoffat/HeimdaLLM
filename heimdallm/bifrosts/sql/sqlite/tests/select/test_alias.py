@@ -118,4 +118,5 @@ ORDER BY film_count DESC
     bifrost.traverse(query, autofix=False)
 
     # prove that the column isn't stripped by the reconstructor
-    bifrost.traverse(query, autofix=True)
+    fixed = bifrost.traverse(query, autofix=True)
+    assert "film_actor.film_id" in fixed
