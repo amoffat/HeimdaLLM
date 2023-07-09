@@ -95,24 +95,31 @@ def test_multi_idents(PromptEnvelope: Type[PromptEnvelope]):
 
 @dialects(bifrost=False, envelope=True)
 def test_custom_envelope(PromptEnvelope: Type[PromptEnvelope]):
-    class MyEnvelope(PromptEnvelope):
-        def template(self, env: jinja2.Environment) -> jinja2.Template:
-            tmpl = """
-            {% extends "sql/sqlite/select.j2" %}
+    def template(self, env: jinja2.Environment) -> jinja2.Template:
+        tmpl = """
+        {% extends "sql/sqlite/select.j2" %}
 
-            {% block delimiters %}
-            Delimit with &&&
-            {% endblock %}
+        {% block delimiters %}
+        Delimit with &&&
+        {% endblock %}
 
-            {% block extras %}
-            {{abc}} do a barrel roll
-            {% endblock %}
-            """
-            return env.from_string(tmpl)
+        {% block extras %}
+        {{abc}} do a barrel roll
+        {% endblock %}
+        """
+        return env.from_string(tmpl)
 
-        @property
-        def params(self) -> dict:
-            return {"abc": 123}
+    def params(self) -> dict:
+        return {"abc": 123}
+
+    MyEnvelope = type(
+        "MyEnvelope",
+        (PromptEnvelope,),
+        {
+            "template": template,
+        },
+    )
+    setattr(MyEnvelope, "params", property(params))
 
     envelope = MyEnvelope(
         llm=EchoMockLLM(),
