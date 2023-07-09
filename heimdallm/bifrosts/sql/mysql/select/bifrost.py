@@ -1,4 +1,3 @@
-import sqlite3
 from pathlib import Path
 
 from lark import Lark
@@ -13,7 +12,7 @@ _GRAMMAR_PATH = _THIS_DIR / "grammar.lark"
 
 class Bifrost(_SQLBifrost):
     """
-    A Bifrost for SQLite ``SELECT`` queries
+    A Bifrost for MySQL ``SELECT`` queries
 
     :param llm: The LLM integration to use.
     :param prompt_envelope: The prompt envelope used to wrap the untrusted human input
@@ -50,14 +49,3 @@ class Bifrost(_SQLBifrost):
     @classmethod
     def reserved_keywords(self) -> set[str]:
         return presets.reserved_keywords
-
-
-def get_schema(conn: sqlite3.Connection):
-    """a convenience function to get the schema of a sqlite database. you
-    probably want to write your own function to do this, one that doesn't
-    include tables and columns that you care about sending to the LLM"""
-    schema = []
-    for line in conn.iterdump():
-        if "CREATE TABLE" in line:
-            schema.append(line)
-    return "\n".join(schema)

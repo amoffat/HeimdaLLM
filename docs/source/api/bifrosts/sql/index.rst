@@ -8,5 +8,7 @@ database, please participate in `this poll.
 .. toctree::
 
     sqlite/index
+    mysql/index
     exceptions
     common
+    

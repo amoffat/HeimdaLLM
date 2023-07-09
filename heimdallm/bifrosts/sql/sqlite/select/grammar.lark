@@ -22,6 +22,7 @@ select_statement : \
 limit_placeholder : limit_clause?
 
 // serves as a basis for table and column names
+// NOTE this is dialect specific
 !quoted_identifier : "`" IDENTIFIER "`"
     | "\"" IDENTIFIER "\""
     | "[" IDENTIFIER "]"

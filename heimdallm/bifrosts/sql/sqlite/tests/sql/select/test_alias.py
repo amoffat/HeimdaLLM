@@ -1,13 +1,17 @@
+from typing import Type
+
 import pytest
 
 from heimdallm.bifrosts.sql import exc
 from heimdallm.bifrosts.sql.common import FqColumn
 from heimdallm.bifrosts.sql.sqlite.select.bifrost import Bifrost
 
+from ..utils import dialects
 from .utils import PermissiveConstraints
 
 
-def test_where_alias():
+@dialects()
+def test_where_alias(Bifrost: Type[Bifrost]):
     class MyConstraints(PermissiveConstraints):
         def condition_column_allowed(self, column: FqColumn) -> bool:
             return column.name == "t1.col"
@@ -30,7 +34,8 @@ def test_where_alias():
     assert e.value.column.name == "t2.col"
 
 
-def test_order_alias():
+@dialects()
+def test_order_alias(Bifrost: Type[Bifrost]):
     class MyConstraints(PermissiveConstraints):
         def condition_column_allowed(self, column: FqColumn) -> bool:
             return column.name == "t1.col"
@@ -53,7 +58,8 @@ def test_order_alias():
     assert e.value.column.name == "t2.col"
 
 
-def test_select_function_alias():
+@dialects()
+def test_select_function_alias(Bifrost: Type[Bifrost]):
     bifrost = Bifrost.mocked(PermissiveConstraints())
 
     query = """
@@ -65,7 +71,8 @@ def test_select_function_alias():
     assert e.value.column == "col"
 
 
-def test_group_by_alias():
+@dialects()
+def test_group_by_alias(Bifrost: Type[Bifrost]):
     bifrost = Bifrost.mocked(PermissiveConstraints())
 
     query = """
@@ -80,7 +87,8 @@ def test_group_by_alias():
     bifrost.traverse(query)
 
 
-def test_count_star_alias():
+@dialects()
+def test_count_star_alias(Bifrost: Type[Bifrost]):
     bifrost = Bifrost.mocked(PermissiveConstraints())
 
     query = """
@@ -97,7 +105,8 @@ LIMIT 5;
     bifrost.traverse(query)
 
 
-def test_count_disallowed_column_alias():
+@dialects()
+def test_count_disallowed_column_alias(Bifrost: Type[Bifrost]):
     class GeneralConstraints(PermissiveConstraints):
         def select_column_allowed(self, fq_column: FqColumn) -> bool:
             return fq_column.name != "film_actor.film_id"

@@ -1,13 +1,17 @@
+from typing import Type
+
 import pytest
 
 from heimdallm.bifrosts.sql import exc
 from heimdallm.bifrosts.sql.common import FqColumn
 from heimdallm.bifrosts.sql.sqlite.select.bifrost import Bifrost
 
+from ..utils import dialects
 from .utils import PermissiveConstraints
 
 
-def test_alter_limit():
+@dialects()
+def test_alter_limit(Bifrost: Type[Bifrost]):
     limit = 25
 
     class LimitConstraints(PermissiveConstraints):
@@ -62,7 +66,8 @@ def test_limit_preserve_offset():
     assert f"offset {offset}" in trusted_query.lower()
 
 
-def test_good_formatting():
+@dialects()
+def test_good_formatting(Bifrost: Type[Bifrost]):
     """verify that the reconstructed query has decent formatting. doesn't have to match
     the original, just look good enough and be semantically the same"""
     bifrost = Bifrost.mocked(PermissiveConstraints())
@@ -97,7 +102,8 @@ LIMIT 20;
     assert correct == trusted_query
 
 
-def test_remove_illegal_columns(conn):
+@dialects("sqlite")
+def test_remove_illegal_columns(Bifrost: Type[Bifrost], conn):
     """show that we can automatically filter out illegal columns"""
 
     class MyConstraints(PermissiveConstraints):

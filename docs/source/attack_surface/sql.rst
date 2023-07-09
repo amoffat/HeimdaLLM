@@ -9,7 +9,7 @@ for understanding the ways that a query can be vulnerable, and the controls that
 HeimdaLLM has in place to mitigate these attacks.
 
 The two primary points of mitigation are `the grammar
-<https://github.com/amoffat/HeimdaLLM/blob/dev/heimdallm/bifrosts/sql/sqlite/select/sqlite.lark>`_,
+<https://github.com/amoffat/HeimdaLLM/blob/dev/heimdallm/bifrosts/sql/sqlite/select/grammar.lark>`_,
 which defines if a query is syntactically correct, and the :class:`constraint validator
 <validator.ConstraintValidator>`, which defines the constraints that the query must
 satisfy. Some controls are implemented in the grammar, and some are in the constraint
