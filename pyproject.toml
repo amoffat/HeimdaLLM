@@ -54,6 +54,7 @@ toml = "^0.10.2"
 types-toml = "^0.10.8.6"
 munch = "^4.0.0"
 mysql-connector-python = "^8.0.33"
+pre-commit = "^3.3.3"
 
 [build-system]
 requires = ["poetry-core"]
