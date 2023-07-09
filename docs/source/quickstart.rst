@@ -23,7 +23,7 @@ First let's set up our imports.
     from heimdallm.bifrosts.sql.sqlite.select.bifrost import Bifrost
     from heimdallm.bifrosts.sql.sqlite.select.envelope import PromptEnvelope
     from heimdallm.bifrosts.sql.sqlite.select.validator import ConstraintValidator 
-    from heimdallm.bifrosts.sql.utils import FqColumn, JoinCondition, RequiredConstraint
+    from heimdallm.bifrosts.sql.common import FqColumn, JoinCondition, RequiredConstraint
     from heimdallm.llm_providers import openai
 
     logging.basicConfig(level=logging.ERROR)

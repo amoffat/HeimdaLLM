@@ -1,7 +1,7 @@
 from typing import Optional, Sequence
 
+from heimdallm.bifrosts.sql.common import FqColumn, JoinCondition, RequiredConstraint
 from heimdallm.bifrosts.sql.sqlite.select.validator import ConstraintValidator
-from heimdallm.bifrosts.sql.utils import FqColumn, JoinCondition, RequiredConstraint
 
 
 class DataConstraints(ConstraintValidator):
