@@ -12,6 +12,9 @@ on:
       - "**.md"
       - "**.ipynb"
 
+env:
+  COVERAGE_ALERT: 90
+
 jobs:
   lint:
     name: Lint
@@ -131,7 +134,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          coverage report
+          coverage report --fail-under ${{ env.COVERAGE_ALERT }}
           coveralls --service=github
 
   deploy:
