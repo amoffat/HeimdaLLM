@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.5 - 7/8/23
+## 0.1.5 - 7/9/23
 
 - Refactor sqlite helpers to be general
 - Bugfix where disabling reconstruction resulted in an error
