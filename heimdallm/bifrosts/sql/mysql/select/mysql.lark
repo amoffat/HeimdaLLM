@@ -209,9 +209,12 @@ ARITH_OP : \
     | "div"i
     | "mod"i
 
+// NOTE this is dialect specific
+ESCAPED_STRING : "'" _STRING_ESC_INNER "'" | "\"" _STRING_ESC_INNER "\""
+
 %import common.NUMBER
 %import common.DIGIT
 %import common.WORD
 %import common.WS
-%import common.ESCAPED_STRING
+%import common._STRING_ESC_INNER
 %ignore WS

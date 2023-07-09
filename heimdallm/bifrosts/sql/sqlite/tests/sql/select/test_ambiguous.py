@@ -1,9 +1,13 @@
+from typing import Type
+
 from heimdallm.bifrosts.sql.sqlite.select.bifrost import Bifrost
 
+from ..utils import dialects
 from .utils import PermissiveConstraints
 
 
-def test_ambiguous_arith():
+@dialects()
+def test_ambiguous_arith(Bifrost: Type[Bifrost]):
     """arith_expr is recursive, so the parser can interpret a long chain of arithmetic
     operations as a single expression, or different groups of sub expressions. our
     ambiguity resolver picks the longest expression"""

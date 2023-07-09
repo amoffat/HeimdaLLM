@@ -1,11 +1,13 @@
+from typing import Type
+
 from heimdallm.bifrosts.sql.sqlite.select.bifrost import Bifrost
 
 from ..utils import dialects
 from .utils import PermissiveConstraints
 
 
-@dialects("sqlite", "mysql")
-def test_is_not_null():
+@dialects()
+def test_is_not_null(Bifrost: Type[Bifrost]):
     bifrost = Bifrost.mocked(PermissiveConstraints())
 
     query = """
@@ -20,7 +22,8 @@ LIMIT 20;
     bifrost.traverse(query)
 
 
-def test_is_null():
+@dialects()
+def test_is_null(Bifrost: Type[Bifrost]):
     bifrost = Bifrost.mocked(PermissiveConstraints())
 
     query = """
@@ -37,7 +40,8 @@ LIMIT 20;
     bifrost.traverse(query)
 
 
-def test_agg_function_modifier_query():
+@dialects()
+def test_agg_function_modifier_query(Bifrost: Type[Bifrost]):
     """distinct can be added in front of an aggregate function"""
     bifrost = Bifrost.mocked(PermissiveConstraints())
 
@@ -50,7 +54,7 @@ JOIN inventory ON film.film_id = inventory.film_id
 JOIN rental ON inventory.inventory_id = rental.inventory_id
 JOIN customer ON rental.customer_id = customer.customer_id
 WHERE customer.customer_id = :customer_id
-AND category.name = 'Family'
+AND category.`name` = 'Family'
 AND rental.return_date IS NOT NULL
 LIMIT 20;
     """
