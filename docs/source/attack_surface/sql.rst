@@ -11,7 +11,7 @@ HeimdaLLM has in place to mitigate these attacks.
 The two primary points of mitigation are `the grammar
 <https://github.com/amoffat/HeimdaLLM/blob/dev/heimdallm/bifrosts/sql/sqlite/select/sqlite.lark>`_,
 which defines if a query is syntactically correct, and the :class:`constraint validator
-<validator.SQLConstraintValidator>`, which defines the constraints that the query must
+<validator.ConstraintValidator>`, which defines the constraints that the query must
 satisfy. Some controls are implemented in the grammar, and some are in the constraint
 validator. They work together to provide validation. For example, outer joins are
 stopped at the grammar, while required conditions are checked at the constraint
@@ -96,8 +96,8 @@ HeimdaLLM takes an overzealous approach to this problem by examining the parse t
 any usage of a column in ``WHERE``, ``HAVING``, ``GROUP BY``, ``ORDER BY``, and
 ``JOIN``. Whether they are nested deep in an expression or not, HeimdaLLM will find
 them. The resulting columns are then sent to the constraint validator's
-:meth:`SQLConstraintValidator.condition_column_allowed
-<validator.SQLConstraintValidator.condition_column_allowed>` predicate and either
+:meth:`ConstraintValidator.condition_column_allowed
+<validator.ConstraintValidator.condition_column_allowed>` predicate and either
 allowed or denied. By using a broad application of the allowlist, we can prevent the use
 of columns that can be used in side-channel attacks.
 
@@ -105,10 +105,10 @@ By default, HeimdaLLM will not allow the use of a column in a condition if it is
 allowed to be selected. This means that if they can't see it, they can't use it. While
 this is a good default, it can be overly restrictive. You may choose to separate these
 two allowlists, in which case your constraint validator would define one predicate for
-:meth:`SQLConstraintValidator.select_column_allowed
-<validator.SQLConstraintValidator.select_column_allowed>` and another for
-:meth:`SQLConstraintValidator.condition_column_allowed
-<validator.SQLConstraintValidator.condition_column_allowed>`.
+:meth:`ConstraintValidator.select_column_allowed
+<validator.ConstraintValidator.select_column_allowed>` and another for
+:meth:`ConstraintValidator.condition_column_allowed
+<validator.ConstraintValidator.condition_column_allowed>`.
 
 Star select
 -----------
@@ -122,14 +122,14 @@ Mitigations
 HeimdaLLM does not allow ``*`` as a selectable column. It does, however, allow
 ``COUNT(*)``, since that is a very common way of counting rows, and it does not reveal
 any additional information when a :meth:`requester identity
-<validator.SQLConstraintValidator.requester_identities>` is also applied.
+<validator.ConstraintValidator.requester_identities>` is also applied.
 
 Optional conditions
 -------------------
 
 When required conditions are defined, either as a :meth:`requester identity
-<validator.SQLConstraintValidator.requester_identities>`, or as some other
-:meth:`required constraint <validator.SQLConstraintValidator.required_constraints>`, an
+<validator.ConstraintValidator.requester_identities>`, or as some other
+:meth:`required constraint <validator.ConstraintValidator.required_constraints>`, an
 attacker may attempt to bypass the condition by coaxing the LLM to produce a query that
 includes the condition as part of an ``OR`` clause. For example:
 
@@ -236,8 +236,8 @@ in the grammar that could allow for a mutation inside a ``SELECT`` query.
 
 You will want to audit your database to ensure that no triggers are present on the
 selectable tables. You will also want to audit your stored functions and ensure that
-they are not allowlisted via the :meth:`SQLConstraintValidator.can_use_function
-<validator.SQLConstraintValidator.can_use_function>` predicate.
+they are not allowlisted via the :meth:`ConstraintValidator.can_use_function
+<validator.ConstraintValidator.can_use_function>` predicate.
 
 Acquiring locks
 ---------------
@@ -270,8 +270,8 @@ Mitigations
 ^^^^^^^^^^^
 
 HeimdaLLM allows you to configure a function allowlist predicate, through
-:meth:`SQLConstraintValidator.can_use_function
-<validator.SQLConstraintValidator.can_use_function>`, which can be used to prevent the
+:meth:`ConstraintValidator.can_use_function
+<validator.ConstraintValidator.can_use_function>`, which can be used to prevent the
 execution of functions. We have chosen what we believe are sensible defaults, but you
 may customize these in your subclassed constraint validator.
 

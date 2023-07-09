@@ -1,15 +1,15 @@
 from typing import Sequence
 
-from heimdallm.bifrosts.sql.sqlite.select.validator import SQLConstraintValidator
-from heimdallm.bifrosts.sql.utils import (
+from heimdallm.bifrosts.sql.common import (
     ANY_JOIN,
     FqColumn,
     JoinCondition,
     RequiredConstraint,
 )
+from heimdallm.bifrosts.sql.validator import ConstraintValidator
 
 
-class PermissiveConstraints(SQLConstraintValidator):
+class PermissiveConstraints(ConstraintValidator):
     """allows basically anything in the query"""
 
     def requester_identities(self):

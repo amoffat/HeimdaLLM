@@ -1,6 +1,6 @@
 import jinja2
 
-from heimdallm.bifrosts.sql.sqlite.select.envelope import SQLPromptEnvelope
+from heimdallm.bifrosts.sql.sqlite.select.envelope import PromptEnvelope
 from heimdallm.llm_providers.mock import EchoMockLLM
 
 from .utils import CustomerConstraints, PermissiveConstraints
@@ -12,7 +12,7 @@ def test_quoted():
     select t1.col from t1
     ```
     """
-    unwrapped = SQLPromptEnvelope(
+    unwrapped = PromptEnvelope(
         llm=EchoMockLLM(),
         db_schema="<schema>",
         validators=[PermissiveConstraints()],
@@ -26,7 +26,7 @@ def test_quoted_with_sql():
     select t1.col from t1
     ```
     """
-    unwrapped = SQLPromptEnvelope(
+    unwrapped = PromptEnvelope(
         llm=EchoMockLLM(),
         db_schema="<schema>",
         validators=[PermissiveConstraints()],
@@ -38,7 +38,7 @@ def test_with_sql():
     resp = """sql
     select t1.col from t1
     """
-    unwrapped = SQLPromptEnvelope(
+    unwrapped = PromptEnvelope(
         llm=EchoMockLLM(),
         db_schema="<schema>",
         validators=[PermissiveConstraints()],
@@ -50,7 +50,7 @@ def test_raw_unquoted():
     resp = """
     select t1.col from t1
     """
-    unwrapped = SQLPromptEnvelope(
+    unwrapped = PromptEnvelope(
         llm=EchoMockLLM(),
         db_schema="<schema>",
         validators=[PermissiveConstraints()],
@@ -62,7 +62,7 @@ def test_no_idents():
     input = """
     select t1.col from t1
     """
-    envelope = SQLPromptEnvelope(
+    envelope = PromptEnvelope(
         llm=EchoMockLLM(),
         db_schema="<schema>",
         validators=[PermissiveConstraints()],
@@ -75,7 +75,7 @@ def test_multi_idents():
     input = """
     select t1.col from t1
     """
-    envelope = SQLPromptEnvelope(
+    envelope = PromptEnvelope(
         llm=EchoMockLLM(),
         db_schema="<schema>",
         validators=[CustomerConstraints()],
@@ -85,10 +85,10 @@ def test_multi_idents():
 
 
 def test_custom_envelope():
-    class MyEnvelope(SQLPromptEnvelope):
+    class MyEnvelope(PromptEnvelope):
         def template(self, env: jinja2.Environment) -> jinja2.Template:
             tmpl = """
-            {% extends "base.j2" %}
+            {% extends "sql/sqlite/select.j2" %}
 
             {% block delimiters %}
             Delimit with &&&

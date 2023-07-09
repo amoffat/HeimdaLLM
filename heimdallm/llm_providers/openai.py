@@ -64,6 +64,7 @@ class Client(llm.LLMIntegration):
 
     def _complete_via_completion(self, prompt):
         response = openai.Completion.create(
+            api_key=self.api_key,
             engine=self.model,
             prompt=prompt,
             max_tokens=256,

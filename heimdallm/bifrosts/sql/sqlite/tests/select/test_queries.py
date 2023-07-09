@@ -15,7 +15,7 @@ from typing import Any, Optional
 
 import pytest
 
-from heimdallm.bifrosts.sql.sqlite.select.bifrost import SQLBifrost
+from heimdallm.bifrosts.sql.sqlite.select.bifrost import Bifrost
 
 from .utils import PermissiveConstraints
 
@@ -75,7 +75,7 @@ def test_query(conn: sqlite3.Connection, sql_name: str):
 
     # now we're going to reconstruct the query, execute it, and confirm that the results
     # are the same.
-    bifrost = SQLBifrost.mocked(PermissiveConstraints())
+    bifrost = Bifrost.mocked(PermissiveConstraints())
     reconstructed_query = bifrost.traverse(query, autofix=True)
     reconstructed_res = _execute(conn, reconstructed_query)
     reconstructed_hash = _calc_res_hash(reconstructed_res)

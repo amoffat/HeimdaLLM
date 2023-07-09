@@ -1,8 +1,8 @@
 import pytest
 
 from heimdallm.bifrosts.sql import exc
-from heimdallm.bifrosts.sql.sqlite.select.bifrost import SQLBifrost
-from heimdallm.bifrosts.sql.utils import JoinCondition
+from heimdallm.bifrosts.sql.common import JoinCondition
+from heimdallm.bifrosts.sql.sqlite.select.bifrost import Bifrost
 
 from .utils import CustomerConstraints, PermissiveConstraints
 
@@ -20,7 +20,7 @@ JOIN Invoice i ON il.InvoiceId = i.InvoiceId AND i.CustomerId = :customer_id
 WHERE i.InvoiceDate <= :timestamp
 LIMIT 20;
 """
-    bifrost = SQLBifrost.mocked(CustomerConstraints())
+    bifrost = Bifrost.mocked(CustomerConstraints())
     bifrost.traverse(query)
 
     # same query, minus the required join constraint
@@ -51,7 +51,7 @@ def test_join_allowlist():
                 JoinCondition("subscriber.provider_id", "provider.id"),
             ]
 
-    bifrost = SQLBifrost.mocked(JoinAllowlist())
+    bifrost = Bifrost.mocked(JoinAllowlist())
 
     # allowed join
     query = """
@@ -89,6 +89,6 @@ join provider p on other_table.provider_id = p.id
                 JoinCondition("provider.id", "other_table.provider_id"),
             ]
 
-    bifrost = SQLBifrost.mocked(JoinAllowlist())
+    bifrost = Bifrost.mocked(JoinAllowlist())
     with pytest.raises(exc.DisconnectedTable):
         bifrost.traverse(query)

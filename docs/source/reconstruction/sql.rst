@@ -4,8 +4,8 @@ SQL Reconstruction
 Adjusting a ``LIMIT``
 *********************
 
-This adjustment only takes place if :meth:`SQLConstraintValidator.max_limit
-<heimdallm.bifrosts.sql.sqlite.select.validator.SQLConstraintValidator.max_limit>` in
+This adjustment only takes place if :meth:`ConstraintValidator.max_limit
+<heimdallm.bifrosts.sql.sqlite.select.validator.ConstraintValidator.max_limit>` in
 your validator subclass returns an integer.
 
 If a query has no ``LIMIT`` clause, one will be added. For example:
@@ -35,7 +35,7 @@ Disallowed column removal
 
 This adjustment takes place if a column appears in the result returned from
 :meth:`SQLConstraintValidator.select_column_allowed
-<heimdallm.bifrosts.sql.sqlite.select.validator.SQLConstraintValidator.select_column_allowed>`
+<heimdallm.bifrosts.sql.sqlite.select.validator.ConstraintValidator.select_column_allowed>`
 
 The :doc:`prompt envelope </api/bifrosts/sql/sqlite/select/envelope>` (and consequently,
 the LLM) isn't told what columns are allowlisted. This means that an LLM may produce a

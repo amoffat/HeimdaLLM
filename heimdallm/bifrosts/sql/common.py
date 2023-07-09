@@ -99,7 +99,7 @@ class JoinCondition:
     :param second: The second fully-qualified column.
     :param identity: If the columns specified in this join condition can also be used as
         a :meth:`requester identity
-        <heimdallm.bifrosts.sql.sqlite.select.validator.SQLConstraintValidator.requester_identities>`
+        <heimdallm.bifrosts.sql.sqlite.select.validator.ConstraintValidator.requester_identities>`
         for the query, then this should be set to the name of the placeholder where the
         identity will be populated at runtime.
     """

@@ -4,8 +4,8 @@
 A Bifrost is capable of reconstructing the structured output from an LLM, to help ensure
 that it will pass validation. In the code and docs, this is called "reconstruction" or
 "autofixing." Alghtough reconstruction is a general HeimdaLLM concept, This page will
-explain it concretely in the context of the :class:`SQL Bifrost.
-<heimdallm.bifrosts.sql.sqlite.select.bifrost.SQLBifrost>`
+explain it concretely in the context of the :class:`SQL SELECT Bifrost.
+<heimdallm.bifrosts.sql.sqlite.select.bifrost.Bifrost>`
 
 Rationale
 *********
@@ -16,8 +16,8 @@ correctly. Whatever we can do to facilitate a high success rate will result in a
 user experience. Otherwise, the end user may see their input frequently rejected due to
 validation failures that are easy to fix.
 
-While developing the :class:`SQL Bifrost
-<heimdallm.bifrosts.sql.sqlite.select.bifrost.SQLBifrost>` for HeimdaLLM, I noticed two
+While developing the :class:`SQLite SELECT Bifrost
+<heimdallm.bifrosts.sql.sqlite.select.bifrost.Bifrost>` for HeimdaLLM, I noticed two
 major sources of validation failures:
 
 #. Queries with no ``LIMIT`` clause, or an incorrect ``LIMIT`` clause.

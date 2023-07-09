@@ -4,11 +4,11 @@ from lark import Discard, Token
 from lark import Transformer as _Transformer
 from lark import Tree
 
-from ... import exc
-from ...utils import FqColumn
-from ..utils.identifier import get_identifier
-from ..utils.visitors import AliasCollector
-from .validator import SQLConstraintValidator
+from . import exc
+from .common import FqColumn
+from .utils.identifier import get_identifier, is_count_function
+from .validator import ConstraintValidator
+from .visitors.aliases import AliasCollector
 
 
 def _build_limit_tree(limit, offset=None):
@@ -68,10 +68,11 @@ class ReconstructTransformer(_Transformer):
         - removing illegal selected columns
     """
 
-    def __init__(self, validator: SQLConstraintValidator):
+    def __init__(self, validator: ConstraintValidator, reserved_keywords: set[str]):
         self._validator = validator
-        self._collector = AliasCollector()
-        self._last_discarded_column = None
+        self._collector = AliasCollector(reserved_keywords=reserved_keywords)
+        self._last_discarded_column: FqColumn | None = None
+        self._reserved_keywords = reserved_keywords
         super().__init__()
 
     def transform(self, tree):
@@ -101,15 +102,18 @@ class ReconstructTransformer(_Transformer):
             raise exc.IllegalSelectedColumn(column=self._last_discarded_column.name)
         return Tree("selected_columns", children)
 
-    def selected_column(self, children):
+    def selected_column(self, children: list[Tree | Token]):
         """ensures that every selected column is allowed"""
         selected = children[0]
-        if isinstance(selected, Tree):
+        if is_count_function(selected):
+            pass
+
+        elif isinstance(selected, Tree):
             for fq_column_node in selected.find_data("fq_column"):
                 table_node, column_node = fq_column_node.children
 
-                maybe_table_alias = get_identifier(table_node)
-                column_name = get_identifier(column_node)
+                maybe_table_alias = get_identifier(table_node, self._reserved_keywords)
+                column_name = get_identifier(column_node, self._reserved_keywords)
 
                 table_name = self._collector._aliased_tables.get(
                     maybe_table_alias, maybe_table_alias

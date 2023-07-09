@@ -1,8 +1,8 @@
 import pytest
 
 from heimdallm.bifrosts.sql import exc
-from heimdallm.bifrosts.sql.sqlite.select.bifrost import SQLBifrost
-from heimdallm.bifrosts.sql.utils import FqColumn
+from heimdallm.bifrosts.sql.common import FqColumn
+from heimdallm.bifrosts.sql.sqlite.select.bifrost import Bifrost
 
 from .utils import PermissiveConstraints
 
@@ -28,7 +28,7 @@ class Succeed2(PermissiveConstraints):
 
 
 def test_all_fail():
-    bifrost = SQLBifrost.mocked([Fail1(), Fail2()])
+    bifrost = Bifrost.mocked([Fail1(), Fail2()])
 
     query = """
     select t1.col from t1
@@ -42,7 +42,7 @@ def test_all_fail():
 
 def test_all_fail_order():
     """we always raise the last error, switching the validators proves this."""
-    bifrost = SQLBifrost.mocked([Fail2(), Fail1()])
+    bifrost = Bifrost.mocked([Fail2(), Fail1()])
 
     query = """
     select t1.col from t1
@@ -55,7 +55,7 @@ def test_all_fail_order():
 
 
 def test_one_succeed():
-    bifrost = SQLBifrost.mocked([Fail1(), Succeed1()])
+    bifrost = Bifrost.mocked([Fail1(), Succeed1()])
 
     query = """
     select t1.col from t1
@@ -66,7 +66,7 @@ def test_one_succeed():
 
 
 def test_both_succeed():
-    bifrost = SQLBifrost.mocked([Succeed1(), Succeed2()])
+    bifrost = Bifrost.mocked([Succeed1(), Succeed2()])
 
     query = """
     select t1.col from t1

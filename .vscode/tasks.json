@@ -19,6 +19,62 @@
         "showReuseMessage": false,
         "clear": true
       }
+    },
+    {
+      "label": "Generate coverage",
+      "type": "shell",
+      "command": "poetry",
+      "args": ["run", "coverage", "run", "-m", "pytest", "heimdallm"],
+      "problemMatcher": [],
+      "group": {
+        "kind": "build"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": true
+      }
+    },
+    {
+      "label": "Coverage report",
+      "type": "shell",
+      "command": "poetry",
+      "dependsOn": "Generate coverage",
+      "args": ["run", "coverage", "html"],
+      "problemMatcher": [],
+      "group": {
+        "kind": "build"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": true
+      }
+    },
+    {
+      "label": "View coverage",
+      "type": "shell",
+      "command": "google-chrome",
+      "dependsOn": "Coverage report",
+      "args": ["${workspaceFolder}/htmlcov/index.html"],
+      "problemMatcher": [],
+      "group": {
+        "kind": "build"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": true
+      }
     }
   ]
 }

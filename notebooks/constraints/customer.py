@@ -1,10 +1,10 @@
 from typing import Optional, Sequence
 
-from heimdallm.bifrosts.sql.sqlite.select.validator import SQLConstraintValidator
-from heimdallm.bifrosts.sql.utils import FqColumn, JoinCondition, RequiredConstraint
+from heimdallm.bifrosts.sql.common import FqColumn, JoinCondition, RequiredConstraint
+from heimdallm.bifrosts.sql.sqlite.select.validator import ConstraintValidator
 
 
-class CustomerDataConstraints(SQLConstraintValidator):
+class DataConstraints(ConstraintValidator):
     """A relatively-permissive customer constraints validator for the Sakila database.
     This validator allows the customer to access tables joined by their customer id."""
 
@@ -60,6 +60,8 @@ class CustomerDataConstraints(SQLConstraintValidator):
             JoinCondition("customer.address_id", "address.address_id"),
             JoinCondition("customer.store_id", "store.store_id"),
             JoinCondition("film_actor.actor_id", "actor.actor_id"),
+            JoinCondition("film_actor.film_id", "film_category.film_id"),
+            JoinCondition("film_actor.film_id", "inventory.film_id"),
             JoinCondition("film_category.category_id", "category.category_id"),
             JoinCondition("film_category.film_id", "inventory.film_id"),
             JoinCondition("film.film_id", "film_actor.film_id"),
@@ -81,7 +83,7 @@ class CustomerDataConstraints(SQLConstraintValidator):
         return True
 
 
-class CustomerGeneralConstraints(SQLConstraintValidator):
+class GeneralConstraints(ConstraintValidator):
     """A constraints validator for general customer access to data that may not be
     theirs, but is not sensitive."""
 
@@ -116,6 +118,8 @@ class CustomerGeneralConstraints(SQLConstraintValidator):
             JoinCondition("address.city_id", "city.city_id"),
             JoinCondition("city.country_id", "country.country_id"),
             JoinCondition("film_actor.actor_id", "actor.actor_id"),
+            JoinCondition("film_actor.film_id", "film_category.film_id"),
+            JoinCondition("film_actor.film_id", "inventory.film_id"),
             JoinCondition("film_category.category_id", "category.category_id"),
             JoinCondition("film_category.film_id", "inventory.film_id"),
             JoinCondition("film.film_id", "film_actor.film_id"),

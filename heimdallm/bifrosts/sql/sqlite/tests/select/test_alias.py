@@ -1,8 +1,8 @@
 import pytest
 
 from heimdallm.bifrosts.sql import exc
-from heimdallm.bifrosts.sql.sqlite.select.bifrost import SQLBifrost
-from heimdallm.bifrosts.sql.utils import FqColumn
+from heimdallm.bifrosts.sql.common import FqColumn
+from heimdallm.bifrosts.sql.sqlite.select.bifrost import Bifrost
 
 from .utils import PermissiveConstraints
 
@@ -12,7 +12,7 @@ def test_where_alias():
         def condition_column_allowed(self, column: FqColumn) -> bool:
             return column.name == "t1.col"
 
-    bifrost = SQLBifrost.mocked(MyConstraints())
+    bifrost = Bifrost.mocked(MyConstraints())
 
     query = """
     select t1.col as thing from t1
@@ -35,7 +35,7 @@ def test_order_alias():
         def condition_column_allowed(self, column: FqColumn) -> bool:
             return column.name == "t1.col"
 
-    bifrost = SQLBifrost.mocked(MyConstraints())
+    bifrost = Bifrost.mocked(MyConstraints())
 
     query = """
     select t1.col as thing from t1
@@ -54,7 +54,7 @@ def test_order_alias():
 
 
 def test_select_function_alias():
-    bifrost = SQLBifrost.mocked(PermissiveConstraints())
+    bifrost = Bifrost.mocked(PermissiveConstraints())
 
     query = """
     select whatever(col) from t1
@@ -66,7 +66,7 @@ def test_select_function_alias():
 
 
 def test_group_by_alias():
-    bifrost = SQLBifrost.mocked(PermissiveConstraints())
+    bifrost = Bifrost.mocked(PermissiveConstraints())
 
     query = """
     SELECT COUNT(*) num_rented_movies,
@@ -80,8 +80,8 @@ def test_group_by_alias():
     bifrost.traverse(query)
 
 
-def test_non_column_alias():
-    bifrost = SQLBifrost.mocked(PermissiveConstraints())
+def test_count_star_alias():
+    bifrost = Bifrost.mocked(PermissiveConstraints())
 
     query = """
 SELECT f.title AS movie_title, COUNT(*) AS rental_days
@@ -95,3 +95,28 @@ LIMIT 5;
     """
 
     bifrost.traverse(query)
+
+
+def test_count_disallowed_column_alias():
+    class GeneralConstraints(PermissiveConstraints):
+        def select_column_allowed(self, fq_column: FqColumn) -> bool:
+            return fq_column.name != "film_actor.film_id"
+
+    bifrost = Bifrost.mocked(GeneralConstraints())
+
+    query = """
+SELECT
+    actor.actor_id,
+    actor.first_name,
+    actor.last_name,
+    COUNT(film_actor.film_id) as film_count
+FROM actor
+JOIN film_actor ON actor.actor_id = film_actor.actor_id
+GROUP BY actor.actor_id
+ORDER BY film_count DESC
+    """
+    bifrost.traverse(query, autofix=False)
+
+    # prove that the column isn't stripped by the reconstructor
+    fixed = bifrost.traverse(query, autofix=True)
+    assert "film_actor.film_id" in fixed

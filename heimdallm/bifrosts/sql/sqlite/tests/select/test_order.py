@@ -1,4 +1,4 @@
-from heimdallm.bifrosts.sql.sqlite.select.bifrost import SQLBifrost
+from heimdallm.bifrosts.sql.sqlite.select.bifrost import Bifrost
 
 from .utils import PermissiveConstraints
 
@@ -17,5 +17,5 @@ ORDER BY COUNT(*) DESC
 LIMIT 20;
 """
 
-    bifrost = SQLBifrost.mocked(PermissiveConstraints())
+    bifrost = Bifrost.mocked(PermissiveConstraints())
     bifrost.traverse(query)

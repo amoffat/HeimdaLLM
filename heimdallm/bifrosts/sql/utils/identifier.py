@@ -1,10 +1,11 @@
-from lark import Token
+from typing import cast
 
-from ... import exc
-from ..presets import reserved_keywords
+from lark import Token, Tree
+
+from .. import exc
 
 
-def get_identifier(node, throw_exc=True) -> str:
+def get_identifier(node, reserved_keywords: set[str]) -> str:
     """takes some node from the tree, either a token or a subtree, and finds
     the identifier it contains. this is used for the rule that matches an
     identifier or a quoted identifier, because, in that case, an identifier will
@@ -21,6 +22,23 @@ def get_identifier(node, throw_exc=True) -> str:
     quoted = False
     ident = next(node.scan_values(match_ident)).value
     quoted = bool(list(node.find_data("quoted_identifier")))
-    if throw_exc and not quoted and ident.lower() in reserved_keywords:
+    if not quoted and ident.lower() in reserved_keywords:
         raise exc.ReservedKeyword(keyword=ident)
     return ident
+
+
+def is_count_function(node: Tree | Token) -> bool:
+    """
+    A helper for determining if a node is a *safe* aggregate function. We allow safe
+    aggregate functions in the SELECT clause, because they don't reveal extra
+    information.
+    """
+    if isinstance(node, Tree):
+        if node.data == "aliased_column":
+            node = node.children[0]
+
+    if isinstance(node, Tree) and node.data == "function":
+        fn_name = cast(Token, node.children[0].children[0]).value.lower()
+        if fn_name == "count":
+            return True
+    return False
