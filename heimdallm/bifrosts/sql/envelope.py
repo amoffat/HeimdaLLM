@@ -2,14 +2,15 @@ import re
 from abc import abstractmethod
 from itertools import chain
 from pathlib import Path
-from typing import Sequence, cast
+from typing import TYPE_CHECKING, Sequence, cast
 
 import jinja2
 
 from heimdallm.envelope import PromptEnvelope as _BasePromptEnvelope
 from heimdallm.llm import LLMIntegration
 
-from .validator import ConstraintValidator
+if TYPE_CHECKING:
+    import heimdallm.bifrosts.sql.validator
 
 THIS_DIR = Path(__file__).parent
 _TMPL_ENV = jinja2.Environment(
@@ -41,7 +42,7 @@ class PromptEnvelope(_BasePromptEnvelope):
         *,
         llm: LLMIntegration,
         db_schema: str,
-        validators: Sequence[ConstraintValidator],
+        validators: Sequence["heimdallm.bifrosts.sql.validator.ConstraintValidator"],
     ):
         self.db_schema = db_schema
         self.validators = validators

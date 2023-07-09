@@ -5,6 +5,8 @@ from lark import Lark
 
 from heimdallm.bifrosts.sql.bifrost import Bifrost as _SQLBifrost
 
+from .. import presets
+
 _THIS_DIR = Path(__file__).parent
 _GRAMMAR_PATH = _THIS_DIR / "sqlite.lark"
 
@@ -44,6 +46,10 @@ class Bifrost(_SQLBifrost):
                 grammar=h,
             )
         return grammar
+
+    @classmethod
+    def reserved_keywords(self) -> set[str]:
+        return presets.reserved_keywords
 
 
 def get_schema(conn: sqlite3.Connection):

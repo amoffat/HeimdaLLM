@@ -6,12 +6,14 @@ from lark import Lark, ParseTree
 from lark.exceptions import VisitError
 from lark.reconstruct import Reconstructor
 
+from heimdallm.bifrost import Bifrost
 from heimdallm.bifrosts.sql import exc
+from heimdallm.bifrosts.sql.bifrost import Bifrost as _SQLBifrost
 from heimdallm.constraints import ConstraintValidator as _BaseConstraintValidator
 
-from .sqlite.utils.visitors import AliasCollector
-from .utils import ANY_JOIN, FqColumn, JoinCondition, RequiredConstraint
-from .visitors import FacetCollector, Facets
+from .common import ANY_JOIN, FqColumn, JoinCondition, RequiredConstraint
+from .visitors.aliases import AliasCollector
+from .visitors.facets import FacetCollector, Facets
 
 
 class ConstraintValidator(_BaseConstraintValidator):
@@ -56,7 +58,7 @@ class ConstraintValidator(_BaseConstraintValidator):
 
         Both ``rental.customer_id`` and ``customer.customer_id`` are valid requester
         identities, so ou need to specify both of them by returning a
-        :class:`heimdallm.bifrosts.sql.utils.RequiredConstraint` for each of them.
+        :class:`heimdallm.bifrosts.sql.common.RequiredConstraint` for each of them.
 
         :return: The sequence of possible requester identities.
         """
@@ -142,7 +144,7 @@ class ConstraintValidator(_BaseConstraintValidator):
         # let's default to "if you can see it, you can use it"
         return self.select_column_allowed(fq_column)
 
-    def fix(self, grammar: Lark, tree: ParseTree) -> str:
+    def fix(self, bifrost: Bifrost, grammar: Lark, tree: ParseTree) -> str:
         """A parse tree may be valid SQL, but it may not be valid according to
         the validator's constraints. we may be able to make intelligent
         decisions about those constraints, and fix the parse tree though, for
@@ -154,7 +156,10 @@ class ConstraintValidator(_BaseConstraintValidator):
         # gets around a circular import issue
         from heimdallm.bifrosts.sql import reconstruct
 
-        transform = reconstruct.ReconstructTransformer(self)
+        transform = reconstruct.ReconstructTransformer(
+            self,
+            cast(_SQLBifrost, bifrost).reserved_keywords(),
+        )
         try:
             fixed_tree = transform.transform(tree)
         except VisitError as e:
@@ -168,7 +173,7 @@ class ConstraintValidator(_BaseConstraintValidator):
         )
         return output
 
-    def validate(self, untrusted_input: str, tree: ParseTree):
+    def validate(self, bifrost: Bifrost, untrusted_input: str, tree: ParseTree):
         """Analyze the parsed tree and validate it against our SQL constraints
 
         :param untrusted_input: The original query string. This is passed in so that if
@@ -178,11 +183,17 @@ class ConstraintValidator(_BaseConstraintValidator):
         :meta private:
         """
         try:
-            alias_collector = AliasCollector()
+            alias_collector = AliasCollector(
+                cast(_SQLBifrost, bifrost).reserved_keywords()
+            )
             alias_collector.visit(tree)
 
             facets = Facets()
-            facet_collector = FacetCollector(facets, alias_collector)
+            facet_collector = FacetCollector(
+                facets,
+                alias_collector,
+                cast(_SQLBifrost, bifrost).reserved_keywords(),
+            )
             facet_collector.visit(tree)
         except exc.GeneralParseError:
             raise exc.InvalidQuery(query=untrusted_input)

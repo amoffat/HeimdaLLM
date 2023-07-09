@@ -4,7 +4,7 @@ import lark
 
 from heimdallm.support.github import make_ambiguous_parse_issue
 
-from .utils import FqColumn, JoinCondition, RequiredConstraint
+from .common import FqColumn, JoinCondition, RequiredConstraint
 
 
 class BaseException(Exception):
@@ -93,7 +93,7 @@ class IllegalSelectedColumn(BaseException):
     it was not automatically removed because :doc:`/reconstruction` is disabled.
 
     :param column: The column that was selected. This is not a :class:`FqColumn
-        <heimdallm.bifrosts.sql.utils.FqColumn>` because we may not always have a table
+        <heimdallm.bifrosts.sql.common.FqColumn>` because we may not always have a table
         name.
     """
 

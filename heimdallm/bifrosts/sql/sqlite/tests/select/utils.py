@@ -1,6 +1,6 @@
 from typing import Sequence
 
-from heimdallm.bifrosts.sql.utils import (
+from heimdallm.bifrosts.sql.common import (
     ANY_JOIN,
     FqColumn,
     JoinCondition,

@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 
 from lark import Lark, ParseTree
 
+from heimdallm.bifrost import Bifrost
+
 
 class ConstraintValidator(ABC):
     """This is the base class for all constraint validators. It is used to validate
@@ -9,7 +11,7 @@ class ConstraintValidator(ABC):
     soft-validation pass."""
 
     @abstractmethod
-    def fix(self, grammar: Lark, tree: ParseTree) -> str:
+    def fix(self, bifrost: Bifrost, grammar: Lark, tree: ParseTree) -> str:
         """If the tree fails validation in a soft-pass, attempt to reconstruct it
         to satisfy the constraints. If the tree cannot be reconstructed, throw a
         Bifrost-specific exception
@@ -21,7 +23,7 @@ class ConstraintValidator(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def validate(self, untrusted_input: str, tree: ParseTree):
+    def validate(self, biforst: Bifrost, untrusted_input: str, tree: ParseTree):
         """This performs the Bifrost-specific validation of the parse tree. It throws a
         Bifrost-specific exception if the tree does not pass the constraints.
 

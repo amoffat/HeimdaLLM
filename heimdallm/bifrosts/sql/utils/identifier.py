@@ -2,11 +2,10 @@ from typing import cast
 
 from lark import Token, Tree
 
-from ... import exc
-from ..presets import reserved_keywords
+from .. import exc
 
 
-def get_identifier(node, throw_exc=True) -> str:
+def get_identifier(node, reserved_keywords: set[str]) -> str:
     """takes some node from the tree, either a token or a subtree, and finds
     the identifier it contains. this is used for the rule that matches an
     identifier or a quoted identifier, because, in that case, an identifier will
@@ -23,7 +22,7 @@ def get_identifier(node, throw_exc=True) -> str:
     quoted = False
     ident = next(node.scan_values(match_ident)).value
     quoted = bool(list(node.find_data("quoted_identifier")))
-    if throw_exc and not quoted and ident.lower() in reserved_keywords:
+    if not quoted and ident.lower() in reserved_keywords:
         raise exc.ReservedKeyword(keyword=ident)
     return ident
 

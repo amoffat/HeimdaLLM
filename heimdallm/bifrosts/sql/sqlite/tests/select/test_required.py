@@ -3,8 +3,8 @@ from typing import Sequence
 import pytest
 
 from heimdallm.bifrosts.sql import exc
+from heimdallm.bifrosts.sql.common import RequiredConstraint
 from heimdallm.bifrosts.sql.sqlite.select.bifrost import Bifrost
-from heimdallm.bifrosts.sql.utils import RequiredConstraint
 
 from .utils import PermissiveConstraints
 

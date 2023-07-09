@@ -1,6 +1,6 @@
-from lark import Token, Visitor
+from lark import Token, Tree, Visitor
 
-from .identifier import get_identifier
+from ..utils.identifier import get_identifier
 
 
 class AliasCollector(Visitor):
@@ -9,13 +9,14 @@ class AliasCollector(Visitor):
     because the tree may not evaluate in the order that would allow us to
     resolve aliases."""
 
-    def __init__(self):
+    def __init__(self, reserved_keywords: set[str]):
         # aliased table names from the FROM clause, as well as JOIN clauses.
         # they map from the alias name to the table name.
-        self._aliased_tables = {}
+        self._aliased_tables: dict[str, str] = {}
         # aliased column names from the SELECT clause. they map from the alias
         # name to the (table, column) tuple
-        self._aliased_columns = {}
+        self._aliased_columns: dict[str, tuple[str | None, str | None]] = {}
+        self._reserved_keywords = reserved_keywords
 
     def _resolve_table(self, table):
         return self._aliased_tables.get(table, table)
@@ -23,10 +24,10 @@ class AliasCollector(Visitor):
     # tables are aliased in the FROM clause of a SELECT statement, or when a
     # table is JOINed. it's here that we know the authoritative table name and
     # its aliased, which may be used in other parts of the query
-    def aliased_table(self, node):
+    def aliased_table(self, node: Tree):
         table_node, _as, alias_node = node.children
-        table_name = get_identifier(table_node)
-        alias = get_identifier(alias_node)
+        table_name = get_identifier(table_node, self._reserved_keywords)
+        alias = get_identifier(alias_node, self._reserved_keywords)
         self._aliased_tables[alias] = table_name
 
         # inefficient, but backfill the correct table alias for any columns
@@ -37,9 +38,9 @@ class AliasCollector(Visitor):
     # columns are aliased in the column list of a SELECT statement. we assume
     # that all aliased columns are fully qualified by table name. note, however,
     # that the table name may be an alias itself.
-    def aliased_column(self, node):
+    def aliased_column(self, node: Tree):
         value_node, _as, alias_node = node.children
-        alias_name = get_identifier(alias_node)
+        alias_name = get_identifier(alias_node, self._reserved_keywords)
 
         if isinstance(value_node, Token):
             if value_node.type == "COUNT_STAR":
@@ -51,8 +52,8 @@ class AliasCollector(Visitor):
         # the result. so we need to look at each fq_column individually
         for fq_column_node in value_node.find_data("fq_column"):
             table_node, column_node = fq_column_node.children
-            table_name = get_identifier(table_node)
-            column_name = get_identifier(column_node)
+            table_name = get_identifier(table_node, self._reserved_keywords)
+            column_name = get_identifier(column_node, self._reserved_keywords)
 
             # do we already have a table alias for this column? use that instead for
             # the table name
