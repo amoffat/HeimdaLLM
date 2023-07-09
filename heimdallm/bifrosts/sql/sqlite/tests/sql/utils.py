@@ -2,6 +2,14 @@ import pytest
 
 
 def dialects(*dialects, bifrost=True, envelope=False, conn=False):
+    """
+    Decorator to run a test against multiple SQL dialects.
+
+    :param dialects: dialects to test, defaults to ``("sqlite", "mysql")`` if not
+        specified.
+    :param bifrost: Whether to pass a ``Bifrost`` class into the test.
+    :param envelope: Whether to pass a ``PromptEnvelope`` class into the test.
+    """
     dialects = dialects or ("sqlite", "mysql")
 
     def map_dialect(d: str):
