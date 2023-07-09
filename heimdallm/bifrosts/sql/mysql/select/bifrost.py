@@ -8,7 +8,7 @@ from heimdallm.bifrosts.sql.bifrost import Bifrost as _SQLBifrost
 from .. import presets
 
 _THIS_DIR = Path(__file__).parent
-_GRAMMAR_PATH = _THIS_DIR / "mysql.lark"
+_GRAMMAR_PATH = _THIS_DIR / "grammar.lark"
 
 
 class Bifrost(_SQLBifrost):

@@ -6,7 +6,7 @@ components:
 
 * :class:`SQLPromptEnvelope <heimdallm.bifrosts.sql.mysql.select.envelope.PromptEnvelope>`
 * :class:`SQLConstraintValidator <heimdallm.bifrosts.sql.mysql.select.validator.ConstraintValidator>`
-* `Grammar <https://github.com/amoffat/HeimdaLLM/blob/dev/heimdallm/bifrosts/sql/mysql/select/sqlite.lark>`_
+* `Grammar <https://github.com/amoffat/HeimdaLLM/blob/dev/heimdallm/bifrosts/sql/mysql/select/grammar.lark>`_
 
 .. autoclass:: heimdallm.bifrosts.sql.mysql.select.bifrost.Bifrost
     :members:
