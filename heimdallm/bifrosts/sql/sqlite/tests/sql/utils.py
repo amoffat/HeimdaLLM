@@ -1,10 +1,10 @@
 import pytest
 
 
-def dialects(*dialects, bifrost=True, envelope=False):
+def dialects(*dialects, bifrost=True, envelope=False, conn=False):
     dialects = dialects or ("sqlite", "mysql")
 
-    def map_dialect(d):
+    def map_dialect(d: str):
         args = []
 
         if bifrost:
@@ -21,6 +21,10 @@ def dialects(*dialects, bifrost=True, envelope=False):
             envelope_cls.dialect = d
             args.append(envelope_cls)
 
+        if conn:
+            if d == "sqlite":
+                pass
+
         if len(args) == 1:
             return args[0]
         return args
@@ -30,6 +34,8 @@ def dialects(*dialects, bifrost=True, envelope=False):
         args.append("Bifrost")
     if envelope:
         args.append("PromptEnvelope")
+    if conn:
+        args.append("conn")
 
     return pytest.mark.parametrize(
         ",".join(args),
