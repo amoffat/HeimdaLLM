@@ -50,14 +50,3 @@ class Bifrost(_SQLBifrost):
     @classmethod
     def reserved_keywords(self) -> set[str]:
         return presets.reserved_keywords
-
-
-def get_schema(conn: sqlite3.Connection):
-    """a convenience function to get the schema of a sqlite database. you
-    probably want to write your own function to do this, one that doesn't
-    include tables and columns that you care about sending to the LLM"""
-    schema = []
-    for line in conn.iterdump():
-        if "CREATE TABLE" in line:
-            schema.append(line)
-    return "\n".join(schema)
