@@ -75,6 +75,28 @@
         "showReuseMessage": false,
         "clear": true
       }
+    },
+    {
+      "label": "Doc builder",
+      "type": "shell",
+      "command": "source ${workspaceFolder}/.venv/bin/activate && find source/ | entr -s 'make clean && make html'",
+      "options": {
+        "cwd": "${workspaceFolder}/docs"
+      },
+      "problemMatcher": [],
+      "group": {
+        "kind": "build"
+      },
+      "isBackground": true,
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": true,
+        "close": true
+      }
     }
   ]
 }

@@ -99,9 +99,11 @@ the mitigations.
 
 # 📚 Database support
 
-Currently, sqlite's flavor of SQL is supported. There is active development for the
-other top relational SQL databases. To help me prioritize, please vote on which database
-you would like to see supported:
+- Sqlite
+- MySQL
+
+There is active development for the other top relational SQL databases. To help me
+prioritize, please vote on which database you would like to see supported:
 
 [![Static Badge](https://img.shields.io/badge/Vote!-here-limegreen)](https://github.com/amoffat/HeimdaLLM/discussions/2)
 

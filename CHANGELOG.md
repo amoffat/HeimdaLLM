@@ -1,7 +1,8 @@
 # Changelog
 
-## 0.1.5 - 7/9/23
+## 0.2.0 - 7/9/23
 
+- Support for MySQL ~8
 - Refactor sqlite helpers to be general
 - Bugfix where disabling reconstruction resulted in an error
 - Allow counting disallowed columns

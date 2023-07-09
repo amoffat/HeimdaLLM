@@ -23,10 +23,12 @@ license. <https://forms.gle/frEPeeJx81Cmwva78>`_ This will help me prioritize th
 What databases are supported?
 *****************************
 
-Currently, sqlite's flavor of SQL is supported. There is rapid development for the other
-top relational SQL databases. To help us prioritize, please `vote here
-<https://github.com/amoffat/HeimdaLLM/discussions/2>`_ on which database you would like
-to see supported:
+* Sqlite
+* MySQL
+
+There is rapid development for the other top relational SQL databases. To help us
+prioritize, please `vote here <https://github.com/amoffat/HeimdaLLM/discussions/2>`_ on
+which database you would like to see supported:
 
 Do I need to purchase a commercial license?
 *******************************************
