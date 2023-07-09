@@ -24,8 +24,6 @@ limit_placeholder : limit_clause?
 // serves as a basis for table and column names
 // NOTE this is dialect specific
 !quoted_identifier : "`" IDENTIFIER "`"
-    | "\"" IDENTIFIER "\""
-    | "[" IDENTIFIER "]"
 unquoted_identifier : IDENTIFIER
 IDENTIFIER : /[a-zA-Z_][a-zA-Z0-9_]*/
 
@@ -130,7 +128,6 @@ function_name : /[a-zA-Z_]+/
 ?string : ESCAPED_STRING
 
 // a placeholder for a value passed in as a parameter at query execution time
-// https://docs.python.org/2/library/sqlite3.html#sqlite3.Cursor.execute
 placeholder: ":" IDENTIFIER
 
 
@@ -212,14 +209,9 @@ ARITH_OP : \
     | "div"i
     | "mod"i
 
-// in sqlite, double quotes are used for quoting identifiers, single quotes for quoting
-// strings. also, a single quote can be escaped by doubling it, and there are no other
-// escape sequences. https://www.sqlite.org/faq.html#q14 the below inner regex says "any
-// character except a single quote, unless it is doubled"
-ESCAPED_STRING : "'" /([^']|'')*/ "'"
-
 %import common.NUMBER
 %import common.DIGIT
 %import common.WORD
 %import common.WS
+%import common.ESCAPED_STRING
 %ignore WS

@@ -4,10 +4,12 @@ from heimdallm.bifrosts.sql import exc
 from heimdallm.bifrosts.sql.common import FqColumn
 from heimdallm.bifrosts.sql.sqlite.select.bifrost import Bifrost
 
+from ..utils import dialects
 from .utils import PermissiveConstraints
 
 
-def test_where_alias():
+@dialects("sqlite", "mysql")
+def test_where_alias(Bifrost: Bifrost):
     class MyConstraints(PermissiveConstraints):
         def condition_column_allowed(self, column: FqColumn) -> bool:
             return column.name == "t1.col"

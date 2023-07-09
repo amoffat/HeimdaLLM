@@ -1,8 +1,10 @@
 from heimdallm.bifrosts.sql.sqlite.select.bifrost import Bifrost
 
+from ..utils import dialects
 from .utils import PermissiveConstraints
 
 
+@dialects("sqlite", "mysql")
 def test_is_not_null():
     bifrost = Bifrost.mocked(PermissiveConstraints())
 
