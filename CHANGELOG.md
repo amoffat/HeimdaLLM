@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1 - 7/10/23
+
+- Automated Github releases
+
 ## 0.2.0 - 7/9/23
 
 - Support for MySQL ~8.0

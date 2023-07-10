@@ -152,10 +152,18 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Tag commit
+        id: tag-commit
         run: |
           version=$(sed -n 's/^version = "\(.*\)"/\1/p' pyproject.toml)
+          echo "VERSION=$version" >> "$GITHUB_OUTPUT"
           git tag "$version" "${{github.ref_name}}"
           git push origin "$version"
+
+      - name: Get changes
+        id: changelog
+        run: |
+          changes=$(python dev_scripts/changelog_extract.py)
+          echo "CHANGES=$changes" >> "$GITHUB_OUTPUT"
 
       - name: Set up Python
         uses: actions/setup-python@v2
@@ -169,5 +177,16 @@ jobs:
       - name: Build
         run: poetry build
 
-      - name: Publish
-        uses: pypa/gh-action-pypi-publish@release/v1
+      - name: Create Release
+        id: create-release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.tag-commit.outputs.VERSION }}
+          name: Release ${{ steps.tag-commit.outputs.VERSION }}
+          body: ${{ steps.changelog.outputs.CHANGES }}
+          draft: true
+          prerelease: false
+          files: dist/*
+
+      # - name: Publish
+      #   uses: pypa/gh-action-pypi-publish@release/v1
