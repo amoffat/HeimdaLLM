@@ -188,5 +188,10 @@ jobs:
           prerelease: false
           files: dist/*
 
+      - name: Store packages
+        uses: actions/upload-artifact@v2
+        with:
+          path: dist/*
+
       # - name: Publish
       #   uses: pypa/gh-action-pypi-publish@release/v1

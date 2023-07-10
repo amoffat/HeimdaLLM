@@ -3,6 +3,7 @@
 ## 0.2.1 - 7/10/23
 
 - Automated Github releases
+- Add sdist and wheels to workflow artifacts
 
 ## 0.2.0 - 7/9/23
 
