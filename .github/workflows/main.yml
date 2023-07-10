@@ -162,7 +162,7 @@ jobs:
       - name: Get changes
         id: changelog
         run: |
-          python dev_scripts/changelog_extract.py ${{ steps.tag-commit.outputs.VERSION }}) \
+          python dev_scripts/changelog_extract.py ${{ steps.tag-commit.outputs.VERSION }} \
             > release_changes.md
 
       - name: Set up Python
