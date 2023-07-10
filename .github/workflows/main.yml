@@ -162,8 +162,8 @@ jobs:
       - name: Get changes
         id: changelog
         run: |
-          changes=$(python dev_scripts/changelog_extract.py)
-          echo "CHANGES=$changes" >> "$GITHUB_OUTPUT"
+          python dev_scripts/changelog_extract.py ${{ steps.tag-commit.outputs.VERSION }}) \
+            > release_changes.md
 
       - name: Set up Python
         uses: actions/setup-python@v2
@@ -183,7 +183,7 @@ jobs:
         with:
           tag_name: ${{ steps.tag-commit.outputs.VERSION }}
           name: Release ${{ steps.tag-commit.outputs.VERSION }}
-          body: ${{ steps.changelog.outputs.CHANGES }}
+          body_path: release_changes.md
           draft: true
           prerelease: false
           files: dist/*

@@ -1,4 +1,5 @@
 import re
+import sys
 from pathlib import Path
 from typing import Iterable
 
@@ -27,7 +28,8 @@ def fetch_changes(changelog: Path, version: str) -> Iterable[str]:
     return changes
 
 
-changes = fetch_changes(CHANGELOG, "0.2.0")
+version = sys.argv[1].strip()
+changes = fetch_changes(CHANGELOG, version)
 if not changes:
     exit(1)
 
