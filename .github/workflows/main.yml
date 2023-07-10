@@ -184,14 +184,15 @@ jobs:
           tag_name: ${{ steps.tag-commit.outputs.VERSION }}
           name: Release ${{ steps.tag-commit.outputs.VERSION }}
           body_path: release_changes.md
-          draft: true
+          draft: false
           prerelease: false
           files: dist/*
 
       - name: Store packages
         uses: actions/upload-artifact@v2
         with:
+          name: packages
           path: dist/*
 
-      # - name: Publish
-      #   uses: pypa/gh-action-pypi-publish@release/v1
+      - name: Publish
+        uses: pypa/gh-action-pypi-publish@release/v1
