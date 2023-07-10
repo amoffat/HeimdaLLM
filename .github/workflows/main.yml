@@ -177,6 +177,12 @@ jobs:
       - name: Build
         run: poetry build
 
+      - name: Store packages
+        uses: actions/upload-artifact@v2
+        with:
+          name: packages
+          path: dist/*
+
       - name: Create Release
         id: create-release
         uses: softprops/action-gh-release@v1
@@ -187,12 +193,6 @@ jobs:
           draft: false
           prerelease: false
           files: dist/*
-
-      - name: Store packages
-        uses: actions/upload-artifact@v2
-        with:
-          name: packages
-          path: dist/*
 
       - name: Publish
         uses: pypa/gh-action-pypi-publish@release/v1
