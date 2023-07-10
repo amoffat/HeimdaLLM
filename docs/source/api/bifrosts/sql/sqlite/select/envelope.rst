@@ -7,6 +7,6 @@ SQL Select Envelope
     LLM knows how to construct the query. If this concerns you, limit the information
     that you include in the schema.
 
-.. autoclass:: heimdallm.bifrosts.sql.sqlite.select.envelope.SQLPromptEnvelope
+.. autoclass:: heimdallm.bifrosts.sql.sqlite.select.envelope.PromptEnvelope
     :members:
     :inherited-members:

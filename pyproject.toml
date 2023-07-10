@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "heimdallm"
-version = "0.1.4"
+version = "0.1.5"
 description = "Construct trusted SQL queries from untrusted input"
 homepage = "https://github.com/amoffat/HeimdaLLM"
 repository = "https://github.com/amoffat/HeimdaLLM"
@@ -53,6 +53,8 @@ sphinx-rtd-theme = "^1.2.2"
 toml = "^0.10.2"
 types-toml = "^0.10.8.6"
 munch = "^4.0.0"
+mysql-connector-python = "^8.0.33"
+pre-commit = "^3.3.3"
 
 [build-system]
 requires = ["poetry-core"]

@@ -1,61 +1,55 @@
 import sqlite3
 from pathlib import Path
-from typing import Callable, Sequence, Union
 
-import lark
-from lark import Lark, ParseTree
-from lark.exceptions import VisitError
+from lark import Lark
 
-from heimdallm.bifrost import Bifrost
-from heimdallm.bifrosts.sql import exc
-from heimdallm.envelope import PromptEnvelope
-from heimdallm.llm import LLMIntegration
-from heimdallm.llm_providers.mock import EchoMockLLM
+from heimdallm.bifrosts.sql.bifrost import Bifrost as _SQLBifrost
 
-from .envelope import TestSQLPromptEnvelope
-from .validator import SQLConstraintValidator
-from .visitors import AmbiguityResolver
+from .. import presets
 
 _THIS_DIR = Path(__file__).parent
-_GRAMMAR_PATH = _THIS_DIR / "sqlite.lark"
+_GRAMMAR_PATH = _THIS_DIR / "grammar.lark"
 
 
-def _build_grammar() -> Lark:
+class Bifrost(_SQLBifrost):
     """
-    returns a limited sqlite SELECT grammar
+    A Bifrost for SQLite ``SELECT`` queries
 
-    noteworthy:
-        - no outer joins
-        - no subqueries
-
-    theoretically, subqueries could be allowed, but it would be more work, and
-    i'm not yet convinced that an LLM produces subqueries often enough to make
-    it worth it.
-
-    outer joins are unsafe because the join constraint is not applied to the
-    rows that would be considered "outer."
+    :param llm: The LLM integration to use.
+    :param prompt_envelope: The prompt envelope used to wrap the untrusted human input
+        and unwrap the untrusted LLM output.
+    :param constraint_validators: A sequence of constraint validators that will be used
+        to validate the parse tree returned by the ``tree_producer``. Only one validator
+        needs to succeed for validation to pass.
     """
-    with open(_GRAMMAR_PATH, "r") as h:
-        grammar = Lark(
-            ambiguity="explicit",
-            maybe_placeholders=False,
-            grammar=h,
-        )
-    return grammar
 
+    @staticmethod
+    def build_grammar() -> Lark:
+        """
+        Returns a limited ``SELECT`` grammar
 
-def _build_tree_producer() -> Callable[[Lark, str], ParseTree]:
-    def parse(grammar: Lark, untrusted_query: str) -> ParseTree:
-        ambig_tree = grammar.parse(untrusted_query)
-        try:
-            final_tree = AmbiguityResolver(untrusted_query).transform(ambig_tree)
-        except VisitError as e:
-            if isinstance(e.orig_exc, exc.BaseException):
-                raise e.orig_exc
-            raise e
-        return final_tree
+        noteworthy:
+            - no outer joins
+            - no subqueries
 
-    return parse
+        Theoretically, subqueries could be allowed, but it would be more work, and
+        I'm not yet convinced that an LLM produces subqueries often enough to make
+        it worth it.
+
+        Outer joins are unsafe because the join constraint is not applied to the
+        rows that would be considered "outer."
+        """
+        with open(_GRAMMAR_PATH, "r") as h:
+            grammar = Lark(
+                ambiguity="explicit",
+                maybe_placeholders=False,
+                grammar=h,
+            )
+        return grammar
+
+    @classmethod
+    def reserved_keywords(self) -> set[str]:
+        return presets.reserved_keywords
 
 
 def get_schema(conn: sqlite3.Connection):
@@ -67,78 +61,3 @@ def get_schema(conn: sqlite3.Connection):
         if "CREATE TABLE" in line:
             schema.append(line)
     return "\n".join(schema)
-
-
-class SQLBifrost(Bifrost):
-    """A Bifrost for traversing SQL ``SELECT`` queries.
-
-    :vartype value: str
-    """
-
-    # for tests
-    @classmethod
-    def mocked(
-        cls,
-        constraint_validators: Union[
-            SQLConstraintValidator, Sequence[SQLConstraintValidator]
-        ],
-    ):
-        """A convenience method for our tests. This creates a Bifrost that assumes its
-        untrusted input is a SQL query already, so it does not need to communicate with
-        the LLM, only parse and validate it.
-
-        :param constraint_validators: A constraint validator or sequence of constraint
-            validators to run on the untrusted input.
-
-        :meta private:
-        """
-        if not isinstance(constraint_validators, Sequence):
-            constraint_validators = [constraint_validators]
-
-        llm = EchoMockLLM()
-        return cls(
-            llm=llm,
-            constraint_validators=constraint_validators,
-            prompt_envelope=TestSQLPromptEnvelope(
-                llm=llm,
-                db_schema="<schema>",  # doesn't matter
-                validators=constraint_validators,
-            ),
-        )
-
-    def __init__(
-        self,
-        *,
-        llm: LLMIntegration,
-        prompt_envelope: PromptEnvelope,
-        constraint_validators: Sequence[SQLConstraintValidator],
-    ):
-        super().__init__(
-            llm=llm,
-            prompt_envelope=prompt_envelope,
-            grammar=_build_grammar(),
-            tree_producer=_build_tree_producer(),
-            constraint_validators=constraint_validators,
-        )
-
-    def parse(self, untrusted_llm_output: str) -> ParseTree:
-        """Parse the unwrapped SQL query from the LLM's output. Raise a SQL-specific
-        exception if the query is not valid.
-
-        :param untrusted_llm_output: The output from the LLM, which should be a SQL
-            query. If it isn't, then our :meth:`SQLPromptEnvelope.unwrap` method failed.
-        :raises InvalidQuery: If the query is not valid.
-        :return: The Lark parse tree for the query.
-
-        :meta private:
-        """
-        try:
-            return super().parse(untrusted_llm_output)
-        except lark.exceptions.UnexpectedEOF as e:
-            raise exc.InvalidQuery(query=untrusted_llm_output) from e
-        except lark.exceptions.UnexpectedCharacters as e:
-            raise exc.InvalidQuery(query=untrusted_llm_output) from e
-        except exc.BaseException as e:
-            raise e
-        except Exception as e:
-            raise exc.InvalidQuery(query=untrusted_llm_output) from e

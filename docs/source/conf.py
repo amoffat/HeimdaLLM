@@ -9,6 +9,16 @@ _REPO = _THIS_DIR.parent.parent
 _PYPROJECT = _REPO / "pyproject.toml"
 
 pyproject = toml.load(_PYPROJECT)
+nitpicky = True
+
+nitpick_ignore = [
+    ("py:class", "Token"),
+    ("py:class", "'Token'"),
+]
+
+nitpick_ignore_regex = [
+    ("py:class", r".*lark.*"),
+]
 
 version = pyproject["tool"]["poetry"]["version"]
 release = version

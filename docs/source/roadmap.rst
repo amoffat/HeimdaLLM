@@ -8,6 +8,12 @@ Below is a very high-level roadmap for HeimdaLLM.
     Want to know when these features get implemented? Add your email to `this form
     <https://forms.gle/r3HjMPXBYwNjxANp7>`_ and I will contact you.
 
+More LLM integrations
+*********************
+
+Currently we support OpenAI, but I intend to add support for all major LLM API services,
+and private LLMs, as they become more capable.
+
 More databases
 **************
 
