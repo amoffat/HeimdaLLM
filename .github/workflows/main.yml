@@ -157,7 +157,7 @@ jobs:
           version=$(sed -n 's/^version = "\(.*\)"/\1/p' pyproject.toml)
           echo "VERSION=$version" >> "$GITHUB_OUTPUT"
           git tag "$version" "${{github.ref_name}}"
-          git push origin "$version"
+          git push origin "$version" || true
 
       - name: Get changes
         id: changelog
