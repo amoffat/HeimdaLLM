@@ -1,11 +1,12 @@
-from typing import Callable, Sequence
+from typing import TYPE_CHECKING, Callable, Sequence
 
 import structlog
 from lark import Lark, ParseTree
 
-from heimdallm.constraints import ConstraintValidator
-from heimdallm.envelope import PromptEnvelope
-from heimdallm.llm import LLMIntegration
+if TYPE_CHECKING:
+    import heimdallm.constraints
+    import heimdallm.envelope
+    from heimdallm.llm import LLMIntegration
 
 LOG = structlog.get_logger(__name__)
 
@@ -33,11 +34,11 @@ class Bifrost:
     def __init__(
         self,
         *,
-        llm: LLMIntegration,
-        prompt_envelope: PromptEnvelope,
+        llm: "LLMIntegration",
+        prompt_envelope: "heimdallm.envelope.PromptEnvelope",
         grammar: Lark,
         tree_producer: Callable[[Lark, str], ParseTree],
-        constraint_validators: Sequence[ConstraintValidator],
+        constraint_validators: Sequence["heimdallm.constraints.ConstraintValidator"],
     ):
         self.llm = llm
         self.prompt_envelope = prompt_envelope
@@ -135,9 +136,9 @@ class Bifrost:
     def _try_validator(
         self,
         log: structlog.BoundLogger,
-        validator: ConstraintValidator,
+        validator: "heimdallm.constraints.ConstraintValidator",
         autofix: bool,
-        untrusted_llm_input: str,
+        untrusted_llm_output: str,
         tree: ParseTree,
     ) -> str:
         """Attempt validation with an individual constraint validator."""
@@ -145,7 +146,7 @@ class Bifrost:
         if autofix:
             log.info("Autofixing parse tree and reconstructing the input")
             try:
-                untrusted_llm_output = validator.fix(self.grammar, tree)
+                untrusted_llm_output = validator.fix(self, self.grammar, tree)
             except Exception as e:
                 log.exception("Autofix failed")
                 raise e
@@ -159,7 +160,7 @@ class Bifrost:
 
         # throws a bifrost-specific exception
         log.info("Validating parse tree")
-        validator.validate(untrusted_llm_input, tree)
+        validator.validate(self, untrusted_llm_output, tree)
         log.info("Validation succeeded")
 
         return untrusted_llm_output

@@ -5,16 +5,12 @@ HeimdaLLM
    the shimmering path connecting the realms.
 
 .. image:: https://raw.githubusercontent.com/amoffat/HeimdaLLM/main/docs/source/images/heimdall.png
-   :target: https://docs.heimdallm.ai
+   :target: https://github.com/amoffat/HeimdaLLM
    :alt: Heimdall guarding the Bifrost
 
 .. image:: https://github.com/amoffat/HeimdaLLM/actions/workflows/main.yml/badge.svg?branch=main
    :target: https://github.com/amoffat/HeimdaLLM/actions
    :alt: Build status
-
-.. .. image:: https://img.shields.io/github/stars/amoffat/HeimdaLLM.svg?style=social&label=Star
-..    :target: https://github.com/amoffat/HeimdaLLM
-..    :alt: GitHub Repo stars
 
 .. image:: https://img.shields.io/pypi/v/heimdallm
    :target: https://pypi.org/project/heimdallm/
@@ -32,6 +28,10 @@ HeimdaLLM
    :target: https://coveralls.io/github/amoffat/HeimdaLLM?branch=dev
    :alt: Coverage Status
 
+.. image:: https://img.shields.io/github/stars/amoffat/HeimdaLLM.svg?style=social&label=Star
+   :target: https://github.com/amoffat/HeimdaLLM
+   :alt: GitHub Repo stars
+
 .. ATTENTION::
 
    These docs are under active development. See an issue? Report it `here.
@@ -45,7 +45,7 @@ HeimdaLLM safely bridges the gap between untrusted human input and trusted
 machine-readable output by augmenting :term:`LLMs <LLM>` with a robust validation
 framework. This enables you to :term:`externalize <externalizing>` LLM technology to
 your users, so that you can do things like execute trusted SQL queries from their
-untrusted output.
+untrusted input.
 
 Imagine giving your users natural language access to their data in your database,
 without having to worry about dangerous queries.

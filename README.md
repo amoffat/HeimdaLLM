@@ -3,7 +3,7 @@
 > Heimdall, the watchman of the gods, dwelt at its entrance, where he guarded Bifrost,
 > the shimmering path connecting the realms.
 
-[![Heimdall](https://raw.githubusercontent.com/amoffat/HeimdaLLM/main/docs/source/images/heimdall.png)](https://docs.heimdallm.ai)
+[![Heimdall](https://raw.githubusercontent.com/amoffat/HeimdaLLM/main/docs/source/images/heimdall.png)](https://heimdallm.ai)
 [![Build status](https://github.com/amoffat/HeimdaLLM/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/amoffat/HeimdaLLM/actions)
 [![Docs](https://img.shields.io/badge/Documentation-purple.svg)](https://docs.heimdallm.ai)
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/amoffat)](https://github.com/sponsors/amoffat)
@@ -99,9 +99,11 @@ the mitigations.
 
 # 📚 Database support
 
-Currently, sqlite's flavor of SQL is supported. There is active development for the
-other top relational SQL databases. To help me prioritize, please vote on which database
-you would like to see supported:
+- Sqlite
+- MySQL
+
+There is active development for the other top relational SQL databases. To help me
+prioritize, please vote on which database you would like to see supported:
 
 [![Static Badge](https://img.shields.io/badge/Vote!-here-limegreen)](https://github.com/amoffat/HeimdaLLM/discussions/2)
 

@@ -1,10 +1,11 @@
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 import lark
 
 from heimdallm.support.github import make_ambiguous_parse_issue
 
-from .utils import FqColumn, JoinCondition, RequiredConstraint
+if TYPE_CHECKING:
+    from .common import FqColumn, JoinCondition, RequiredConstraint
 
 
 class BaseException(Exception):
@@ -93,7 +94,7 @@ class IllegalSelectedColumn(BaseException):
     it was not automatically removed because :doc:`/reconstruction` is disabled.
 
     :param column: The column that was selected. This is not a :class:`FqColumn
-        <heimdallm.bifrosts.sql.utils.FqColumn>` because we may not always have a table
+        <heimdallm.bifrosts.sql.common.FqColumn>` because we may not always have a table
         name.
     """
 
@@ -111,14 +112,14 @@ class IllegalConditionColumn(BaseException):
     :param column: The column that was used in the condition.
     """
 
-    def __init__(self, *, column: FqColumn):
+    def __init__(self, *, column: "FqColumn"):
         message = f"Column `{column}` is not allowed in WHERE"
         super().__init__(message)
         self.column = column
 
 
 class MissingRequiredConstraint(BaseException):
-    def __init__(self, *, column: FqColumn, placeholder: str):
+    def __init__(self, *, column: "FqColumn", placeholder: str):
         message = f"Missing required constraint `{column}`=:{placeholder}"
         super().__init__(message)
         self.column = column
@@ -126,7 +127,7 @@ class MissingRequiredConstraint(BaseException):
 
 
 class MissingRequiredIdentity(BaseException):
-    def __init__(self, *, identities: set[RequiredConstraint]):
+    def __init__(self, *, identities: set["RequiredConstraint"]):
         message = f"Missing one required identities: {identities!r}"
         super().__init__(message)
         self.identities = identities
@@ -139,7 +140,7 @@ class IllegalJoinTable(BaseException):
     :param join: The join spec that was not allowed.
     """
 
-    def __init__(self, *, join: JoinCondition):
+    def __init__(self, *, join: "JoinCondition"):
         message = f"Join condition {join} is not allowed"
         super().__init__(message)
         self.join = join
