@@ -59,6 +59,33 @@ def add_limit(limit_placeholder, max_limit: int):
         limit_placeholder.children.append(limit_tree)
 
 
+def qualify_column(table: str, column: str) -> Tree:
+    tree = Tree(
+        "fq_column",
+        [
+            Tree(
+                Token("RULE", "table_name"),
+                [
+                    Tree(
+                        Token("RULE", "unquoted_identifier"),
+                        [Token("IDENTIFIER", table)],
+                    )
+                ],
+            ),
+            Tree(
+                Token("RULE", "column_name"),
+                [
+                    Tree(
+                        Token("RULE", "unquoted_identifier"),
+                        [Token("IDENTIFIER", column)],
+                    )
+                ],
+            ),
+        ],
+    )
+    return tree
+
+
 class ReconstructTransformer(_Transformer):
     """makes some alterations to a query if it does not meet some basic validation
     constraints, but could with those alterations. currently, these are just the
@@ -101,6 +128,12 @@ class ReconstructTransformer(_Transformer):
         if not children:
             raise exc.IllegalSelectedColumn(column=self._last_discarded_column.name)
         return Tree("selected_columns", children)
+
+    def column_alias(self, children: list[Tree | Token]):
+        table = cast(str, self._collector._selected_table)
+        column = get_identifier(children[0], self._reserved_keywords)
+        tree = qualify_column(table, column)
+        return tree
 
     def selected_column(self, children: list[Tree | Token]):
         """ensures that every selected column is allowed"""

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.0 -
+
+- Autofix non-qualified column names
+
 ## 0.2.1 - 7/10/23
 
 - Automated Github releases

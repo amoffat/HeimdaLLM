@@ -17,9 +17,13 @@ class AliasCollector(Visitor):
         # name to the (table, column) tuple
         self._aliased_columns: dict[str, tuple[str | None, str | None]] = {}
         self._reserved_keywords = reserved_keywords
+        self._selected_table: str | None = None
 
     def _resolve_table(self, table):
         return self._aliased_tables.get(table, table)
+
+    def selected_table(self, node: Tree):
+        self._selected_table = get_identifier(node, self._reserved_keywords)
 
     # tables are aliased in the FROM clause of a SELECT statement, or when a
     # table is JOINed. it's here that we know the authoritative table name and

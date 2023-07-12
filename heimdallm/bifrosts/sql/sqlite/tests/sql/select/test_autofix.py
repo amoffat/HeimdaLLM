@@ -154,3 +154,20 @@ LIMIT 10;
 """
 
     bifrost.traverse(query, autofix=False)
+
+
+@dialects()
+def test_unqualified_columns(Bifrost: Type[Bifrost]):
+    """an unqualified column should be qualified with the table name from the select"""
+    bifrost = Bifrost.mocked(PermissiveConstraints())
+
+    query = """
+SELECT salary
+FROM salaries
+WHERE emp_no = :employee_id
+AND from_date <= DATE(:timestamp)
+AND to_date >= DATE(:timestamp)
+"""
+
+    trusted_query = bifrost.traverse(query)
+    assert "salaries.salary" in trusted_query
