@@ -4,6 +4,7 @@
 
 - Autofix non-qualified column names
 - Bugfix where aliases composed of multiple columns would not correctly resolve
+- Allow customization of SQL dialect placeholder format
 
 ## 0.2.1 - 7/10/23
 
