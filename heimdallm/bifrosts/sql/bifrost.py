@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Callable, Sequence, Union
+from typing import TYPE_CHECKING, Callable, Sequence, Union, cast
 
 import lark
-from lark import Lark, ParseTree
+from lark import Lark, ParseTree, Token
 from lark.exceptions import VisitError
 
 from heimdallm.bifrost import Bifrost as _BaseBifrost
@@ -116,6 +116,40 @@ class Bifrost(_BaseBifrost, ABC):
             return final_tree
 
         return parse
+
+    @classmethod
+    def placeholder(cls, name: str) -> str:
+        """
+        For a given database and library, produce a placeholder for a named parameter.
+        This is needed because different databases and libraries have different formats
+        for their placeholder params. For example, sqlite is ``:param`` while mysql is
+        ``%(param)s``.
+
+        :param name: The name of the placeholder to be replaced.
+        :return: The db-specific placeholder.
+        :meta private
+        """
+        return ":" + name
+
+    def post_transform(self, trusted_llm_output: str, tree: ParseTree) -> str:
+        placeholders = list(tree.find_data("placeholder"))
+
+        # reverse=True so we work backwords so we don't mess up the indices
+        placeholders.sort(key=lambda x: x.meta.start_pos, reverse=True)
+
+        def replace_slice(input_str, start, end, replacement):
+            return input_str[:start] + replacement + input_str[end:]
+
+        for placeholder in placeholders:
+            m = placeholder.meta
+            name = cast(Token, placeholder.children[0]).value
+            trusted_llm_output = replace_slice(
+                trusted_llm_output,
+                m.start_pos,
+                m.end_pos,
+                self.placeholder(name),
+            )
+        return trusted_llm_output
 
     @staticmethod
     @abstractmethod

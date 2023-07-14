@@ -43,6 +43,7 @@ class Bifrost(_SQLBifrost):
             grammar = Lark(
                 ambiguity="explicit",
                 maybe_placeholders=False,
+                propagate_positions=True,
                 grammar=h,
             )
         return grammar

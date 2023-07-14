@@ -67,7 +67,7 @@ def test_select_function_alias(Bifrost: Type[Bifrost]):
     """
 
     with pytest.raises(exc.UnqualifiedColumn) as e:
-        bifrost.traverse(query)
+        bifrost.traverse(query, autofix=False)
     assert e.value.column == "col"
 
 

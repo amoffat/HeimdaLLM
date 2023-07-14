@@ -3,6 +3,7 @@
 ## 0.3.0 -
 
 - Autofix non-qualified column names
+- Bugfix where aliases composed of multiple columns would not correctly resolve
 
 ## 0.2.1 - 7/10/23
 

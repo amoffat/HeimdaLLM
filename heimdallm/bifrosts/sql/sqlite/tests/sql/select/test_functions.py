@@ -3,6 +3,7 @@ import pytest
 from heimdallm.bifrosts.sql import exc
 from heimdallm.bifrosts.sql.sqlite.select.bifrost import Bifrost
 
+from ..utils import dialects
 from .utils import PermissiveConstraints
 
 
@@ -11,7 +12,8 @@ class MyConstraints(PermissiveConstraints):
         return fn != "nope"
 
 
-def test_disallowed_in_select():
+@dialects()
+def test_disallowed_in_select(Bifrost: Bifrost):
     bifrost = Bifrost.mocked(MyConstraints())
 
     query = "select yep(t1.col) from t1"
@@ -28,7 +30,8 @@ def test_disallowed_in_select():
     assert e.value.function == "nope"
 
 
-def test_disallowed_in_where():
+@dialects()
+def test_disallowed_in_where(Bifrost: Bifrost):
     bifrost = Bifrost.mocked(MyConstraints())
 
     query = "select t1.col from t1 where yep(t1.col)=1"
@@ -40,7 +43,8 @@ def test_disallowed_in_where():
     assert e.value.function == "nope"
 
 
-def test_disallowed_in_join():
+@dialects()
+def test_disallowed_in_join(Bifrost: Bifrost):
     bifrost = Bifrost.mocked(MyConstraints())
 
     query = "select t1.col from t1 join t2 on t1.t2_id=t2.id and t2.col=nope()"
@@ -49,7 +53,8 @@ def test_disallowed_in_join():
     assert e.value.function == "nope"
 
 
-def test_case_insensitive():
+@dialects()
+def test_case_insensitive(Bifrost: Bifrost):
     bifrost = Bifrost.mocked(MyConstraints())
 
     query = "select YEP(t1.col) from t1"

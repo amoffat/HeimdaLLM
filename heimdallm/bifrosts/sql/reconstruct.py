@@ -59,7 +59,7 @@ def add_limit(limit_placeholder, max_limit: int):
         limit_placeholder.children.append(limit_tree)
 
 
-def qualify_column(table: str, column: str) -> Tree:
+def qualify_column(fq_column: FqColumn) -> Tree:
     tree = Tree(
         "fq_column",
         [
@@ -68,7 +68,7 @@ def qualify_column(table: str, column: str) -> Tree:
                 [
                     Tree(
                         Token("RULE", "unquoted_identifier"),
-                        [Token("IDENTIFIER", table)],
+                        [Token("IDENTIFIER", fq_column.table)],
                     )
                 ],
             ),
@@ -77,7 +77,7 @@ def qualify_column(table: str, column: str) -> Tree:
                 [
                     Tree(
                         Token("RULE", "unquoted_identifier"),
-                        [Token("IDENTIFIER", column)],
+                        [Token("IDENTIFIER", fq_column.column)],
                     )
                 ],
             ),
@@ -130,9 +130,40 @@ class ReconstructTransformer(_Transformer):
         return Tree("selected_columns", children)
 
     def column_alias(self, children: list[Tree | Token]):
-        table = cast(str, self._collector._selected_table)
-        column = get_identifier(children[0], self._reserved_keywords)
-        tree = qualify_column(table, column)
+        alias_name = get_identifier(children[0], self._reserved_keywords)
+
+        # if we can't find the actual table where this column alias comes from, assume
+        # the selected table.
+        fq_columns = self._collector._aliased_columns[alias_name]
+
+        # None means the alias is not based on any column (it's an expression of some
+        # kind), so we leave this node alone
+        if fq_columns is None:
+            tree = Tree("column_alias", children)
+
+        # if we haven't found any columns associated with this alias, it means that the
+        # query is implicitly using the selected table, so we can fully qualify it based
+        # on that information.
+        elif len(fq_columns) == 0:
+            tree = qualify_column(
+                FqColumn(
+                    table=cast(str, self._collector._selected_table),
+                    column=alias_name,
+                )
+            )
+
+        # if there's only one fq column associated with this alias, then we know it's
+        # not a composite alias, so we can fully qualify it.
+        elif len(fq_columns) == 1:
+            tree = qualify_column(next(iter(fq_columns)))
+
+        # if it's a composite alias, we can't fully qualify it, so we leave it alone.
+        elif len(fq_columns) > 1:
+            tree = Tree("column_alias", children)
+
+        else:
+            assert False, "Unreachable"
+
         return tree
 
     def selected_column(self, children: list[Tree | Token]):

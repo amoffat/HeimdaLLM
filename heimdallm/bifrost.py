@@ -105,7 +105,7 @@ class Bifrost:
                 validator=validator.__class__.__name__,
             )
             try:
-                trusted_llm_output = self._try_validator(
+                trusted_llm_output, tree = self._try_validator(
                     log,
                     validator,
                     autofix,
@@ -131,6 +131,8 @@ class Bifrost:
         log = log.bind(trusted=untrusted_llm_output)
         log.info("Validation succeeded")
 
+        # trusted_llm_output = self.post_transform(trusted_llm_output, tree)
+
         return trusted_llm_output
 
     def _try_validator(
@@ -140,7 +142,7 @@ class Bifrost:
         autofix: bool,
         untrusted_llm_output: str,
         tree: ParseTree,
-    ) -> str:
+    ) -> tuple[str, ParseTree]:
         """Attempt validation with an individual constraint validator."""
 
         if autofix:
@@ -163,7 +165,22 @@ class Bifrost:
         validator.validate(self, untrusted_llm_output, tree)
         log.info("Validation succeeded")
 
-        return untrusted_llm_output
+        return untrusted_llm_output, tree
+
+    def post_transform(self, trusted_llm_output: str, tree: ParseTree) -> str:
+        """
+        A hook for subclasses to perform post-transformations on the trusted output.
+        This is useful for making adjustments that cannot be made during
+        :doc:`reconstruction` because they would produce an output that is incompatible
+        with the grammar.
+
+        For example, replacing the generic ``:placeholder`` with the SQL-specific
+        placeholder fields (e.g. ``%(placeholder)s``) cannot be done in reconstruction
+        because it would conflict with the grammar. It needs to be done in a separate
+        step, after the input has been reconstruction and the constraint validators have
+        been satisfied.
+        """
+        return trusted_llm_output
 
     def parse(self, untrusted_llm_output: str) -> ParseTree:
         """Converts the :term:`LLM` output into a parse tree. Override it in a subclass

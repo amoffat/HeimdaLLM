@@ -42,6 +42,7 @@ class Bifrost(_SQLBifrost):
             grammar = Lark(
                 ambiguity="explicit",
                 maybe_placeholders=False,
+                propagate_positions=True,
                 grammar=h,
             )
         return grammar
@@ -49,3 +50,7 @@ class Bifrost(_SQLBifrost):
     @classmethod
     def reserved_keywords(self) -> set[str]:
         return presets.reserved_keywords
+
+    @classmethod
+    def placeholder(cls, name: str) -> str:
+        return f"%({name})s"

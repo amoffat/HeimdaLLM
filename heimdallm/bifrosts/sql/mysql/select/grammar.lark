@@ -37,7 +37,7 @@ selected_columns : selected_column ("," selected_column)*
 // a selected column can be a value, not just a column name. a value encapsulates
 // fully qualified column names, and also functions that use column names
 selected_column : aliased_column | COUNT_STAR | value | ALL_COLUMNS
-aliased_column : (value | COUNT_STAR) as column_alias
+aliased_column : (value | COUNT_STAR) as generic_alias
 // this is a "fully-qualified" column name, meaning it just has a table name prefixing
 // it. keep in mind that the table may be an alias.
 fq_column : table_name "." column_name
@@ -129,7 +129,6 @@ function_name : /[a-zA-Z_]+/
 
 // a placeholder for a value passed in as a parameter at query execution time
 placeholder: ":" IDENTIFIER
-
 
 SELECT : "select"i
 FROM : "from"i

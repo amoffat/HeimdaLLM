@@ -4,14 +4,16 @@ from heimdallm.bifrosts.sql import exc
 from heimdallm.bifrosts.sql.common import JoinCondition
 from heimdallm.bifrosts.sql.sqlite.select.bifrost import Bifrost
 
+from ..utils import dialects
 from .utils import CustomerConstraints, PermissiveConstraints
 
 
-def test_required_constraint_in_join():
+@dialects()
+def test_required_constraint_in_join(Bifrost: Bifrost):
     """sometimes LLMs will put a required constraint in a join clause, not a
     where clause. ensure that we allow this to satisfy a required constraint."""
     query = """
-    SELECT a.Name AS ArtistName, i.InvoiceDate AS PurchaseDate
+    SELECT a.`Name` AS ArtistName, i.InvoiceDate AS PurchaseDate
 FROM Artist a
 JOIN Album al ON a.ArtistId = al.ArtistId
 JOIN Track t ON al.AlbumId = t.AlbumId
@@ -25,7 +27,7 @@ LIMIT 20;
 
     # same query, minus the required join constraint
     query = """
-SELECT a.Name AS ArtistName, i.InvoiceDate AS PurchaseDate
+SELECT a.`Name` AS ArtistName, i.InvoiceDate AS PurchaseDate
 FROM Artist a
 JOIN Album al ON a.ArtistId = al.ArtistId
 JOIN Track t ON al.AlbumId = t.AlbumId
@@ -39,7 +41,8 @@ LIMIT 20;
         bifrost.traverse(query)
 
 
-def test_join_allowlist():
+@dialects()
+def test_join_allowlist(Bifrost: Bifrost):
     """ensure that we can discriminate on joins"""
 
     class JoinAllowlist(PermissiveConstraints):
@@ -55,7 +58,7 @@ def test_join_allowlist():
 
     # allowed join
     query = """
-select s.name
+select s.`name`
 from subscriber s
 join provider p on s.provider_id = p.id
     """
@@ -63,7 +66,7 @@ join provider p on s.provider_id = p.id
 
     # disallowed join
     query = """
-select s.name
+select s.`name`
 from subscriber s
 join preferences p on s.subscriber_id = s.id
     """
@@ -71,11 +74,12 @@ join preferences p on s.subscriber_id = s.id
         bifrost.traverse(query)
 
 
-def test_unconnected_select():
+@dialects()
+def test_unconnected_select(Bifrost: Bifrost):
     """a selected table must always be connected to other tables, if other tables are
     joined in the query"""
     query = """
-select s.name
+select s.`name`
 from subscriber s
 join provider p on other_table.provider_id = p.id
 """

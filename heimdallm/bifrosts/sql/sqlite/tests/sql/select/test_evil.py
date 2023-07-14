@@ -4,10 +4,12 @@ from heimdallm.bifrosts.sql import exc
 from heimdallm.bifrosts.sql.common import FqColumn
 from heimdallm.bifrosts.sql.sqlite.select.bifrost import Bifrost
 
+from ..utils import dialects
 from .utils import PermissiveConstraints
 
 
-def test_no_outer_join():
+@dialects()
+def test_no_outer_join(Bifrost: Bifrost):
     """outer joins should not be allowed, because they can be used to return
     rows that are outside of the join constraint"""
     query = """
@@ -22,7 +24,8 @@ left join t2 on t1.jid = t2.jid
     assert e.value.join_type == "OUTER_JOIN"
 
 
-def test_no_select_star():
+@dialects()
+def test_no_select_star(Bifrost: Bifrost):
     query = "select * from t1"
 
     class MyConstraints(PermissiveConstraints):
@@ -36,7 +39,8 @@ def test_no_select_star():
     assert e.value.column == "*"
 
 
-def test_allow_count_star():
+@dialects()
+def test_allow_count_star(Bifrost: Bifrost):
     class MyConstraints(PermissiveConstraints):
         def select_column_allowed(self, column: FqColumn) -> bool:
             # count(*) doesn't count as a column that needs to be allowlisted
@@ -51,7 +55,8 @@ def test_allow_count_star():
     bifrost.traverse(query)
 
 
-def test_keyword_table_alias():
+@dialects("sqlite")
+def test_keyword_table_alias(Bifrost: Bifrost):
     query = """
 select t1.secret
 from t1 group
@@ -70,7 +75,8 @@ from t1 "group"
     bifrost.traverse(query)
 
 
-def test_keyword_column_alias():
+@dialects("sqlite")
+def test_keyword_column_alias(Bifrost: Bifrost):
     query = """
 select t1.secret group
 from t1
@@ -89,7 +95,8 @@ from t1
     bifrost.traverse(query)
 
 
-def test_escaped_single_quote():
+@dialects("sqlite")
+def test_escaped_single_quote(Bifrost: Bifrost):
     query = """
 select t1.col
 from t1

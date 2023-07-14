@@ -6,6 +6,7 @@ from heimdallm.bifrosts.sql import exc
 from heimdallm.bifrosts.sql.common import RequiredConstraint
 from heimdallm.bifrosts.sql.sqlite.select.bifrost import Bifrost
 
+from ..utils import dialects
 from .utils import PermissiveConstraints
 
 
@@ -14,7 +15,8 @@ class MyConstraints(PermissiveConstraints):
         return [RequiredConstraint(column="t1.email", placeholder="email")]
 
 
-def test_required_constraint():
+@dialects()
+def test_required_constraint(Bifrost: Bifrost):
     bifrost = Bifrost.mocked(MyConstraints())
 
     query = """
@@ -50,7 +52,8 @@ def test_required_constraint():
     bifrost.traverse(query)
 
 
-def test_required_constraint_alias():
+@dialects()
+def test_required_constraint_alias(Bifrost: Bifrost):
     bifrost = Bifrost.mocked(MyConstraints())
 
     query = """

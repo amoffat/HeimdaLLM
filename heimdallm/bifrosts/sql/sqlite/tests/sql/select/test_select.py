@@ -32,12 +32,12 @@ def test_unqualified_columns():
 
     bifrost = Bifrost.mocked(PermissiveConstraints())
     with pytest.raises(exc.UnqualifiedColumn) as e:
-        bifrost.traverse(query)
+        bifrost.traverse(query, autofix=False)
     assert e.value.column == "col"
 
 
 @dialects()
-def test_unqualified_where_column(Bifrost: Type[Bifrost]):
+def test_unqualified_where_columns(Bifrost: Type[Bifrost]):
     """a column alias in the where class is valid, as long as the alias points to an
     actual aliased column. if it doesn't, we consider it unqualified."""
     query = """
@@ -50,7 +50,7 @@ LIMIT 5;
 
     bifrost = Bifrost.mocked(PermissiveConstraints())
     with pytest.raises(exc.UnqualifiedColumn) as e:
-        bifrost.traverse(query)
+        bifrost.traverse(query, autofix=False)
     assert e.value.column == "customer_id"
 
 
@@ -137,7 +137,7 @@ def test_required_constraint(Bifrost: Type[Bifrost]):
     # impossible for us to trace back to the original table
     query = "select t1.col from t1 as aliased where id=:id"
     with pytest.raises(exc.UnqualifiedColumn):
-        bifrost.traverse(query)
+        bifrost.traverse(query, autofix=False)
 
 
 @dialects()
@@ -178,7 +178,7 @@ def test_select_expr(Bifrost: Type[Bifrost], query):
 
 
 @dialects()
-def test_conflicting_validations(Bifrost: Type[Bifrost]):
+def test_conflicting_validation(Bifrost: Type[Bifrost]):
     query = "select t1.col from t1"
 
     class MyConstraints(PermissiveConstraints):

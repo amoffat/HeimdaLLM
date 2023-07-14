@@ -4,10 +4,12 @@ from heimdallm.bifrosts.sql import exc
 from heimdallm.bifrosts.sql.common import RequiredConstraint
 from heimdallm.bifrosts.sql.sqlite.select.bifrost import Bifrost
 
+from ..utils import dialects
 from .utils import CustomerConstraints
 
 
-def test_required_identity():
+@dialects()
+def test_required_identity(Bifrost: Bifrost):
     bifrost = Bifrost.mocked(CustomerConstraints())
 
     query = """select Customer.CustomerId from Customer"""
@@ -34,13 +36,14 @@ def test_required_identity():
     bifrost.traverse(query)
 
 
-def test_where_circumvent_with_precedence():
+@dialects()
+def test_where_circumvent_with_precedence(Bifrost: Bifrost):
     """check that we cannot pay lip service to a required condition by
     putting it in an "OR" clause that would never evaluate to true."""
 
     # this query uses parentheses to ensure precedence
     query = """
-SELECT Track.Name
+SELECT Track.`Name`
 FROM Track
 INNER JOIN InvoiceLine ON Track.TrackId = InvoiceLine.TrackId
 INNER JOIN Invoice ON InvoiceLine.InvoiceId = Invoice.InvoiceId
@@ -60,11 +63,12 @@ LIMIT 20;
         bifrost.traverse(query)
 
 
-def test_where_no_circumvent_and_very_nested():
+@dialects()
+def test_where_no_circumvent_and_very_nested(Bifrost: Bifrost):
     """a query with a very nested where clause, but does not try to circumvent
     the required constraint"""
     query = """
-SELECT Track.Name
+SELECT Track.`Name`
 FROM Track
 INNER JOIN InvoiceLine ON Track.TrackId = InvoiceLine.TrackId
 INNER JOIN Invoice ON InvoiceLine.InvoiceId = Invoice.InvoiceId
@@ -89,13 +93,14 @@ WHERE
     bifrost.traverse(query)
 
 
-def test_top_level_where_circumvention():
+@dialects()
+def test_top_level_where_circumvention(Bifrost: Bifrost):
     """checks that we cannot circumvent a required constraint by specifying it
     but making it optional with an OR clause."""
 
     # no circumvention
     query = """
-SELECT Track.Name
+SELECT Track.`Name`
 FROM Track
 INNER JOIN InvoiceLine ON Track.TrackId = InvoiceLine.TrackId
 INNER JOIN Invoice ON InvoiceLine.InvoiceId = Invoice.InvoiceId
@@ -111,7 +116,7 @@ WHERE
 
     # same query, but with the required constraint circumvented with "OR"
     query = """
-SELECT Track.Name
+SELECT Track.`Name`
 FROM Track
 INNER JOIN InvoiceLine ON Track.TrackId = InvoiceLine.TrackId
 INNER JOIN Invoice ON InvoiceLine.InvoiceId = Invoice.InvoiceId
@@ -125,7 +130,8 @@ WHERE
         bifrost.traverse(query)
 
 
-def test_where_ambiguity():
+@dialects()
+def test_where_ambiguity(Bifrost: Bifrost):
     query = """
 SELECT track.id
 FROM track
