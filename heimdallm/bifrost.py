@@ -131,7 +131,7 @@ class Bifrost:
         log = log.bind(trusted=untrusted_llm_output)
         log.info("Validation succeeded")
 
-        # trusted_llm_output = self.post_transform(trusted_llm_output, tree)
+        trusted_llm_output = self.post_transform(trusted_llm_output, tree)
 
         return trusted_llm_output
 
@@ -171,7 +171,7 @@ class Bifrost:
         """
         A hook for subclasses to perform post-transformations on the trusted output.
         This is useful for making adjustments that cannot be made during
-        :doc:`reconstruction` because they would produce an output that is incompatible
+        :doc:`/reconstruction` because they would produce an output that is incompatible
         with the grammar.
 
         For example, replacing the generic ``:placeholder`` with the SQL-specific
