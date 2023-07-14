@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.0 -
+## 0.3.0 - 7/14/23
 
 - Autofix non-qualified column names
 - Bugfix where aliases composed of multiple columns would not correctly resolve
