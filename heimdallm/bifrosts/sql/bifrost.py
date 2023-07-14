@@ -127,7 +127,7 @@ class Bifrost(_BaseBifrost, ABC):
 
         :param name: The name of the placeholder to be replaced.
         :return: The db-specific placeholder.
-        :meta private
+        :meta private:
         """
         return ":" + name
 
