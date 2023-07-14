@@ -60,6 +60,7 @@ def add_limit(limit_placeholder, max_limit: int):
 
 
 def qualify_column(fq_column: FqColumn) -> Tree:
+    """Replaces an alias node with a fully qualified column node."""
     tree = Tree(
         "fq_column",
         [

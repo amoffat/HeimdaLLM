@@ -33,6 +33,7 @@ def is_count_function(node: Tree | Token) -> bool:
     aggregate functions in the SELECT clause, because they don't reveal extra
     information.
     """
+    # count(*) or count(1)
     if isinstance(node, Token) and node.type == "COUNT_STAR":
         return True
 
@@ -40,6 +41,7 @@ def is_count_function(node: Tree | Token) -> bool:
         if node.data == "aliased_column":
             node = node.children[0]
 
+    # count(column) or count(some_other_expression)
     if isinstance(node, Tree) and node.data == "function":
         fn_name = cast(Token, node.children[0].children[0]).value.lower()
         if fn_name == "count":

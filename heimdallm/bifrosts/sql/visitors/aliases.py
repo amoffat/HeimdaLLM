@@ -22,8 +22,8 @@ class AliasCollector(Visitor):
         # collection is because a single alias can be a composite alias consisting of
         # multiple columns, for example, ``(a + b) as c``.
         #
-        # a None value means that the alias has no associated columns, which can happen
-        # for aliases based on an expression.
+        # a None value means that the alias cannot have any associated columns, which
+        # can happen for aliases based on an expression, and not columns.
         self._aliased_columns: dict[str, set[FqColumn] | None] = dd(set)
         self._reserved_keywords = reserved_keywords
         self._selected_table: str | None = None
