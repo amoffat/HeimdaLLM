@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 _THIS_DIR = Path(__file__).parent
-_REPO_ROOT = _THIS_DIR.parent.parent.parent.parent.parent
+_REPO_ROOT = _THIS_DIR.parent.parent.parent.parent
 _DB_FILE = _REPO_ROOT / "notebooks" / "sakila.sqlite3"
 
 

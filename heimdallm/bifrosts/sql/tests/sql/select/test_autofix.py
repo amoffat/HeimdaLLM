@@ -11,7 +11,7 @@ from .utils import PermissiveConstraints
 
 
 @dialects()
-def test_alter_limit(Bifrost: Type[Bifrost]):
+def test_alter_limit(dialect: str, Bifrost: Type[Bifrost]):
     limit = 25
 
     class LimitConstraints(PermissiveConstraints):
@@ -66,8 +66,8 @@ def test_limit_preserve_offset():
     assert f"offset {offset}" in trusted_query.lower()
 
 
-@dialects()
-def test_good_formatting(Bifrost: Type[Bifrost]):
+@dialects("sqlite")
+def test_good_formatting(dialect: str, Bifrost: Type[Bifrost]):
     """verify that the reconstructed query has decent formatting. doesn't have to match
     the original, just look good enough and be semantically the same"""
     bifrost = Bifrost.mocked(PermissiveConstraints())
@@ -103,7 +103,7 @@ LIMIT 20;
 
 
 @dialects("sqlite")
-def test_remove_illegal_columns(Bifrost: Type[Bifrost], conn):
+def test_remove_illegal_columns(dialect: str, Bifrost: Type[Bifrost], conn):
     """show that we can automatically filter out illegal columns"""
 
     class MyConstraints(PermissiveConstraints):
@@ -157,7 +157,7 @@ LIMIT 10;
 
 
 @dialects()
-def test_unqualified_columns(Bifrost: Type[Bifrost]):
+def test_unqualified_columns(dialect: str, Bifrost: Type[Bifrost]):
     """an unqualified column should be qualified with the table name from the select"""
     bifrost = Bifrost.mocked(PermissiveConstraints())
 

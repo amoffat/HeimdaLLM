@@ -1,4 +1,4 @@
-from typing import Sequence
+from typing import Sequence, Type
 
 import pytest
 
@@ -16,7 +16,7 @@ class MyConstraints(PermissiveConstraints):
 
 
 @dialects()
-def test_required_constraint(Bifrost: Bifrost):
+def test_required_constraint(dialect: str, Bifrost: Type[Bifrost]):
     bifrost = Bifrost.mocked(MyConstraints())
 
     query = """
@@ -53,7 +53,7 @@ def test_required_constraint(Bifrost: Bifrost):
 
 
 @dialects()
-def test_required_constraint_alias(Bifrost: Bifrost):
+def test_required_constraint_alias(dialect: str, Bifrost: Type[Bifrost]):
     bifrost = Bifrost.mocked(MyConstraints())
 
     query = """

@@ -1,3 +1,5 @@
+from typing import Type
+
 import pytest
 
 from heimdallm.bifrosts.sql import exc
@@ -9,7 +11,7 @@ from .utils import CustomerConstraints
 
 
 @dialects()
-def test_required_identity(Bifrost: Bifrost):
+def test_required_identity(dialect: str, Bifrost: Type[Bifrost]):
     bifrost = Bifrost.mocked(CustomerConstraints())
 
     query = """select Customer.CustomerId from Customer"""
@@ -37,7 +39,7 @@ def test_required_identity(Bifrost: Bifrost):
 
 
 @dialects()
-def test_where_circumvent_with_precedence(Bifrost: Bifrost):
+def test_where_circumvent_with_precedence(dialect: str, Bifrost: Type[Bifrost]):
     """check that we cannot pay lip service to a required condition by
     putting it in an "OR" clause that would never evaluate to true."""
 
@@ -64,7 +66,7 @@ LIMIT 20;
 
 
 @dialects()
-def test_where_no_circumvent_and_very_nested(Bifrost: Bifrost):
+def test_where_no_circumvent_and_very_nested(dialect: str, Bifrost: Type[Bifrost]):
     """a query with a very nested where clause, but does not try to circumvent
     the required constraint"""
     query = """
@@ -94,7 +96,7 @@ WHERE
 
 
 @dialects()
-def test_top_level_where_circumvention(Bifrost: Bifrost):
+def test_top_level_where_circumvention(dialect: str, Bifrost: Type[Bifrost]):
     """checks that we cannot circumvent a required constraint by specifying it
     but making it optional with an OR clause."""
 
@@ -131,7 +133,7 @@ WHERE
 
 
 @dialects()
-def test_where_ambiguity(Bifrost: Bifrost):
+def test_where_ambiguity(dialect: str, Bifrost: Type[Bifrost]):
     query = """
 SELECT track.id
 FROM track

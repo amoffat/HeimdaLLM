@@ -1,3 +1,5 @@
+from typing import Type
+
 import pytest
 
 from heimdallm.bifrosts.sql import exc
@@ -9,7 +11,7 @@ from .utils import CustomerConstraints, PermissiveConstraints
 
 
 @dialects()
-def test_required_constraint_in_join(Bifrost: Bifrost):
+def test_required_constraint_in_join(dialect: str, Bifrost: Type[Bifrost]):
     """sometimes LLMs will put a required constraint in a join clause, not a
     where clause. ensure that we allow this to satisfy a required constraint."""
     query = """
@@ -42,7 +44,7 @@ LIMIT 20;
 
 
 @dialects()
-def test_join_allowlist(Bifrost: Bifrost):
+def test_join_allowlist(dialect: str, Bifrost: Type[Bifrost]):
     """ensure that we can discriminate on joins"""
 
     class JoinAllowlist(PermissiveConstraints):
@@ -75,7 +77,7 @@ join preferences p on s.subscriber_id = s.id
 
 
 @dialects()
-def test_unconnected_select(Bifrost: Bifrost):
+def test_unconnected_select(dialect: str, Bifrost: Type[Bifrost]):
     """a selected table must always be connected to other tables, if other tables are
     joined in the query"""
     query = """

@@ -1,3 +1,5 @@
+from typing import Type
+
 import pytest
 
 from heimdallm.bifrosts.sql import exc
@@ -13,7 +15,7 @@ class MyConstraints(PermissiveConstraints):
 
 
 @dialects()
-def test_disallowed_in_select(Bifrost: Bifrost):
+def test_disallowed_in_select(dialect: str, Bifrost: Type[Bifrost]):
     bifrost = Bifrost.mocked(MyConstraints())
 
     query = "select yep(t1.col) from t1"
@@ -31,7 +33,7 @@ def test_disallowed_in_select(Bifrost: Bifrost):
 
 
 @dialects()
-def test_disallowed_in_where(Bifrost: Bifrost):
+def test_disallowed_in_where(dialect: str, Bifrost: Type[Bifrost]):
     bifrost = Bifrost.mocked(MyConstraints())
 
     query = "select t1.col from t1 where yep(t1.col)=1"
@@ -44,7 +46,7 @@ def test_disallowed_in_where(Bifrost: Bifrost):
 
 
 @dialects()
-def test_disallowed_in_join(Bifrost: Bifrost):
+def test_disallowed_in_join(dialect: str, Bifrost: Type[Bifrost]):
     bifrost = Bifrost.mocked(MyConstraints())
 
     query = "select t1.col from t1 join t2 on t1.t2_id=t2.id and t2.col=nope()"
@@ -54,7 +56,7 @@ def test_disallowed_in_join(Bifrost: Bifrost):
 
 
 @dialects()
-def test_case_insensitive(Bifrost: Bifrost):
+def test_case_insensitive(dialect: str, Bifrost: Type[Bifrost]):
     bifrost = Bifrost.mocked(MyConstraints())
 
     query = "select YEP(t1.col) from t1"

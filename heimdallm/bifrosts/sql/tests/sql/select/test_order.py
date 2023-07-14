@@ -1,3 +1,5 @@
+from typing import Type
+
 from heimdallm.bifrosts.sql.sqlite.select.bifrost import Bifrost
 
 from ..utils import dialects
@@ -5,7 +7,7 @@ from .utils import PermissiveConstraints
 
 
 @dialects()
-def test_order_by_count(Bifrost: Bifrost):
+def test_order_by_count(dialect: str, Bifrost: Type[Bifrost]):
     query = """
 SELECT c.customer_id, fc.category_id, category.`name`
 FROM customer c

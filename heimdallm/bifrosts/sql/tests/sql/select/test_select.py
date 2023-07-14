@@ -11,7 +11,7 @@ from .utils import PermissiveConstraints
 
 
 @dialects()
-def test_aliased_select_column(Bifrost: Type[Bifrost]):
+def test_aliased_select_column(dialect: str, Bifrost: Type[Bifrost]):
     """tests that we can select a column from a table that was aliased via a
     join"""
     query = """
@@ -37,7 +37,7 @@ def test_unqualified_columns():
 
 
 @dialects()
-def test_unqualified_where_columns(Bifrost: Type[Bifrost]):
+def test_unqualified_where_columns(dialect: str, Bifrost: Type[Bifrost]):
     """a column alias in the where class is valid, as long as the alias points to an
     actual aliased column. if it doesn't, we consider it unqualified."""
     query = """
@@ -64,7 +64,7 @@ LIMIT 5;
         'select t1.col from t1 join "t2" on t1.jid = "t2".jid',
     ),
 )
-def test_escapes(Bifrost: Type[Bifrost], query):
+def test_escapes(dialect: str, Bifrost: Type[Bifrost], query):
     class MyConstraints(PermissiveConstraints):
         def select_column_allowed(self, column: FqColumn):
             return column.name in {"t1.col"}
@@ -77,7 +77,7 @@ def test_escapes(Bifrost: Type[Bifrost], query):
 
 
 @dialects()
-def test_disallowed_select_column(Bifrost: Type[Bifrost]):
+def test_disallowed_select_column(dialect: str, Bifrost: Type[Bifrost]):
     """tests that our constraint validator works when trying to select a
     column"""
     query = "select t1.col from t1"
@@ -102,7 +102,7 @@ def test_disallowed_select_column(Bifrost: Type[Bifrost]):
 
 
 @dialects()
-def test_required_constraint(Bifrost: Type[Bifrost]):
+def test_required_constraint(dialect: str, Bifrost: Type[Bifrost]):
     """tests that our required constraint restricts the query correctly"""
 
     # missing constraint
@@ -148,7 +148,7 @@ def test_required_constraint(Bifrost: Type[Bifrost]):
         "select `` fro t1",  # just broken
     ),
 )
-def test_broken_query(Bifrost: Type[Bifrost], query):
+def test_broken_query(dialect: str, Bifrost: Type[Bifrost], query):
     """tests that we raise an exception when we cannot parse the query"""
 
     bifrost = Bifrost.mocked(PermissiveConstraints())
@@ -157,7 +157,7 @@ def test_broken_query(Bifrost: Type[Bifrost], query):
 
 
 @dialects()
-def test_select_column_arith(Bifrost: Type[Bifrost]):
+def test_select_column_arith(dialect: str, Bifrost: Type[Bifrost]):
     query = "select t1.col + 1 as plus_one from t1"
     bifrost = Bifrost.mocked(PermissiveConstraints())
     bifrost.traverse(query)
@@ -171,14 +171,14 @@ def test_select_column_arith(Bifrost: Type[Bifrost]):
         "select t1.id, (1 + 1) as two from t1",
     ),
 )
-def test_select_expr(Bifrost: Type[Bifrost], query):
+def test_select_expr(dialect: str, Bifrost: Type[Bifrost], query):
     """select a non-column expression"""
     bifrost = Bifrost.mocked(PermissiveConstraints())
     bifrost.traverse(query)
 
 
 @dialects()
-def test_conflicting_validation(Bifrost: Type[Bifrost]):
+def test_conflicting_validation(dialect: str, Bifrost: Type[Bifrost]):
     query = "select t1.col from t1"
 
     class MyConstraints(PermissiveConstraints):
@@ -193,7 +193,7 @@ def test_conflicting_validation(Bifrost: Type[Bifrost]):
 
 
 @dialects()
-def test_count_disallowed_column(Bifrost: Type[Bifrost]):
+def test_count_disallowed_column(dialect: str, Bifrost: Type[Bifrost]):
     """we're allowed to count a disallowed column"""
 
     class GeneralConstraints(PermissiveConstraints):
