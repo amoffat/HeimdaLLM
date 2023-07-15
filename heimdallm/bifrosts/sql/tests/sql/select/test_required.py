@@ -61,3 +61,14 @@ def test_required_constraint_alias(dialect: str, Bifrost: Type[Bifrost]):
     where email=:email
     """
     bifrost.traverse(query)
+
+
+@dialects()
+def test_backwards_placeholder(dialect: str, Bifrost: Type[Bifrost]):
+    bifrost = Bifrost.mocked(MyConstraints())
+
+    query = """
+    select t1.col, t1.email email from t1
+    where :email=t1.email
+    """
+    bifrost.traverse(query)

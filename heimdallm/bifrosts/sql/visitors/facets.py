@@ -213,7 +213,14 @@ class FacetCollector(Visitor):
     def _add_required_comparison(self, node: Tree):
         """takes a node representing a required comparison and adds it to the
         facets"""
-        maybe_fq_column_node, placeholder = node.children
+
+        # handle both a forwards (column = :placeholder) and backwards (:placeholder =
+        # column)
+        if list(node.find_data("lhs_req_comparison")):
+            maybe_fq_column_node, placeholder = node.children[0].children
+        else:
+            placeholder, maybe_fq_column_node = node.children[0].children
+
         placeholder_name = cast(Token, placeholder.children[0]).value
 
         if maybe_fq_column_node.data == "column_alias":

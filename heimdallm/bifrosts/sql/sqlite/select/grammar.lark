@@ -88,7 +88,9 @@ where_condition : \
 
 // a required comparison is a parameterized, equality-based comparison that
 // enforces a constraint on the returned rows.
-required_comparison.1 : (fq_column | column_alias) "=" placeholder
+required_comparison.1 : lhs_req_comparison | rhs_req_comparison
+lhs_req_comparison : (fq_column | column_alias) "=" placeholder
+rhs_req_comparison : placeholder "=" (fq_column | column_alias)
 relational_comparison : value comparison value
 comparison : \
     EQ

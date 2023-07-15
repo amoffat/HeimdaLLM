@@ -1,10 +1,11 @@
 # Changelog
 
-## 0.3.0 - 7/14/23
+## 0.3.0 - 7/15/23
 
 - Autofix non-qualified column names
 - Bugfix where aliases composed of multiple columns would not correctly resolve
 - Allow customization of SQL dialect placeholder format
+- Bugfix to allow forwards and backwards required conditions
 
 ## 0.2.1 - 7/10/23
 
