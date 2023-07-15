@@ -86,19 +86,7 @@ LIMIT 20;
 """
     trusted_query = bifrost.traverse(query)
 
-    correct = """
-SELECT f.title,f.rating,f.release_year
-FROM film as f
-INNER JOIN inventory as i on f.film_id=i.film_id
-INNER JOIN rental as r on i.inventory_id=r.inventory_id
-INNER JOIN customer as c on r.customer_id=c.customer_id
-WHERE c.customer_id=:customer_id
-AND(f.rating='R'
-OR f.rating='NC-17')
-AND f.release_year IS NOT NULL
-ORDER BY f.release_year DESC
-LIMIT 20;
-""".strip()
+    correct = """SELECT f.title,f.rating,f.release_year FROM film as f INNER JOIN inventory as i on f.film_id=i.film_id INNER JOIN rental as r on i.inventory_id=r.inventory_id INNER JOIN customer as c on r.customer_id=c.customer_id WHERE c.customer_id=:customer_id AND (f.rating='R' OR f.rating='NC-17') AND f.release_year IS NOT NULL ORDER BY f.release_year DESC LIMIT 20;"""  # noqa: E501
     assert correct == trusted_query
 
 

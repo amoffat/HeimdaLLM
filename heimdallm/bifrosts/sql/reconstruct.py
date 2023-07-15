@@ -1,4 +1,4 @@
-from typing import cast
+from typing import Generator, Iterable, cast
 
 from lark import Discard, Token
 from lark import Transformer as _Transformer
@@ -191,27 +191,12 @@ class ReconstructTransformer(_Transformer):
         return Tree("selected_column", children)
 
 
-def postproc(items):
-    """helps format our reconstructed query so it's not all on one line"""
-    for item in items:
-        if isinstance(item, Token):
-            if item.type in {
-                "FROM",
-                "GROUP_BY",
-                "HAVING",
-                "INNER_JOIN",
-                "LIMIT",
-                "OFFSET",
-                "ORDER_BY",
-                "WHERE",
-                "WHERE_TYPE",
-            }:
-                yield "\n"
-            else:
-                pass
+PostProcToken = Token | str
 
-        yield item
 
-        if isinstance(item, Token):
-            if item.type in {}:
-                yield " "
+def postproc(items: Iterable[PostProcToken]) -> Generator[PostProcToken, None, None]:
+    for token in items:
+        if token == "_WS":
+            yield " "
+            continue
+        yield token
