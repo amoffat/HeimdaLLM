@@ -65,3 +65,25 @@ will pass validation:
     Only selected columns are examined for reconstruction in this soft-validation pass.
     Other clauses of the query where columns are referenced, like the ``WHERE`` clause,
     are left alone until the hard-validation pass, where they could cause a failure.
+
+Fully-qualifying columns
+************************
+
+Despite efforts to convince the LLM to fully-qualify columns, it may still produce
+queries that use columns that are not prefixed by a table name or table alias:
+
+.. code-block:: sql
+
+    SELECT u.email
+    FROM users u
+    WHERE id=:user_id
+
+The LLM typically produces these queries when the column is unambiguous because a single
+table is being selected. In these cases, the reconstructor will fully-qualify the column
+based on the name of the selected table, so that the above query becomes:
+
+.. code-block:: sql
+
+    SELECT u.email
+    FROM users u
+    WHERE users.id=:user_id

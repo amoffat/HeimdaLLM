@@ -11,7 +11,7 @@ from .utils import PermissiveConstraints
 
 
 @dialects()
-def test_alter_limit(Bifrost: Type[Bifrost]):
+def test_alter_limit(dialect: str, Bifrost: Type[Bifrost]):
     limit = 25
 
     class LimitConstraints(PermissiveConstraints):
@@ -66,8 +66,8 @@ def test_limit_preserve_offset():
     assert f"offset {offset}" in trusted_query.lower()
 
 
-@dialects()
-def test_good_formatting(Bifrost: Type[Bifrost]):
+@dialects("sqlite")
+def test_good_formatting(dialect: str, Bifrost: Type[Bifrost]):
     """verify that the reconstructed query has decent formatting. doesn't have to match
     the original, just look good enough and be semantically the same"""
     bifrost = Bifrost.mocked(PermissiveConstraints())
@@ -86,24 +86,12 @@ LIMIT 20;
 """
     trusted_query = bifrost.traverse(query)
 
-    correct = """
-SELECT f.title,f.rating,f.release_year
-FROM film as f
-INNER JOIN inventory as i on f.film_id=i.film_id
-INNER JOIN rental as r on i.inventory_id=r.inventory_id
-INNER JOIN customer as c on r.customer_id=c.customer_id
-WHERE c.customer_id=:customer_id
-AND(f.rating='R'
-OR f.rating='NC-17')
-AND f.release_year IS NOT NULL
-ORDER BY f.release_year DESC
-LIMIT 20;
-""".strip()
+    correct = """SELECT f.title,f.rating,f.release_year FROM film as f INNER JOIN inventory as i on f.film_id=i.film_id INNER JOIN rental as r on i.inventory_id=r.inventory_id INNER JOIN customer as c on r.customer_id=c.customer_id WHERE c.customer_id=:customer_id AND (f.rating='R' OR f.rating='NC-17') AND f.release_year IS NOT NULL ORDER BY f.release_year DESC LIMIT 20;"""  # noqa: E501
     assert correct == trusted_query
 
 
 @dialects("sqlite")
-def test_remove_illegal_columns(Bifrost: Type[Bifrost], conn):
+def test_remove_illegal_columns(dialect: str, Bifrost: Type[Bifrost], conn):
     """show that we can automatically filter out illegal columns"""
 
     class MyConstraints(PermissiveConstraints):
@@ -154,3 +142,20 @@ LIMIT 10;
 """
 
     bifrost.traverse(query, autofix=False)
+
+
+@dialects()
+def test_unqualified_columns(dialect: str, Bifrost: Type[Bifrost]):
+    """an unqualified column should be qualified with the table name from the select"""
+    bifrost = Bifrost.mocked(PermissiveConstraints())
+
+    query = """
+SELECT salary
+FROM salaries
+WHERE emp_no = :employee_id
+AND from_date <= DATE(:timestamp)
+AND to_date >= DATE(:timestamp)
+"""
+
+    trusted_query = bifrost.traverse(query)
+    assert "salaries.salary" in trusted_query

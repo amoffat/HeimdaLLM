@@ -2,7 +2,7 @@ from abc import abstractmethod
 from itertools import chain
 from typing import Optional, Sequence, cast
 
-from lark import Lark, ParseTree
+from lark import Lark, ParseTree, Token
 from lark.exceptions import VisitError
 from lark.reconstruct import Reconstructor
 
@@ -167,7 +167,10 @@ class ConstraintValidator(_BaseConstraintValidator):
                 raise e.orig_exc
             raise e
 
-        output = Reconstructor(grammar).reconstruct(
+        def special(sym):
+            return Token("IGNORE", sym.name)
+
+        output = Reconstructor(grammar, {"_WS": special}).reconstruct(
             fixed_tree,
             postproc=reconstruct.postproc,
         )

@@ -19,7 +19,7 @@ class MyConstraints(PermissiveConstraints):
 
 
 @dialects()
-def test_allowed_where(Bifrost: Type[Bifrost]):
+def test_allowed_where(dialect: str, Bifrost: Type[Bifrost]):
     bifrost = Bifrost.mocked(MyConstraints())
 
     query = """
@@ -44,7 +44,7 @@ def test_allowed_where(Bifrost: Type[Bifrost]):
 
 
 @dialects()
-def test_allowed_join(Bifrost: Type[Bifrost]):
+def test_allowed_join(dialect: str, Bifrost: Type[Bifrost]):
     bifrost = Bifrost.mocked(MyConstraints())
 
     query = """
@@ -64,7 +64,7 @@ def test_allowed_join(Bifrost: Type[Bifrost]):
 
 
 @dialects()
-def test_allowed_having(Bifrost: Type[Bifrost]):
+def test_allowed_having(dialect: str, Bifrost: Type[Bifrost]):
     bifrost = Bifrost.mocked(MyConstraints())
 
     query = """
@@ -85,7 +85,7 @@ def test_allowed_having(Bifrost: Type[Bifrost]):
 
 
 @dialects()
-def test_allowed_order_by(Bifrost: Type[Bifrost]):
+def test_allowed_order_by(dialect: str, Bifrost: Type[Bifrost]):
     bifrost = Bifrost.mocked(MyConstraints())
 
     query = """

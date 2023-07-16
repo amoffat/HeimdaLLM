@@ -5,13 +5,13 @@ unions : union+
 union : UNION (ALL | DISTINCT)? select_statement
 
 select_statement : \
-    SELECT DISTINCT? selected_columns \
-    FROM selected_table \
-    joins? \
-    where_clause? \
-    group_by_clause? \
-    having_clause? \
-    order_by_clause? \
+    SELECT _WS DISTINCT? selected_columns \
+    _WS FROM selected_table \
+    (_WS joins)? \
+    (_WS where_clause)? \
+    (_WS group_by_clause)? \
+    (_WS having_clause)? \
+    (_WS order_by_clause)? \
     limit_placeholder \
     SEMICOLON?
 
@@ -37,7 +37,7 @@ selected_columns : selected_column ("," selected_column)*
 // a selected column can be a value, not just a column name. a value encapsulates
 // fully qualified column names, and also functions that use column names
 selected_column : aliased_column | COUNT_STAR | value | ALL_COLUMNS
-aliased_column : (value | COUNT_STAR) as column_alias
+aliased_column : (value | COUNT_STAR) as generic_alias
 // this is a "fully-qualified" column name, meaning it just has a table name prefixing
 // it. keep in mind that the table may be an alias.
 fq_column : table_name "." column_name
@@ -48,7 +48,7 @@ column_alias : generic_alias
 generic_alias : quoted_identifier | unquoted_identifier
 
 joins : join+
-join : join_type joined_table "on"i join_condition ("and"i join_condition)*
+join : join_type _WS joined_table _WS "on"i join_condition (_WS "and"i join_condition)*
 // note we do not allow outer joins. this is because we cannot control
 // the rows that are returned by the outer join, and we cannot depend on the
 // join conditions to restrict the returned rows.
@@ -61,22 +61,22 @@ join_condition : connecting_join_condition | required_comparison
 connecting_join_condition : fq_column EQUI_JOIN value
 joined_table : aliased_table | table_name
 
-group_by_clause : GROUP_BY group_by_column ("," group_by_column)*
+group_by_clause : GROUP_BY _WS group_by_column ("," group_by_column)*
 group_by_column : value
 
-having_clause : HAVING having_condition
+having_clause : HAVING _WS having_condition
 having_condition : value comparison value
 
-order_by_clause : ORDER_BY order_column ("," order_column)*
-order_column : (COUNT_STAR | value) SORT_ORDER?
+order_by_clause : ORDER_BY _WS order_column ("," order_column)*
+order_column : (COUNT_STAR | value) (_WS SORT_ORDER)?
 SORT_ORDER : ASC | DESC
 
-limit_clause : LIMIT (((offset ",")? limit) | (limit OFFSET offset))
+limit_clause : LIMIT (_WS ((offset ",")? limit) | (limit _WS OFFSET _WS offset))
 limit : NUMBER
 offset : NUMBER
 
-where_clause : WHERE where_conditions
-where_conditions : where_condition (WHERE_TYPE where_condition)*
+where_clause : WHERE _WS where_conditions
+where_conditions : where_condition (_WS WHERE_TYPE _WS where_condition)*
 where_condition : \
     | required_comparison
     | relational_comparison
@@ -86,7 +86,9 @@ where_condition : \
 
 // a required comparison is a parameterized, equality-based comparison that
 // enforces a constraint on the returned rows.
-required_comparison.1 : (fq_column | column_alias) "=" placeholder
+required_comparison.1 : lhs_req_comparison | rhs_req_comparison
+lhs_req_comparison : (fq_column | column_alias) "=" placeholder
+rhs_req_comparison : placeholder "=" (fq_column | column_alias)
 relational_comparison : value comparison value
 comparison : \
     EQ
@@ -99,9 +101,9 @@ comparison : \
     | IS NOT?
     | SOUNDS_LIKE
     | NOT? (REGEXP | RLIKE)
-in_comparison : value NOT? IN in_list
+in_comparison : value _WS NOT? _WS IN _WS in_list
 in_list : "(" value ("," value)* ")"
-between_comparison : value NOT? BETWEEN value AND value
+between_comparison : value _WS NOT? _WS BETWEEN _WS value _WS AND _WS value
 
 // for everywhere but the SELECT clause, because that's where column aliases
 // are declared, so we cannot use this there
@@ -120,7 +122,7 @@ wrapped_value : LPAREN value RPAREN
 
 // a function with any number of arguments
 function : function_name "(" \
-        AGG_FN_MODIFIER? (value ("," value)*)? \
+        (AGG_FN_MODIFIER _WS)? (value ("," value)*)? \
     ")"
 function_name : /[a-zA-Z_]+/
 
@@ -129,7 +131,6 @@ function_name : /[a-zA-Z_]+/
 
 // a placeholder for a value passed in as a parameter at query execution time
 placeholder: ":" IDENTIFIER
-
 
 SELECT : "select"i
 FROM : "from"i
@@ -140,22 +141,22 @@ SEMICOLON : ";"
 ALL_COLUMNS : "*"
 WHERE : "where"i
 WHERE_TYPE : AND | OR
-ORDER_BY : "order"i WS "by"i
+ORDER_BY : "order"i _WS "by"i
 LIMIT : "limit"i
 OFFSET : "offset"i
-GROUP_BY : "group"i WS "by"i
+GROUP_BY : "group"i _WS "by"i
 HAVING : "having"i
 
 // this is the only way that a query can have a "*" column spec, because it
 // doesn't reveal any information that would be restricted.
-COUNT_STAR : "count"i "(" AGG_FN_MODIFIER? ("*" | "1") ")"
+COUNT_STAR : "count"i "(" (AGG_FN_MODIFIER _WS)? ("*" | "1") ")"
 AGG_FN_MODIFIER : DISTINCT | ALL
 
-INNER_JOIN : ("inner"i WS)? "join"i
-CROSS_JOIN : "cross"i WS "join"i
-NATURAL_JOIN : "natural"i WS (("left"i | "right"i | "full"i | "inner"i) WS)? "join"i
-OUTER_JOIN : ("left"i | "right"i | "full"i) WS ("outer"i WS)? "join"i
-NATURAL_OUTER_JOIN : "natural"i WS (("left"i | "right"i | "full"i) WS)? "outer"i WS "join"i
+INNER_JOIN : ("inner"i _WS)? "join"i
+CROSS_JOIN : "cross"i _WS "join"i
+NATURAL_JOIN : "natural"i _WS (("left"i | "right"i | "full"i | "inner"i) _WS)? "join"i
+OUTER_JOIN : ("left"i | "right"i | "full"i) _WS ("outer"i _WS)? "join"i
+NATURAL_OUTER_JOIN : "natural"i _WS (("left"i | "right"i | "full"i) _WS)? "outer"i _WS "join"i
 
 ASC : "asc"i
 DESC : "desc"i
@@ -181,7 +182,7 @@ GTE : ">="
 IS : "is"i
 BETWEEN : "between"i
 IN : "in"i
-SOUNDS_LIKE : "sounds"i WS "like"i
+SOUNDS_LIKE : "sounds"i _WS "like"i
 LIKE : "like"i
 NOT : "not"i
 REGEXP : "regexp"i
@@ -211,6 +212,7 @@ ARITH_OP : \
 
 // NOTE this is dialect specific
 ESCAPED_STRING : "'" _STRING_ESC_INNER "'" | "\"" _STRING_ESC_INNER "\""
+_WS : WS
 
 %import common.NUMBER
 %import common.DIGIT
