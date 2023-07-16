@@ -8,6 +8,7 @@
 - Bugfix to allow forwards and backwards required conditions
 - Add required whitespace to SQL grammars
 - SQL pretty-printer should return everything on one line.
+- Bugfix with Mysql prompt envelope mentioning sqlite
 
 ## 0.2.1 - 7/10/23
 
