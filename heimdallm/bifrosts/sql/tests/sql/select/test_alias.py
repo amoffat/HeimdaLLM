@@ -11,7 +11,7 @@ from .utils import PermissiveConstraints
 
 
 @dialects()
-def test_where_alias(Bifrost: Type[Bifrost]):
+def test_where_alias(dialect: str, Bifrost: Type[Bifrost]):
     class MyConstraints(PermissiveConstraints):
         def condition_column_allowed(self, column: FqColumn) -> bool:
             return column.name == "t1.col"
@@ -35,7 +35,7 @@ def test_where_alias(Bifrost: Type[Bifrost]):
 
 
 @dialects()
-def test_order_alias(Bifrost: Type[Bifrost]):
+def test_order_alias(dialect: str, Bifrost: Type[Bifrost]):
     class MyConstraints(PermissiveConstraints):
         def condition_column_allowed(self, column: FqColumn) -> bool:
             return column.name == "t1.col"
@@ -59,7 +59,7 @@ def test_order_alias(Bifrost: Type[Bifrost]):
 
 
 @dialects()
-def test_select_function_alias(Bifrost: Type[Bifrost]):
+def test_select_function_alias(dialect: str, Bifrost: Type[Bifrost]):
     bifrost = Bifrost.mocked(PermissiveConstraints())
 
     query = """
@@ -67,12 +67,12 @@ def test_select_function_alias(Bifrost: Type[Bifrost]):
     """
 
     with pytest.raises(exc.UnqualifiedColumn) as e:
-        bifrost.traverse(query)
+        bifrost.traverse(query, autofix=False)
     assert e.value.column == "col"
 
 
 @dialects()
-def test_group_by_alias(Bifrost: Type[Bifrost]):
+def test_group_by_alias(dialect: str, Bifrost: Type[Bifrost]):
     bifrost = Bifrost.mocked(PermissiveConstraints())
 
     query = """
@@ -88,7 +88,7 @@ def test_group_by_alias(Bifrost: Type[Bifrost]):
 
 
 @dialects()
-def test_count_star_alias(Bifrost: Type[Bifrost]):
+def test_count_star_alias(dialect: str, Bifrost: Type[Bifrost]):
     bifrost = Bifrost.mocked(PermissiveConstraints())
 
     query = """
@@ -106,7 +106,7 @@ LIMIT 5;
 
 
 @dialects()
-def test_count_disallowed_column_alias(Bifrost: Type[Bifrost]):
+def test_count_disallowed_column_alias(dialect: str, Bifrost: Type[Bifrost]):
     class GeneralConstraints(PermissiveConstraints):
         def select_column_allowed(self, fq_column: FqColumn) -> bool:
             return fq_column.name != "film_actor.film_id"

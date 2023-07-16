@@ -50,13 +50,10 @@ class FacetCollector(Visitor):
         self._facets = facets
         self._reserved_keywords = reserved_keywords
 
-    def _resolve_column(self, node: Tree):
+    def _resolve_column(self, node: Tree) -> set[FqColumn] | None:
         if node.data == "column_alias":
             maybe_alias = get_identifier(node, self._reserved_keywords)
-            table, column = self._collector._aliased_columns.get(
-                maybe_alias, (None, maybe_alias)
-            )
-            return table, column
+            return self._collector._aliased_columns[maybe_alias]
 
         # should never happen
         raise RuntimeError(f"unknown column reference type: {type(node)}")
@@ -165,7 +162,7 @@ class FacetCollector(Visitor):
         elif isinstance(child, Tree):
             # if it's an aliased column, we need to ensure that the thing being aliased
             # isn't a non-fully-qualified column. we do that by looking for
-            # `column_alias`
+            # `generic_alias`
             if child.data == "aliased_column":
                 alias_child = child.children[0]
                 # if we're aliasing COUNT(*), it's safe to ignore, since it doesn't
@@ -173,20 +170,20 @@ class FacetCollector(Visitor):
                 if isinstance(alias_child, Token) and alias_child.type == "COUNT_STAR":
                     return
 
-                if list(alias_child.find_data("column_alias")):
+                if list(alias_child.find_data("generic_alias")):
                     alias = get_identifier(alias_child, self._reserved_keywords)
                     raise exc.UnqualifiedColumn(column=alias)
 
             # if the column looks like a column alias (meaning a non-fully-qualified
             # column), then that's an error, because we only work with fully-qualified
             # columns
-            elif child.data == "column_alias":
+            elif child.data == "generic_alias":
                 alias = get_identifier(child, self._reserved_keywords)
                 raise exc.UnqualifiedColumn(column=alias)
 
             # if we're not an aliased column, but we contain a column alias somewhere,
             # that's an error, because we only work with fully-qualified columns
-            elif column_alias := list(child.find_data("column_alias")):
+            elif column_alias := list(child.find_data("generic_alias")):
                 alias = get_identifier(column_alias[0], self._reserved_keywords)
                 raise exc.UnqualifiedColumn(column=alias)
 
@@ -216,11 +213,45 @@ class FacetCollector(Visitor):
     def _add_required_comparison(self, node: Tree):
         """takes a node representing a required comparison and adds it to the
         facets"""
-        maybe_fq_column_node, placeholder = node.children
+
+        # handle both a forwards (column = :placeholder) and backwards (:placeholder =
+        # column)
+        if list(node.find_data("lhs_req_comparison")):
+            maybe_fq_column_node, placeholder = node.children[0].children
+        else:
+            placeholder, maybe_fq_column_node = node.children[0].children
+
         placeholder_name = cast(Token, placeholder.children[0]).value
 
         if maybe_fq_column_node.data == "column_alias":
-            table_name, column_name = self._resolve_column(maybe_fq_column_node)
+            maybe_fq_columns = self._resolve_column(maybe_fq_column_node)
+
+            # none means the alias is based on an expression, so we don't need to add it
+            # to the required constraints because it's not a column
+            if maybe_fq_columns is None:
+                return
+
+            # multiple columns means the alias is based on a composite expression, so we
+            # cannot determine which column to add to the required constraints, so we
+            # add none of them
+            elif len(maybe_fq_columns) > 1:
+                return
+
+            # no columns means the alias was never resolved. i don't think we should
+            # ever end up down this path
+            elif len(maybe_fq_columns) == 0:
+                assert False, "Unreachable"
+
+            # otherwise we have one column backing the alias, so we add it to the
+            # required constraints that were found.
+            elif len(maybe_fq_columns) == 1:
+                fq_column = next(iter(maybe_fq_columns))
+                self._facets.required_constraints.add(
+                    RequiredConstraint(
+                        column=fq_column.name,
+                        placeholder=placeholder_name,
+                    )
+                )
 
         elif maybe_fq_column_node.data == "fq_column":
             fq_column_node = maybe_fq_column_node
@@ -228,17 +259,17 @@ class FacetCollector(Visitor):
 
             table_name = self._resolve_table(table_node)
             column_name = get_identifier(column_node, self._reserved_keywords)
+
+            self._facets.required_constraints.add(
+                RequiredConstraint(
+                    column=f"{table_name}.{column_name}",
+                    placeholder=placeholder_name,
+                )
+            )
         else:
             raise RuntimeError(
                 f"Unknown required column type {type(maybe_fq_column_node)}"
             )
-
-        self._facets.required_constraints.add(
-            RequiredConstraint(
-                column=f"{table_name}.{column_name}",
-                placeholder=placeholder_name,
-            )
-        )
 
     def where_clause(self, where_node: Tree):
         """here we'll do a breadth-first search on the where clause, going level
@@ -291,22 +322,20 @@ class FacetCollector(Visitor):
             )
 
         for column_alias_node in node.find_data("column_alias"):
-            table_name, column_name = self._resolve_column(column_alias_node)
-            if not table_name:
-                # no table name AND no column name means the inserted alias is an alias
-                # for a non-column expression, like `COUNT(*) as thing`. this is valid
-                # as it is, so we don't raise, and we don't track it as a condition
-                # column.
-                if not column_name:
-                    pass
-                else:
-                    raise exc.UnqualifiedColumn(column=column_name)
-            self._facets.condition_columns.add(
-                FqColumn(
-                    table=table_name,
-                    column=column_name,
-                )
-            )
+            maybe_fq_columns = self._resolve_column(column_alias_node)
+
+            # a None means this is a non-column expression alias. this is valid as it
+            # is, so we don't raise, and we don't track it as a condition column.
+            if maybe_fq_columns is None:
+                pass
+            # we have a single underlying column, or multiple composite columns. add all
+            # of them to our condition columns.
+            elif len(maybe_fq_columns) > 0:
+                self._facets.condition_columns.update(maybe_fq_columns)
+            # we have no columns that resolve the alias. this is an error.
+            else:
+                column_name = get_identifier(column_alias_node, self._reserved_keywords)
+                raise exc.UnqualifiedColumn(column=column_name)
 
     where_condition = _collect_condition_column
     having_condition = _collect_condition_column

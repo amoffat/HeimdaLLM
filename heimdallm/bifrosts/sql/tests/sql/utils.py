@@ -13,7 +13,7 @@ def dialects(*dialects, bifrost=True, envelope=False, conn=False):
     dialects = dialects or ("sqlite", "mysql")
 
     def map_dialect(d: str):
-        args = []
+        args = [d]
 
         if bifrost:
             bf_mod = __import__(f"heimdallm.bifrosts.sql.{d}.select.bifrost")
@@ -29,6 +29,7 @@ def dialects(*dialects, bifrost=True, envelope=False, conn=False):
             envelope_cls.dialect = d
             args.append(envelope_cls)
 
+        # TODO
         if conn:
             if d == "sqlite":
                 pass
@@ -37,7 +38,7 @@ def dialects(*dialects, bifrost=True, envelope=False, conn=False):
             return args[0]
         return args
 
-    args = []
+    args = ["dialect"]
     if bifrost:
         args.append("Bifrost")
     if envelope:

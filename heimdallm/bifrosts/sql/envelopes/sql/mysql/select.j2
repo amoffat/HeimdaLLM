@@ -6,7 +6,7 @@ Consider the following Mysql 8.0 SQL schema:
 {%- endblock %}
 
 {% block requester_context -%}
-A requester has written a free-form query that they want translated into a SQL query, compatible with sqlite that operates on the above database schema.
+A requester has written a free-form query that they want translated into a SQL query, compatible with Mysql 8.0 that operates on the above database schema.
 {%- endblock %}
 
 {% block requester_identities -%}
@@ -18,7 +18,7 @@ Assume that the requester that wrote the query has unrestricted access to all da
 {%- endblock %}
 
 {% block current_time -%}
-If the current time is needed, assume that the placeholder `:timestamp` holds the current unix timestamp.
+If the current time is needed, assume that the placeholder `:timestamp` holds the current unix timestamp as an integer. Use the necessary functions to convert it to a datetime in order to compare it to datetime columns.
 {%- endblock %}
 
 {% block delimiters -%}

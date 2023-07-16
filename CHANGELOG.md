@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.0 - 7/15/23
+
+- Autofix non-qualified column names
+- Bugfix where aliases composed of multiple columns would not correctly resolve
+- Allow customization of SQL dialect placeholder format
+- Bugfix to allow forwards and backwards required conditions
+- Add required whitespace to SQL grammars
+- SQL pretty-printer should return everything on one line.
+- Bugfix with Mysql prompt envelope mentioning sqlite
+
 ## 0.2.1 - 7/10/23
 
 - Automated Github releases

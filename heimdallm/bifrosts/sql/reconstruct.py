@@ -1,4 +1,4 @@
-from typing import cast
+from typing import Generator, Iterable, cast
 
 from lark import Discard, Token
 from lark import Transformer as _Transformer
@@ -59,6 +59,34 @@ def add_limit(limit_placeholder, max_limit: int):
         limit_placeholder.children.append(limit_tree)
 
 
+def qualify_column(fq_column: FqColumn) -> Tree:
+    """Replaces an alias node with a fully qualified column node."""
+    tree = Tree(
+        "fq_column",
+        [
+            Tree(
+                Token("RULE", "table_name"),
+                [
+                    Tree(
+                        Token("RULE", "unquoted_identifier"),
+                        [Token("IDENTIFIER", fq_column.table)],
+                    )
+                ],
+            ),
+            Tree(
+                Token("RULE", "column_name"),
+                [
+                    Tree(
+                        Token("RULE", "unquoted_identifier"),
+                        [Token("IDENTIFIER", fq_column.column)],
+                    )
+                ],
+            ),
+        ],
+    )
+    return tree
+
+
 class ReconstructTransformer(_Transformer):
     """makes some alterations to a query if it does not meet some basic validation
     constraints, but could with those alterations. currently, these are just the
@@ -102,6 +130,43 @@ class ReconstructTransformer(_Transformer):
             raise exc.IllegalSelectedColumn(column=self._last_discarded_column.name)
         return Tree("selected_columns", children)
 
+    def column_alias(self, children: list[Tree | Token]):
+        alias_name = get_identifier(children[0], self._reserved_keywords)
+
+        # if we can't find the actual table where this column alias comes from, assume
+        # the selected table.
+        fq_columns = self._collector._aliased_columns[alias_name]
+
+        # None means the alias is not based on any column (it's an expression of some
+        # kind), so we leave this node alone
+        if fq_columns is None:
+            tree = Tree("column_alias", children)
+
+        # if we haven't found any columns associated with this alias, it means that the
+        # query is implicitly using the selected table, so we can fully qualify it based
+        # on that information.
+        elif len(fq_columns) == 0:
+            tree = qualify_column(
+                FqColumn(
+                    table=cast(str, self._collector._selected_table),
+                    column=alias_name,
+                )
+            )
+
+        # if there's only one fq column associated with this alias, then we know it's
+        # not a composite alias, so we can fully qualify it.
+        elif len(fq_columns) == 1:
+            tree = qualify_column(next(iter(fq_columns)))
+
+        # if it's a composite alias, we can't fully qualify it, so we leave it alone.
+        elif len(fq_columns) > 1:
+            tree = Tree("column_alias", children)
+
+        else:
+            assert False, "Unreachable"
+
+        return tree
+
     def selected_column(self, children: list[Tree | Token]):
         """ensures that every selected column is allowed"""
         selected = children[0]
@@ -126,27 +191,12 @@ class ReconstructTransformer(_Transformer):
         return Tree("selected_column", children)
 
 
-def postproc(items):
-    """helps format our reconstructed query so it's not all on one line"""
-    for item in items:
-        if isinstance(item, Token):
-            if item.type in {
-                "FROM",
-                "GROUP_BY",
-                "HAVING",
-                "INNER_JOIN",
-                "LIMIT",
-                "OFFSET",
-                "ORDER_BY",
-                "WHERE",
-                "WHERE_TYPE",
-            }:
-                yield "\n"
-            else:
-                pass
+PostProcToken = Token | str
 
-        yield item
 
-        if isinstance(item, Token):
-            if item.type in {}:
-                yield " "
+def postproc(items: Iterable[PostProcToken]) -> Generator[PostProcToken, None, None]:
+    for token in items:
+        if token == "_WS":
+            yield " "
+            continue
+        yield token

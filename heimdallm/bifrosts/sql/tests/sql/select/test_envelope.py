@@ -10,7 +10,7 @@ from .utils import CustomerConstraints, PermissiveConstraints
 
 
 @dialects(bifrost=False, envelope=True)
-def test_quoted(PromptEnvelope: Type[PromptEnvelope]):
+def test_quoted(dialect: str, PromptEnvelope: Type[PromptEnvelope]):
     resp = """
     ```
     select t1.col from t1
@@ -25,7 +25,7 @@ def test_quoted(PromptEnvelope: Type[PromptEnvelope]):
 
 
 @dialects(bifrost=False, envelope=True)
-def test_quoted_with_sql(PromptEnvelope: Type[PromptEnvelope]):
+def test_quoted_with_sql(dialect: str, PromptEnvelope: Type[PromptEnvelope]):
     resp = """
     ```sql
     select t1.col from t1
@@ -40,7 +40,7 @@ def test_quoted_with_sql(PromptEnvelope: Type[PromptEnvelope]):
 
 
 @dialects(bifrost=False, envelope=True)
-def test_with_sql(PromptEnvelope: Type[PromptEnvelope]):
+def test_with_sql(dialect: str, PromptEnvelope: Type[PromptEnvelope]):
     resp = """sql
     select t1.col from t1
     """
@@ -53,7 +53,7 @@ def test_with_sql(PromptEnvelope: Type[PromptEnvelope]):
 
 
 @dialects(bifrost=False, envelope=True)
-def test_raw_unquoted(PromptEnvelope: Type[PromptEnvelope]):
+def test_raw_unquoted(dialect: str, PromptEnvelope: Type[PromptEnvelope]):
     resp = """
     select t1.col from t1
     """
@@ -66,7 +66,7 @@ def test_raw_unquoted(PromptEnvelope: Type[PromptEnvelope]):
 
 
 @dialects(bifrost=False, envelope=True)
-def test_no_idents(PromptEnvelope: Type[PromptEnvelope]):
+def test_no_idents(dialect: str, PromptEnvelope: Type[PromptEnvelope]):
     input = """
     select t1.col from t1
     """
@@ -80,7 +80,7 @@ def test_no_idents(PromptEnvelope: Type[PromptEnvelope]):
 
 
 @dialects(bifrost=False, envelope=True)
-def test_multi_idents(PromptEnvelope: Type[PromptEnvelope]):
+def test_multi_idents(dialect: str, PromptEnvelope: Type[PromptEnvelope]):
     input = """
     select t1.col from t1
     """
@@ -94,7 +94,7 @@ def test_multi_idents(PromptEnvelope: Type[PromptEnvelope]):
 
 
 @dialects(bifrost=False, envelope=True)
-def test_custom_envelope(PromptEnvelope: Type[PromptEnvelope]):
+def test_custom_envelope(dialect: str, PromptEnvelope: Type[PromptEnvelope]):
     def template(self, env: jinja2.Environment) -> jinja2.Template:
         tmpl = """
         {% extends "sql/sqlite/select.j2" %}

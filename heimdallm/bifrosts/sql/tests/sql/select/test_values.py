@@ -7,7 +7,7 @@ from .utils import PermissiveConstraints
 
 
 @dialects()
-def test_is_not_null(Bifrost: Type[Bifrost]):
+def test_is_not_null(dialect: str, Bifrost: Type[Bifrost]):
     bifrost = Bifrost.mocked(PermissiveConstraints())
 
     query = """
@@ -23,7 +23,7 @@ LIMIT 20;
 
 
 @dialects()
-def test_is_null(Bifrost: Type[Bifrost]):
+def test_is_null(dialect: str, Bifrost: Type[Bifrost]):
     bifrost = Bifrost.mocked(PermissiveConstraints())
 
     query = """
@@ -41,7 +41,7 @@ LIMIT 20;
 
 
 @dialects()
-def test_agg_function_modifier_query(Bifrost: Type[Bifrost]):
+def test_agg_function_modifier_query(dialect: str, Bifrost: Type[Bifrost]):
     """distinct can be added in front of an aggregate function"""
     bifrost = Bifrost.mocked(PermissiveConstraints())
 
