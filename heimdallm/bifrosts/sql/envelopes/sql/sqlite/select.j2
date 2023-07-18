@@ -26,11 +26,11 @@ Only respond with the SQL query. Delimit the query in the response with "```"
 {%- endblock %}
 
 {% block general_constraints -%}
-Use fully-qualified column names in the form table.column, even if selecting from a single table. Avoid using subqueries.
+Use fully-qualified column names in the form table.column, even if selecting from a single table.
 {%- endblock %}
 
 {% block quirks -%}
-Sqlite cannot add or subtract dates directly, and must use the available sqlite datetime functions.
+Sqlite cannot add or subtract dates or timestamps directly, and must use the available sqlite datetime functions.
 {%- endblock %}
 
 {% block extras -%}

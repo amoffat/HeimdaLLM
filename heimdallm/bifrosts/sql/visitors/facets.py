@@ -3,6 +3,8 @@ from typing import MutableMapping, Optional, cast
 
 from lark import Token, Tree, Visitor
 
+from heimdallm.bifrosts.sql.utils.context import in_subquery
+
 from .. import exc
 from ..common import FqColumn, JoinCondition, RequiredConstraint
 from ..utils.identifier import get_identifier, is_count_function
@@ -213,6 +215,11 @@ class FacetCollector(Visitor):
     def _add_required_comparison(self, node: Tree):
         """takes a node representing a required comparison and adds it to the
         facets"""
+
+        # if we're in a subquery, don't count it as a required comparison, because a
+        # required comparison must exist in the outermost query
+        if in_subquery(node):
+            return
 
         # handle both a forwards (column = :placeholder) and backwards (:placeholder =
         # column)

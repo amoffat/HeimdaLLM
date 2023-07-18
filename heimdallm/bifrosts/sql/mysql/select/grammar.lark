@@ -19,7 +19,7 @@ select_statement : \
 // automatically in the case of reconstruction. if we didn't have a placeholder, we'd
 // have to examine ever clause child in `select_statement` to try to figure out where
 // to insert our new limit. having a placeholder simplifies this greatly.
-limit_placeholder : limit_clause?
+limit_placeholder : (_WS limit_clause)?
 
 // serves as a basis for table and column names
 // NOTE this is dialect specific
@@ -89,7 +89,7 @@ where_condition : \
 required_comparison.1 : lhs_req_comparison | rhs_req_comparison
 lhs_req_comparison : (fq_column | column_alias) "=" placeholder
 rhs_req_comparison : placeholder "=" (fq_column | column_alias)
-relational_comparison : value comparison value
+relational_comparison : value comparison (value | subquery)
 comparison : \
     EQ
     | NEQ
@@ -97,11 +97,11 @@ comparison : \
     | GT
     | LTE
     | GTE
-    | NOT? LIKE
-    | IS NOT?
-    | SOUNDS_LIKE
-    | NOT? (REGEXP | RLIKE)
-in_comparison : value _WS NOT? _WS IN _WS in_list
+    | NOT? LIKE _WS
+    | IS NOT? _WS
+    | SOUNDS_LIKE _WS
+    | NOT? (REGEXP | RLIKE) _WS
+in_comparison : value _WS (NOT _WS)? IN _WS (in_list | subquery)
 in_list : "(" value ("," value)* ")"
 between_comparison : value _WS NOT? _WS BETWEEN _WS value _WS AND _WS value
 
@@ -116,6 +116,7 @@ between_comparison : value _WS NOT? _WS BETWEEN _WS value _WS AND _WS value
     | NUMBER_PREFIX? placeholder
     | NUMBER_PREFIX? column_alias
     | NUMBER_PREFIX? wrapped_value
+subquery : "(" full_query ")"
 wrapped_value : LPAREN value RPAREN
 ?value_expr : function | arith_expr
 ?arith_expr : value ARITH_OP value (ARITH_OP value)*
@@ -167,7 +168,7 @@ OR : "or"i
 // a rule instead of a terminal, so it can be present or not in the input, but the
 // tree will always contain a placeholder for it, making tree validation easier than
 // if it was sometimes there and sometimes not
-as : "as"i?
+as : (_WS "as"i _WS)?
 
 // important! only allow an equi join, so we can carefully control the rows
 // that the user has access to

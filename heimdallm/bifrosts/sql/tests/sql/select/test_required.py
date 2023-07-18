@@ -53,6 +53,24 @@ def test_required_constraint(dialect: str, Bifrost: Type[Bifrost]):
 
 
 @dialects()
+def test_required_constraint_outer_query(dialect: str, Bifrost: Type[Bifrost]):
+    """only the outer query should be checked for required constraints"""
+
+    bifrost = Bifrost.mocked(MyConstraints())
+
+    query = """
+    select t1.col from t1
+    where t1.id=(
+        select t1.id from t1
+        where t1.email=:email
+    )
+    """
+    with pytest.raises(exc.MissingRequiredConstraint) as e:
+        bifrost.traverse(query)
+    assert e.value.column.name == "t1.email"
+
+
+@dialects()
 def test_required_constraint_alias(dialect: str, Bifrost: Type[Bifrost]):
     bifrost = Bifrost.mocked(MyConstraints())
 
