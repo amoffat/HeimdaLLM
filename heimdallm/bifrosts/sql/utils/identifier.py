@@ -43,7 +43,8 @@ def is_count_function(node: Tree | Token) -> bool:
 
     # count(column) or count(some_other_expression)
     if isinstance(node, Tree) and node.data == "function":
-        fn_name = cast(Token, node.children[0].children[0]).value.lower()
+        # node.find_data("")
+        fn_name = cast(Token, node.children[0]).value.lower()
         if fn_name == "count":
             return True
     return False

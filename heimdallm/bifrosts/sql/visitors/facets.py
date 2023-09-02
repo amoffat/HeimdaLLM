@@ -1,5 +1,6 @@
 from collections import defaultdict as dd
 from typing import MutableMapping, Optional, cast
+from uuid import UUID
 
 from lark import Token, Tree, Visitor
 
@@ -34,8 +35,8 @@ class Facets:
         self.required_constraints: set[RequiredConstraint] = set()
         # all of the functions used in the query
         self.functions: set[str] = set()
-        # the row limit of the query
-        self.limit: Optional[int] = None
+        # the row limit of the query and all subqueries
+        self.limits: dict[UUID, int | None] = {}
 
 
 class FacetCollector(Visitor):
@@ -348,8 +349,13 @@ class FacetCollector(Visitor):
     having_condition = _collect_condition_column
     order_column = _collect_condition_column
 
-    def limit(self, node: Tree):
-        self._facets.limit = int(cast(Token, node.children[0]).value)
+    def limit_placeholder(self, node: Tree):
+        if limit_nodes := list(node.find_data("limit")):
+            limit_node = limit_nodes[0]
+            limit = int(cast(Token, limit_node.children[0]).value)
+        else:
+            limit = None
+        self._facets.limits[node.meta.id] = limit
 
-    def function_name(self, node: Tree):
+    def function(self, node: Tree):
         self._facets.functions.add(cast(Token, node.children[0]).value.lower())

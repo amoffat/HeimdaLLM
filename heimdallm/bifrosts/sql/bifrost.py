@@ -7,6 +7,7 @@ from lark.exceptions import VisitError
 
 from heimdallm.bifrost import Bifrost as _BaseBifrost
 from heimdallm.bifrosts.sql import exc
+from heimdallm.bifrosts.sql.visitors.id_setter import IdSetter
 from heimdallm.bifrosts.sql.visitors.parent import ParentSetter
 from heimdallm.llm import LLMIntegration
 from heimdallm.llm_providers.mock import EchoMockLLM
@@ -117,6 +118,7 @@ class Bifrost(_BaseBifrost, ABC):
 
             final_tree.parent = None  # type: ignore
             final_tree = ParentSetter().visit(final_tree)
+            final_tree = IdSetter().visit(final_tree)
             return final_tree
 
         return parse

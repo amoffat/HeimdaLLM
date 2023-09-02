@@ -27,7 +27,7 @@ limit_placeholder : (_WS limit_clause)?
 unquoted_identifier : IDENTIFIER
 IDENTIFIER : /[a-zA-Z_][a-zA-Z0-9_]*/
 
-selected_table : aliased_table | table_name
+selected_table : aliased_table | table_name | derived_table
 aliased_table : table_name as table_alias
 
 table_name : quoted_identifier | unquoted_identifier
@@ -37,7 +37,7 @@ selected_columns : selected_column ("," selected_column)*
 // a selected column can be a value, not just a column name. a value encapsulates
 // fully qualified column names, and also functions that use column names
 selected_column : aliased_column | COUNT_STAR | value | ALL_COLUMNS
-aliased_column : (value | COUNT_STAR) as generic_alias
+aliased_column : (value | COUNT_STAR | subquery) as generic_alias
 // this is a "fully-qualified" column name, meaning it just has a table name prefixing
 // it. keep in mind that the table may be an alias.
 fq_column : table_name "." column_name
@@ -103,7 +103,7 @@ comparison : \
     | NOT? (REGEXP | RLIKE) _WS
 in_comparison : value _WS (NOT _WS)? IN _WS (in_list | subquery)
 in_list : "(" value ("," value)* ")"
-between_comparison : value _WS NOT? _WS BETWEEN _WS value _WS AND _WS value
+between_comparison : value (_WS NOT)? _WS BETWEEN _WS value _WS AND _WS value
 
 // for everywhere but the SELECT clause, because that's where column aliases
 // are declared, so we cannot use this there
@@ -117,15 +117,16 @@ between_comparison : value _WS NOT? _WS BETWEEN _WS value _WS AND _WS value
     | NUMBER_PREFIX? column_alias
     | NUMBER_PREFIX? wrapped_value
 subquery : "(" full_query ")"
+derived_table : subquery as table_alias
 wrapped_value : LPAREN value RPAREN
 ?value_expr : function | arith_expr
 ?arith_expr : value ARITH_OP value (ARITH_OP value)*
 
 // a function with any number of arguments
-function : function_name "(" \
+function : FUNCTION_NAME "(" \
         (AGG_FN_MODIFIER _WS)? (value ("," value)*)? \
     ")"
-function_name : /[a-zA-Z_]+/
+FUNCTION_NAME : /[a-zA-Z_]+/
 
 ?boolean : TRUE | FALSE
 ?string : ESCAPED_STRING

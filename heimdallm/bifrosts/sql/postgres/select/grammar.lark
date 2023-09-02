@@ -1,5 +1,7 @@
 ?start : full_query
-full_query : select_statement unions?
+full_query : \
+    with_cte? \
+    select_statement unions?
 
 unions : union+
 union : UNION (ALL | DISTINCT)? select_statement
@@ -15,6 +17,9 @@ select_statement : \
     limit_placeholder \
     SEMICOLON?
 
+with_cte : "with"i _WS cte ("," cte)*
+cte : generic_alias _WS "as"i _WS "(" full_query ")"
+
 // we use a placeholder for the limit clause because we need to be able to insert one
 // automatically in the case of reconstruction. if we didn't have a placeholder, we'd
 // have to examine ever clause child in `select_statement` to try to figure out where
@@ -23,9 +28,7 @@ limit_placeholder : (_WS limit_clause)?
 
 // serves as a basis for table and column names
 // NOTE this is dialect specific
-!quoted_identifier : "`" IDENTIFIER "`"
-    | "\"" IDENTIFIER "\""
-    | "[" IDENTIFIER "]"
+!quoted_identifier : "\"" IDENTIFIER "\""
 unquoted_identifier : IDENTIFIER
 IDENTIFIER : /[a-zA-Z_][a-zA-Z0-9_]*/
 
@@ -84,6 +87,7 @@ where_condition : \
     | relational_comparison
     | in_comparison
     | between_comparison
+    | fts_comparison
     | "(" where_conditions ")"
 
 // a required comparison is a parameterized, equality-based comparison that
@@ -99,18 +103,18 @@ comparison : \
     | GT
     | LTE
     | GTE
-    | NOT? LIKE _WS
-    | IS NOT? _WS
-    | SOUNDS_LIKE _WS
-    | NOT? (REGEXP | RLIKE) _WS
-    | MATCH _WS
+    | _WS (NOT _WS)? LIKE _WS
+    | _WS IS (NOT _WS)? _WS
+    | _WS (NOT _WS)? ILIKE _WS
+    | _WS SIMILAR_TO _WS
 in_comparison : value _WS (NOT _WS)? IN _WS (in_list | subquery)
 in_list : "(" value ("," value)* ")"
 between_comparison : value (_WS NOT)? _WS BETWEEN _WS value _WS AND _WS value
+fts_comparison : value "@@" value
 
 // for everywhere but the SELECT clause, because that's where column aliases
 // are declared, so we cannot use this there
-?value : NUMBER
+?value : PREFIX_CAST? (NUMBER
     | string
     | boolean
     | NULL
@@ -118,25 +122,28 @@ between_comparison : value (_WS NOT)? _WS BETWEEN _WS value _WS AND _WS value
     | NUMBER_PREFIX? fq_column
     | NUMBER_PREFIX? placeholder
     | NUMBER_PREFIX? column_alias
-    | NUMBER_PREFIX? wrapped_value
+    | NUMBER_PREFIX? wrapped_value) SUFFIX_CAST?
 subquery : "(" full_query ")"
 derived_table : subquery as table_alias
 wrapped_value : LPAREN value RPAREN
 ?value_expr : function | arith_expr
-?arith_expr : value ARITH_OP value (ARITH_OP value)*
+?arith_expr : value BINARY_OP value (BINARY_OP value)*
 
 // a function with any number of arguments
-function : FUNCTION_NAME "(" \
-        (AGG_FN_MODIFIER _WS)? (value ("," value)*)? \
-    ")"
+function : FUNCTION_NAME "(" (value ("," value)*)? ")"
+    | SUBSTRING_FN_NAME "(" value (_WS "from"i _WS INT)? (_WS "for"i _WS INT)? ")"
+    | EXTRACT_FN_NAME "(" DATE_PART "from"i value ")"
 FUNCTION_NAME : /[a-zA-Z_]+/
+SUBSTRING_FN_NAME : "substring"i
+EXTRACT_FN_NAME : "extract"i
 
 ?boolean : TRUE | FALSE
-?string : ESCAPED_STRING
+?string : ESCAPE_PREFIX? ESCAPED_STRING
 
 // a placeholder for a value passed in as a parameter at query execution time
 placeholder: ":" IDENTIFIER
 
+ESCAPE_PREFIX : "E"
 SELECT : "select"i
 FROM : "from"i
 DISTINCT : "distinct"i
@@ -151,6 +158,7 @@ LIMIT : "limit"i
 OFFSET : "offset"i
 GROUP_BY : "group"i _WS "by"i
 HAVING : "having"i
+WITH : "with"i
 
 // this is the only way that a query can have a "*" column spec, because it
 // doesn't reveal any information that would be restricted.
@@ -187,12 +195,11 @@ GTE : ">="
 IS : "is"i
 BETWEEN : "between"i
 IN : "in"i
-SOUNDS_LIKE : "sounds"i _WS "like"i
 LIKE : "like"i
 NOT : "not"i
 REGEXP : "regexp"i
-RLIKE : "rlike"i
-MATCH : "match"i
+ILIKE : "ilike"i
+SIMILAR_TO : "similar"i _WS "to"i
 
 TRUE : "true"i
 FALSE : "false"i
@@ -201,11 +208,12 @@ NULL : "null"i
 LPAREN : "("
 RPAREN : ")"
 
-NUMBER_PREFIX : "+" | "-" | "~"
-ARITH_OP : \
+NUMBER_PREFIX : "+" | "-" | "~" | "@"
+BINARY_OP : \
     "+"
     | "-"
     | "*"
+    | "#"
     | "/"
     | "%"
     | "^"
@@ -215,16 +223,58 @@ ARITH_OP : \
     | "|"
     | "div"i
     | "mod"i
+    | "||"
 
-// in sqlite, double quotes are used for quoting identifiers, single quotes for quoting
-// strings. also, a single quote can be escaped by doubling it, and there are no other
-// escape sequences. https://www.sqlite.org/faq.html#q14 the below inner regex says "any
-// character except a single quote, unless it is doubled"
+PREFIX_CAST : CAST_TYPE _WS
+SUFFIX_CAST : "::" CAST_TYPE
+CAST_TYPE : \
+    "int"i
+    | "float"i
+    | "string"i
+    | "bool"i
+    | "timestamp"i
+    | "date"i
+    | "time"i
+    | "inet"i
+    | "json"i
+    | "jsonb"i
+    | "uuid"i
+    | "regconfig"i
+
+DATE_PART : \
+    "century"i
+    | "day"i
+    | "decade"i
+    | "dow"i
+    | "doy"i
+    | "epoch"i
+    | "hour"i
+    | "isodow"i
+    | "isoyear"i
+    | "microseconds"i
+    | "millennium"i
+    | "milliseconds"i
+    | "minute"i
+    | "month"i
+    | "quarter"i
+    | "second"i
+    | "timezone"i
+    | "timezone_hour"i
+    | "timezone_minute"i
+    | "week"i
+    | "year"i
+
+// in postgres, double quotes are used for quoting identifiers, single quotes for
+// quoting strings. also, a single quote can be escaped by doubling it, and there are no
+// other escape sequences. the below inner regex says "any character except a single
+// quote, unless it is doubled"
 ESCAPED_STRING : "'" /([^']|'')*/ "'"
 _WS : WS
 
 %import common.NUMBER
 %import common.DIGIT
+%import common.INT
 %import common.WORD
 %import common.WS
+%import common._STRING_ESC_INNER
 %ignore WS

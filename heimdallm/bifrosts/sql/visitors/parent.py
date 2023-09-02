@@ -12,5 +12,5 @@ class ParentSetter(Visitor):
     def __default__(self, tree: Tree):
         for subtree in tree.children:
             if isinstance(subtree, Tree):
-                assert not hasattr(subtree, "parent")
-                subtree.parent = proxy(tree)  # type: ignore
+                assert not hasattr(subtree.meta, "parent")
+                subtree.meta.parent = proxy(tree)  # type: ignore

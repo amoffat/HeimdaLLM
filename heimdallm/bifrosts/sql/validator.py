@@ -278,8 +278,9 @@ class ConstraintValidator(_BaseConstraintValidator):
 
         # check that the query limits the rows correctly, if we restrict to a limit
         if (max_limit := self.max_limit()) is not None:
-            if facets.limit is None or facets.limit > max_limit:
-                raise exc.TooManyRows(limit=facets.limit)
+            for limit in facets.limits.values():
+                if limit is None or limit > max_limit:
+                    raise exc.TooManyRows(limit=limit)
 
         # check that every function used has been allowlisted
         for fn in facets.functions:
