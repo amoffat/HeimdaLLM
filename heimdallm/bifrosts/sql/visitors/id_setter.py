@@ -10,5 +10,5 @@ class IdSetter(Visitor):
     """
 
     def __default__(self, tree: Tree):
-        assert not hasattr(tree.meta, "id")
-        tree.meta.id = uuid4()  # type: ignore
+        if not hasattr(tree.meta, "id"):
+            tree.meta.id = uuid4()  # type: ignore

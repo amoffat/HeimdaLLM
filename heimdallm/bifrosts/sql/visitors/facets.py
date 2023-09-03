@@ -1,5 +1,5 @@
 from collections import defaultdict as dd
-from typing import MutableMapping, Optional, cast
+from typing import Any, MutableMapping, Optional, cast
 from uuid import UUID
 
 from lark import Token, Tree, Visitor
@@ -56,7 +56,8 @@ class FacetCollector(Visitor):
     def _resolve_column(self, node: Tree) -> set[FqColumn] | None:
         if node.data == "column_alias":
             maybe_alias = get_identifier(node, self._reserved_keywords)
-            return self._collector._aliased_columns[maybe_alias]
+            aliases = self._collector._alias_scope(node)
+            return aliases._aliased_columns[maybe_alias]
 
         # should never happen
         raise RuntimeError(f"unknown column reference type: {type(node)}")
@@ -71,7 +72,8 @@ class FacetCollector(Visitor):
                 # we have no way of knowing if this is an alias or not, other
                 # than testing for its existence in the collector's alias map
                 maybe_alias = get_identifier(table_ref, self._reserved_keywords)
-                table = self._collector._aliased_tables.get(maybe_alias, maybe_alias)
+                aliases = self._collector._alias_scope(table_ref)
+                table = aliases._aliased_tables.get(maybe_alias, maybe_alias)
                 return table
 
         elif isinstance(table_ref, Token):
@@ -355,7 +357,7 @@ class FacetCollector(Visitor):
             limit = int(cast(Token, limit_node.children[0]).value)
         else:
             limit = None
-        self._facets.limits[node.meta.id] = limit
+        self._facets.limits[cast(Any, node.meta).id] = limit
 
     def function(self, node: Tree):
         self._facets.functions.add(cast(Token, node.children[0]).value.lower())

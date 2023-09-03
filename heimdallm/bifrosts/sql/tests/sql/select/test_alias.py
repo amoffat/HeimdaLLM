@@ -129,3 +129,53 @@ ORDER BY film_count DESC
     # prove that the column isn't stripped by the reconstructor
     fixed = bifrost.traverse(query, autofix=True)
     assert "film_actor.film_id" in fixed
+
+
+@dialects()
+def test_subquery_alias_bleed(dialect: str, Bifrost: Type[Bifrost]):
+    """attempt to use an alias from a subquery to mask the real column name in an outer
+    query"""
+
+    class GeneralConstraints(PermissiveConstraints):
+        def condition_column_allowed(self, fq_column: FqColumn) -> bool:
+            return fq_column.name not in {"t1.secret"}
+
+    bifrost = Bifrost.mocked(GeneralConstraints())
+
+    query = """
+    select
+        t1.col as outer_alias,
+        t1.secret as inner_alias
+    from t1
+    where outer_alias=(
+        select t2.col as inner_alias from t2
+        where inner_alias=42
+    ) and inner_alias=42
+    """
+    with pytest.raises(exc.IllegalConditionColumn) as e:
+        bifrost.traverse(query)
+    assert e.value.column.name == "t1.secret"
+
+
+@dialects()
+def test_subquery_as_alias(dialect: str, Bifrost: Type[Bifrost]):
+    """A subquery can be selected as an alias, but all of the columns it references are
+    going to be bound to the outer alias."""
+    bifrost = Bifrost.mocked(PermissiveConstraints())
+
+    query = """
+    select (select t1.col from t1 where t1.secret='a') as thing
+    from t1
+    where thing=42
+    """
+
+    bifrost.traverse(query)
+
+    class MyConstraints(PermissiveConstraints):
+        def select_column_allowed(self, column: FqColumn) -> bool:
+            return column.name == "t1.col"
+
+    bifrost = Bifrost.mocked(MyConstraints())
+    with pytest.raises(exc.IllegalSelectedColumn) as e:
+        bifrost.traverse(query)
+    assert e.value.column == "t1.secret"

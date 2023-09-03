@@ -120,7 +120,8 @@ WHERE c.customer_id = :customer_id
 
 
 @pytest.mark.skip("TODO")
-def test_leave_illegal_columns(conn):
+@dialects()
+def test_leave_illegal_columns(dialect: str, Bifrost: Type[Bifrost]):
     """columns referenced in an aggregate function should not be removed, since they
     don't reveal information"""
 
@@ -159,3 +160,10 @@ AND to_date >= DATE(:timestamp)
 
     trusted_query = bifrost.traverse(query)
     assert "salaries.salary" in trusted_query
+
+
+@pytest.mark.skip("TODO")
+@dialects()
+def test_add_required_constraint(dialect: str, Bifrost: Type[Bifrost]):
+    """show that we can add a required constraint to a query"""
+    raise NotImplementedError

@@ -10,7 +10,7 @@ def dialects(*dialects, bifrost=True, envelope=False, conn=False):
     :param bifrost: Whether to pass a ``Bifrost`` class into the test.
     :param envelope: Whether to pass a ``PromptEnvelope`` class into the test.
     """
-    dialects = dialects or ("sqlite", "mysql")
+    dialects = dialects or ("sqlite", "mysql")  # , "postgres")
 
     def map_dialect(d: str):
         args = [d]

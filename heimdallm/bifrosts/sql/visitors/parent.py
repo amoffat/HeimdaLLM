@@ -1,3 +1,4 @@
+from typing import Any, cast
 from weakref import proxy
 
 from lark import Tree, Visitor
@@ -10,7 +11,10 @@ class ParentSetter(Visitor):
     """
 
     def __default__(self, tree: Tree):
+        # this will get the root node, which has no parent
+        if not hasattr(tree.meta, "parent"):
+            cast(Any, tree.meta).parent = None
+
         for subtree in tree.children:
             if isinstance(subtree, Tree):
-                assert not hasattr(subtree.meta, "parent")
                 subtree.meta.parent = proxy(tree)  # type: ignore

@@ -1,11 +1,13 @@
+from typing import Any, cast
+
 from lark import Tree
 
 
 def get_ancestor(node: Tree, ancestor_name: str) -> Tree | None:
-    while node.parent:
-        if node.parent.data == ancestor_name:
-            return node.parent
-        node = node.parent
+    while parent := cast(Any, node.meta).parent:
+        if parent.data == ancestor_name:
+            return parent
+        node = cast(Any, node.meta).parent
     return None
 
 

@@ -116,7 +116,6 @@ class Bifrost(_BaseBifrost, ABC):
                     raise e.orig_exc
                 raise e
 
-            final_tree.parent = None  # type: ignore
             final_tree = ParentSetter().visit(final_tree)
             final_tree = IdSetter().visit(final_tree)
             return final_tree
