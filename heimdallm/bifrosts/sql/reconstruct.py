@@ -130,17 +130,18 @@ class ReconstructTransformer(_Transformer):
         # that they were all illegal columns. since we can't proceed without a column,
         # go ahead and raise an exception about illegal column.
         if not tree.children:
-            raise exc.IllegalSelectedColumn(column=self._last_discarded_column.name)
+            raise exc.IllegalSelectedColumn(
+                column=cast(FqColumn, self._last_discarded_column).name
+            )
         return self._copy_tree(tree)
 
-    @v_args(tree=True)
     def column_alias(self, tree: Tree):
         alias_name = get_identifier(tree.children[0], self._reserved_keywords)
 
         # if we can't find the actual table where this column alias comes from, assume
         # the selected table.
-        aliases = self._collector._alias_scope(tree)
-        fq_columns = aliases._aliased_columns[alias_name]
+        aliases = self._collector.alias_scope(tree)
+        fq_columns = aliases.columns[alias_name]
 
         # None means the alias is not based on any column (it's an expression of some
         # kind), so we leave this node alone
@@ -150,11 +151,12 @@ class ReconstructTransformer(_Transformer):
         # if we haven't found any columns associated with this alias, it means that the
         # query is implicitly using the selected table, so we can fully qualify it based
         # on that information.
+        # FIXME, but what if there was a JOIN? TEST THIS
         elif len(fq_columns) == 0:
             old_meta = tree.meta
             tree = qualify_column(
                 FqColumn(
-                    table=cast(str, self._collector._selected_table),
+                    table=cast(str, aliases.selected_table),
                     column=alias_name,
                 )
             )
@@ -177,7 +179,8 @@ class ReconstructTransformer(_Transformer):
         return tree
 
     def selected_column(self, tree: Tree):
-        """ensures that every selected column is allowed"""
+        """Drops disallowed columns from the query, rather than have them fail at
+        constraint validation."""
         selected = tree.children[0]
         if is_count_function(selected):
             pass
@@ -189,11 +192,9 @@ class ReconstructTransformer(_Transformer):
                 maybe_table_alias = get_identifier(table_node, self._reserved_keywords)
                 column_name = get_identifier(column_node, self._reserved_keywords)
 
-                aliases = self._collector._alias_scope(selected)
-                table_name = aliases._aliased_tables.get(
-                    maybe_table_alias, maybe_table_alias
-                )
+                table_name = self._collector.resolve_table(maybe_table_alias)
                 column = FqColumn(table=table_name, column=column_name)
+
                 if not self._validator.select_column_allowed(column):
                     self._last_discarded_column = column
                     return Discard

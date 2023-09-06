@@ -48,3 +48,7 @@ def is_count_function(node: Tree | Token) -> bool:
         if fn_name == "count":
             return True
     return False
+
+
+def is_subquery(node: Tree) -> bool:
+    return node.data == "subquery"

@@ -5,7 +5,8 @@ from uuid import UUID
 from lark import Tree, Visitor
 
 from ..common import FqColumn
-from ..utils.identifier import get_identifier, is_count_function
+from ..exc import AliasConflict
+from ..utils.identifier import get_identifier, is_count_function, is_subquery
 
 
 class _QueryAliases:
@@ -20,8 +21,13 @@ class _QueryAliases:
 
     def __init__(self: "_QueryAliases"):
         # aliased table names from the FROM clause, as well as JOIN clauses.
-        # they map from the alias name to the table name.
-        self._aliased_tables: dict[str, str] = {}
+        # they map from the alias name to a set of table names. It's a set because an
+        # alias may be mapped to multiple different tables, and we want to detect this
+        # so that we can raise an exception.
+        #
+        # also, in addition to the keys being aliases, the keys may be authoritative
+        # table names themselves.
+        self.tables: dict[str, set[str]] = dd(set)
         # aliased column names from the SELECT clause. they map from the alias name to
         # the a collection of fully qualified column names. the reason why it's a
         # collection is because a single alias can be a composite alias consisting of
@@ -29,25 +35,77 @@ class _QueryAliases:
         #
         # a None value means that the alias cannot have any associated columns, which
         # can happen for aliases based on an expression, and not columns.
-        self._aliased_columns: dict[str, set[FqColumn] | None] = dd(set)
-        self._selected_table: str | None = None
-        # these represent subqueries that are aliased in the FROM clause. the key is the
-        # alias for the subquery, and the value is the uuid associated with the subquery
-        # node.
-        self._subquery_aliases: dict[str, UUID] = {}
+        #
+        # each FqColumn in the set may contain aliases themselves, which is why we need
+        # to resolve them in the .resolve() method.
+        self.columns: dict[str, set[FqColumn] | None] = dd(set)
+        # these represent subqueries that are aliased in the FROM and JOIN clauses. the
+        # key is the alias for the subquery, and the value is the uuid associated with
+        # the subquery node.
+        self.subqueries: dict[str, UUID] = {}
+        # this is used to help resolve unqualified column names to their fully qualified
+        # name, if possible.
+        self.selected_table: str | None = None
 
 
 class AliasCollector(Visitor):
-    """collects all of our table and column aliases and maps them back to the
-    authoritative name. we have to do this pass first, before any other passes,
-    because the tree may not evaluate in the order that would allow us to
-    resolve aliases."""
+    """Collects all of our table and column aliases, which can then be mapped back to
+    the authoritative names. We have to do this pass first, before any other passes,
+    because the tree may not evaluate in the order that would allow us to resolve
+    aliases."""
 
     def __init__(self, reserved_keywords: set[str]):
         self._query_aliases: dict[UUID, _QueryAliases] = {}
         self._reserved_keywords = reserved_keywords
+        self._table_aliases: dict[str, str] = {}
 
-    def _alias_scope(self, node: Tree) -> _QueryAliases:
+    def visit(self, tree: Tree) -> Tree:
+        new_tree = super().visit(tree)
+        self._resolve_aliases()
+        return new_tree
+
+    def _resolve_aliases(self):
+        """Processes all aggregated aliases, and resolves them to their authoritative
+        names."""
+
+        table_aliases = {}
+        self._table_aliases = table_aliases
+
+        # first collect all of the table aliases that we know of. we'll also test that
+        # there exist only one authoritative table name associated with each alias.
+        for qa in self._query_aliases.values():
+            for alias, auth_tables in qa.tables.items():
+                if len(auth_tables) > 1:
+                    raise AliasConflict(alias)
+                table_aliases[alias] = next(iter(auth_tables))
+
+        # look at the aliases for derived queries (aliased subqueries) and ensure that
+        # they don't conflict with any other aliases. we don't actually do anything with
+        # the derived query aliases, because they don't resolve to anything that isn't
+        # covered by other validations. for example, if `t1` aliases to a subquery,
+        # that subquery is already checked for selectable tables and columns
+        for qa in self._query_aliases.values():
+            for alias in qa.subqueries.keys():
+                if alias in table_aliases:
+                    raise AliasConflict(alias)
+
+        # now that we've collected all of the aliases, we can resolve fully-qualfiied
+        # column names that may have an alias for their table component.
+        for qa in self._query_aliases.values():
+            for fq_columns in qa.columns.values():
+                if fq_columns:
+                    for fq_column in fq_columns:
+                        if fq_column.table in table_aliases:
+                            fq_column.table = table_aliases[fq_column.table]
+
+        # TODO resolve qa.selected_table
+        pass
+
+    def resolve_table(self, table: str) -> str:
+        """For a table name, resolve it to its authoritative name."""
+        return self._table_aliases.get(table, table)
+
+    def alias_scope(self, node: Tree) -> _QueryAliases:
         """Finds the wrapping query for a given node, and returns the aliases for it.
         This is the scope of aliases that are available to the current node."""
         p = cast(Any, node.meta).parent
@@ -59,51 +117,41 @@ class AliasCollector(Visitor):
             p = p.meta.parent
         raise RuntimeError("could not find wrapping query for node")
 
-    def _resolve_table(self, node: Tree, table: str):
-        aliases = self._alias_scope(node)
-        return aliases._aliased_tables.get(table, table)
-
     def selected_table(self, node: Tree):
-        self._selected_table = get_identifier(node, self._reserved_keywords)
+        """Called for tables targeted in the FROM clause of a SELECT statement."""
+        aliases = self.alias_scope(node)
+        table_type_node = node.children[0]
+
+        # if we're selecting from a normal table, then use its name
+        if table_type_node.data == "table_name":
+            table_name = get_identifier(node, self._reserved_keywords)
+            aliases.selected_table = table_name
+            aliases.tables[table_name].add(table_name)
+
+        # it's a derived table, aka an aliased subquery
+        elif table_type_node.data == "derived_table":
+            subquery, _as, alias_node = table_type_node.children
+            alias_name = get_identifier(alias_node, self._reserved_keywords)
+            aliases.selected_table = alias_name
+            sq_node = subquery.children[0]
+            aliases.subqueries[alias_name] = cast(Any, sq_node.meta).id
+
+        elif table_type_node.data == "aliased_table":
+            table_node, _as, alias_node = table_type_node.children
+            table_name = get_identifier(table_node, self._reserved_keywords)
+            alias = get_identifier(alias_node, self._reserved_keywords)
+            aliases.tables[alias].add(table_name)
+
+    joined_table = selected_table
 
     def full_query(self, node: Tree):
         self._query_aliases.setdefault(cast(Any, node.meta).id, _QueryAliases())
 
-    # tables are aliased in the FROM clause of a SELECT statement, or when a
-    # table is JOINed. it's here that we know the authoritative table name and
-    # its alias, which may be used in other parts of the query
-    def aliased_table(self, node: Tree):
-        table_node, _as, alias_node = node.children
-        table_name = get_identifier(table_node, self._reserved_keywords)
-        alias = get_identifier(alias_node, self._reserved_keywords)
-
-        aliases = self._alias_scope(node)
-        aliases._aliased_tables[alias] = table_name
-
-        # inefficient, but backfill the correct table alias for any columns. we must do
-        # some form of this because we may have recorded a column alias, e.g. ``r.amt as
-        # amt``, before knowing the table alias, e.g. ``rental as r``. so for each
-        # aliased table that we resolve, we need to make sure the column aliases reflect
-        # that table alias correctly. this could be more efficient.
-        for fq_columns in aliases._aliased_columns.values():
-            if fq_columns:
-                for fq_column in fq_columns:
-                    if fq_column.table == alias:
-                        fq_column.table = table_name
-
-    def derived_table(self, node: Tree):
-        """This is a subquery aliased in the FROM clause."""
-        subquery, _as, alias_node = node.children
-        alias_name = get_identifier(alias_node, self._reserved_keywords)
-
-        aliases = self._alias_scope(node)
-        aliases._subquery_aliases[alias_name] = cast(Any, subquery.meta).id
-
-    # columns are aliased in the column list of a SELECT statement. we assume
-    # that all aliased columns are fully qualified by table name. note, however,
-    # that the table name may be an alias itself.
     def aliased_column(self, node: Tree):
-        aliases = self._alias_scope(node)
+        """Columns are aliased in the column list of a SELECT statement. we assume
+        that all aliased columns are fully qualified by table name. note, however, that
+        the table name may be an alias itself."""
+        aliases = self.alias_scope(node)
         value_node, _as, alias_node = node.children
         alias_name = get_identifier(alias_node, self._reserved_keywords)
 
@@ -111,7 +159,14 @@ class AliasCollector(Visitor):
         # doesn't reveal any information about the underlying data. so we don't use it
         # for resolving aliases
         if is_count_function(value_node):
-            aliases._aliased_columns[alias_name] = None
+            aliases.columns[alias_name] = None
+            return
+
+        # if it's a subquery, we'll need to dig into the subquery later to figure out
+        # exactly what the alias name refers to. for now, just store a reference to the
+        # subquery and move on.
+        if is_subquery(value_node):
+            aliases.subqueries[alias_name] = cast(Any, value_node.meta).id
             return
 
         # there may be multiple columns referenced in this alias column, for
@@ -125,10 +180,7 @@ class AliasCollector(Visitor):
 
             # do we already have a table alias for this column? use that instead for
             # the table name
-            table_name = self._resolve_table(node, table_name)
-            composite_columns = cast(
-                set[FqColumn], aliases._aliased_columns[alias_name]
-            )
+            composite_columns = cast(set[FqColumn], aliases.columns[alias_name])
             composite_columns.add(FqColumn(table=table_name, column=column_name))
             inserted_fq_alias = True
 
@@ -136,4 +188,4 @@ class AliasCollector(Visitor):
         # is being an aliased. something like ``1 + 1 as name``. so we set it to None so
         # that we don't try to autofix it later to be a fully qualified column.
         if not inserted_fq_alias:
-            aliases._aliased_columns[alias_name] = None
+            aliases.columns[alias_name] = None

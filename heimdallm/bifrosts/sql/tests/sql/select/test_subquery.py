@@ -162,14 +162,37 @@ select t1.t2col from (
 
 
 def test_subquery_alias_conflict():
-    """If a subuquery is aliased, and that alias conflicts with a parent query alias,
+    """If a subquery is aliased, and that alias conflicts with a table name,
     then the query is ambiguous and should be rejected"""
+
+    query = """
+select t1.col from t1
+join (
+    select t2.col from t2
+) as t1
+    """  # noqa
+    raise NotImplementedError
+
+
+def test_subquery_alias_conflict2():
+    """Alias conflicts anywhere in the query should be rejected"""
 
     query = """
 select t1.col from (
     select t2.col from t2
 ) t1
 join t3 as t1
+    """  # noqa
+    raise NotImplementedError
+
+
+def test_subquery_alias_conflict3():
+    """Alias conflicts anywhere in the query should be rejected"""
+
+    query = """
+select t1.col from (
+    select t2.col from t2 as t1
+) t1
     """  # noqa
     raise NotImplementedError
 
@@ -182,5 +205,22 @@ def test_subquery_fq():
 select t1.col from (
     select col from t2
 ) t1
+    """  # noqa
+    raise NotImplementedError
+
+
+def test_subquery_alias_alignment():
+    """The table and column alias names for a column should be defined in the same
+    query."""
+
+    # fail because the table alias and the column alias for `t1.col` come from different
+    # queries
+    query = """
+select t1.col from (
+    select thing from t2
+) t1
+where id in (
+    select thing as col from t3
+)
     """  # noqa
     raise NotImplementedError

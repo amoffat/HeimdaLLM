@@ -56,24 +56,23 @@ class FacetCollector(Visitor):
     def _resolve_column(self, node: Tree) -> set[FqColumn] | None:
         if node.data == "column_alias":
             maybe_alias = get_identifier(node, self._reserved_keywords)
-            aliases = self._collector._alias_scope(node)
-            return aliases._aliased_columns[maybe_alias]
+            aliases = self._collector.alias_scope(node)
+            return aliases.columns[maybe_alias]
 
         # should never happen
         raise RuntimeError(f"unknown column reference type: {type(node)}")
 
     def _resolve_table(self, table_ref: Tree | Token):
         if isinstance(table_ref, Tree):
+            # it's clearly an aliased table, so we know the table name from this node
             if table_ref.data == "aliased_table":
                 table_name = get_identifier(table_ref, self._reserved_keywords)
                 return table_name
 
+            # it's a table name, but it may be an alias, so we need to do a lookup
             elif table_ref.data == "table_name":
-                # we have no way of knowing if this is an alias or not, other
-                # than testing for its existence in the collector's alias map
                 maybe_alias = get_identifier(table_ref, self._reserved_keywords)
-                aliases = self._collector._alias_scope(table_ref)
-                table = aliases._aliased_tables.get(maybe_alias, maybe_alias)
+                table = self._collector.resolve_table(maybe_alias)
                 return table
 
         elif isinstance(table_ref, Token):

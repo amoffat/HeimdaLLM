@@ -213,3 +213,16 @@ class IllegalFunction(BaseException):
         message = f"Function `{function}` is not allowed"
         super().__init__(message)
         self.function = function
+
+
+class AliasConflict(BaseException):
+    """
+    Thrown when an alias shadows a table name or another alias name.
+
+    :param alias: The alias that conflicts with another name.
+    """
+
+    def __init__(self, *, alias: str):
+        message = f"Alias `{alias}` conflicts with a table name or another alias"
+        super().__init__(message)
+        self.alias = alias
