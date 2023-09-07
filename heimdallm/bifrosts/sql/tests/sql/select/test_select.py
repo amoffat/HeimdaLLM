@@ -3,7 +3,11 @@ from typing import Sequence, Type
 import pytest
 
 from heimdallm.bifrosts.sql import exc
-from heimdallm.bifrosts.sql.common import FqColumn, JoinCondition, RequiredConstraint
+from heimdallm.bifrosts.sql.common import (
+    FqColumn,
+    JoinCondition,
+    ParameterizedConstraint,
+)
 from heimdallm.bifrosts.sql.sqlite.select.bifrost import Bifrost
 
 from ..utils import dialects
@@ -102,23 +106,23 @@ def test_disallowed_select_column(dialect: str, Bifrost: Type[Bifrost]):
 
 
 @dialects()
-def test_required_constraint(dialect: str, Bifrost: Type[Bifrost]):
-    """tests that our required constraint restricts the query correctly"""
+def test_parameterized_constraints(dialect: str, Bifrost: Type[Bifrost]):
+    """tests that our parameterized constraint restricts the query correctly"""
 
     # missing constraint
     query = "select t1.col from t1"
 
     class RequiredConstraints(PermissiveConstraints):
-        def required_constraints(self):
+        def parameterized_constraints(self):
             return [
-                RequiredConstraint(
+                ParameterizedConstraint(
                     column="t1.id",
                     placeholder="id",
                 )
             ]
 
     bifrost = Bifrost.mocked(RequiredConstraints())
-    with pytest.raises(exc.MissingRequiredConstraint) as excinfo:
+    with pytest.raises(exc.MissingParameterizedConstraint) as excinfo:
         bifrost.traverse(query)
 
     e = excinfo.value

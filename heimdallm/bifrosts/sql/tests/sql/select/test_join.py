@@ -11,7 +11,7 @@ from .utils import CustomerConstraints, PermissiveConstraints
 
 
 @dialects()
-def test_required_constraint_in_join(dialect: str, Bifrost: Type[Bifrost]):
+def test_parameterized_constraint_in_join(dialect: str, Bifrost: Type[Bifrost]):
     """sometimes LLMs will put a required constraint in a join clause, not a
     where clause. ensure that we allow this to satisfy a required constraint."""
     query = """

@@ -7,7 +7,7 @@ from .utils import PermissiveConstraints
 
 
 @dialects()
-def test_required_constraint(dialect: str, Bifrost: Type[Bifrost]):
+def test_parameterized_constraint(dialect: str, Bifrost: Type[Bifrost]):
     bifrost = Bifrost.mocked(PermissiveConstraints())
 
     query = """

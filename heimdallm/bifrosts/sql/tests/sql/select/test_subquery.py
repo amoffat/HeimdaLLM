@@ -22,7 +22,7 @@ where t1.id=(select t2.id from t2)
 
 
 @dialects()
-def test_required_constraint(dialect: str, Bifrost: Type[Bifrost]):
+def test_parameterized_constraint(dialect: str, Bifrost: Type[Bifrost]):
     query = """
 select t1.col from t1
 where t1.id=(select t2.id from t2)

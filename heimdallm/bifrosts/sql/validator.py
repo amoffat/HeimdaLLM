@@ -11,7 +11,7 @@ from heimdallm.bifrosts.sql import exc
 from heimdallm.bifrosts.sql.bifrost import Bifrost as _SQLBifrost
 from heimdallm.constraints import ConstraintValidator as _BaseConstraintValidator
 
-from .common import ANY_JOIN, FqColumn, JoinCondition, RequiredConstraint
+from .common import ANY_JOIN, FqColumn, JoinCondition, ParameterizedConstraint
 from .visitors.aliases import AliasCollector
 from .visitors.facets import FacetCollector, Facets
 
@@ -22,7 +22,7 @@ class ConstraintValidator(_BaseConstraintValidator):
     class and implement its methods."""
 
     @abstractmethod
-    def requester_identities(self) -> Sequence[RequiredConstraint]:
+    def requester_identities(self) -> Sequence[ParameterizedConstraint]:
         """Returns the possible identities of the requester, as represented in the
         database. This is used to instruct the LLM how to constrain the query that it
         generates. Only one of these identities needs to match for the query to be
@@ -68,7 +68,7 @@ class ConstraintValidator(_BaseConstraintValidator):
         )
 
     @abstractmethod
-    def required_constraints(self) -> Sequence[RequiredConstraint]:
+    def parameterized_constraints(self) -> Sequence[ParameterizedConstraint]:
         """
         Returns a sequence of constraints that must exist in either the ``WHERE`` clause
         of the query or in a ``JOIN`` condition. It doesn't matter where the constraint
@@ -78,7 +78,7 @@ class ConstraintValidator(_BaseConstraintValidator):
         :return: The sequence of required constraints.
         """
         raise NotImplementedError(
-            "You must explicitly provide a sequence of required constraints, "
+            "You must explicitly provide a sequence of parameterized constraints, "
             "or an empty list for no constraints"
         )
 
@@ -248,9 +248,9 @@ class ConstraintValidator(_BaseConstraintValidator):
 
         # get all of the constraints that the query MUST be constrained by in
         # the WHERE clause
-        for constraint in self.required_constraints():
-            if constraint not in facets.required_constraints:
-                raise exc.MissingRequiredConstraint(
+        for constraint in self.parameterized_constraints():
+            if constraint not in facets.parameterized_constraints:
+                raise exc.MissingParameterizedConstraint(
                     column=constraint.fq_column,
                     placeholder=constraint.placeholder,
                 )
@@ -270,7 +270,7 @@ class ConstraintValidator(_BaseConstraintValidator):
         if all_req_identities:
             found_id = False
             for one_id in all_req_identities:
-                if one_id in facets.required_constraints:
+                if one_id in facets.parameterized_constraints:
                     found_id = True
                     break
             if not found_id:

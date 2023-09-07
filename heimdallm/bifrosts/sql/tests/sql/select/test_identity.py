@@ -3,7 +3,7 @@ from typing import Type
 import pytest
 
 from heimdallm.bifrosts.sql import exc
-from heimdallm.bifrosts.sql.common import RequiredConstraint
+from heimdallm.bifrosts.sql.common import ParameterizedConstraint
 from heimdallm.bifrosts.sql.sqlite.select.bifrost import Bifrost
 
 from ..utils import dialects
@@ -21,11 +21,11 @@ def test_required_identity(dialect: str, Bifrost: Type[Bifrost]):
 
     e = excinfo.value
     assert e.identities == {
-        RequiredConstraint(
+        ParameterizedConstraint(
             column="Customer.CustomerId",
             placeholder="customer_id",
         ),
-        RequiredConstraint(
+        ParameterizedConstraint(
             column="Invoice.CustomerId",
             placeholder="customer_id",
         ),

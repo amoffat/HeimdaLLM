@@ -164,6 +164,6 @@ AND to_date >= DATE(:timestamp)
 
 @pytest.mark.skip("TODO")
 @dialects()
-def test_add_required_constraint(dialect: str, Bifrost: Type[Bifrost]):
-    """show that we can add a required constraint to a query"""
+def test_add_parameterized_constraints(dialect: str, Bifrost: Type[Bifrost]):
+    """show that we can add a parameterized_constraint to a query"""
     raise NotImplementedError

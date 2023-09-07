@@ -7,7 +7,7 @@ from lark import Token, Tree, Visitor
 from heimdallm.bifrosts.sql.utils.context import has_subquery, in_subquery
 
 from .. import exc
-from ..common import FqColumn, JoinCondition, RequiredConstraint
+from ..common import FqColumn, JoinCondition, ParameterizedConstraint
 from ..utils.identifier import get_identifier, is_count_function
 from .aliases import AliasCollector
 
@@ -32,7 +32,7 @@ class Facets:
         self.condition_columns: set[FqColumn] = set()
         # the required conditions in the WHERE and JOIN clauses, used to
         # constrain the query so that it is safe
-        self.required_constraints: set[RequiredConstraint] = set()
+        self.parameterized_constraints: set[ParameterizedConstraint] = set()
         # all of the functions used in the query
         self.functions: set[str] = set()
         # the row limit of the query and all subqueries
@@ -272,8 +272,8 @@ class FacetCollector(Visitor):
             # required constraints that were found.
             elif len(maybe_fq_columns) == 1:
                 fq_column = next(iter(maybe_fq_columns))
-                self._facets.required_constraints.add(
-                    RequiredConstraint(
+                self._facets.parameterized_constraints.add(
+                    ParameterizedConstraint(
                         column=fq_column.name,
                         placeholder=placeholder_name,
                     )
@@ -286,8 +286,8 @@ class FacetCollector(Visitor):
             table_name = self._resolve_table(table_node)
             column_name = get_identifier(column_node, self._reserved_keywords)
 
-            self._facets.required_constraints.add(
-                RequiredConstraint(
+            self._facets.parameterized_constraints.add(
+                ParameterizedConstraint(
                     column=f"{table_name}.{column_name}",
                     placeholder=placeholder_name,
                 )

@@ -84,7 +84,7 @@ the methods that you can override in the derived class, look :doc:`here.
                 ),
             ]
 
-        def required_constraints(self) -> Sequence[RequiredConstraint]:
+        def parameterized_constraints(self) -> Sequence[RequiredConstraint]:
             return []
 
         def select_column_allowed(self, column: FqColumn) -> bool:

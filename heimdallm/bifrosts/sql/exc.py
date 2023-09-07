@@ -5,7 +5,7 @@ import lark
 from heimdallm.support.github import make_ambiguous_parse_issue
 
 if TYPE_CHECKING:
-    from .common import FqColumn, JoinCondition, RequiredConstraint
+    from .common import FqColumn, JoinCondition, ParameterizedConstraint
 
 
 class BaseException(Exception):
@@ -129,7 +129,7 @@ class IllegalConditionColumn(BaseException):
         self.column = column
 
 
-class MissingRequiredConstraint(BaseException):
+class MissingParameterizedConstraint(BaseException):
     def __init__(self, *, column: "FqColumn", placeholder: str):
         message = f"Missing required constraint `{column}`=:{placeholder}"
         super().__init__(message)
@@ -138,7 +138,7 @@ class MissingRequiredConstraint(BaseException):
 
 
 class MissingRequiredIdentity(BaseException):
-    def __init__(self, *, identities: set["RequiredConstraint"]):
+    def __init__(self, *, identities: set["ParameterizedConstraint"]):
         message = f"Missing one required identities: {identities!r}"
         super().__init__(message)
         self.identities = identities
