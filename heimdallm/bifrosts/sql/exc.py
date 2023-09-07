@@ -36,6 +36,17 @@ class InvalidQuery(BaseException):
         self.query = query
 
 
+class UnsupportedQuery(BaseException):
+    """
+    A query may be valid, but not yet supported by our parser.
+
+    :param msg: The reason why it is unsupported.
+    """
+
+    def __init__(self, *, msg: str):
+        super().__init__(f"Query is not supported. Reason: {msg}")
+
+
 class ReservedKeyword(BaseException):
     """
     Thrown when a the query attempts to use a reserved keyword, unescaped, as an alias

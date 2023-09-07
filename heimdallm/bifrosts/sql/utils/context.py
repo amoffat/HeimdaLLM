@@ -13,3 +13,12 @@ def get_ancestor(node: Tree, ancestor_name: str) -> Tree | None:
 
 def in_subquery(node: Tree) -> bool:
     return get_ancestor(node, "subquery") is not None
+
+
+def has_subquery(node: Tree) -> bool:
+    try:
+        next(node.find_data("full_query"))
+    except StopIteration:
+        return False
+    else:
+        return True

@@ -193,11 +193,12 @@ class ReconstructTransformer(_Transformer):
                 column_name = get_identifier(column_node, self._reserved_keywords)
 
                 table_name = self._collector.resolve_table(maybe_table_alias)
-                column = FqColumn(table=table_name, column=column_name)
+                if table_name is not None:
+                    column = FqColumn(table=table_name, column=column_name)
 
-                if not self._validator.select_column_allowed(column):
-                    self._last_discarded_column = column
-                    return Discard
+                    if not self._validator.select_column_allowed(column):
+                        self._last_discarded_column = column
+                        return Discard
 
         return self._copy_tree(tree)
 

@@ -61,7 +61,7 @@ illegal_join : CROSS_JOIN | NATURAL_JOIN | OUTER_JOIN | NATURAL_OUTER_JOIN
 join_condition : connecting_join_condition | required_comparison
 // one side can be any value, but the other side must be a column
 connecting_join_condition : fq_column EQUI_JOIN value
-joined_table : aliased_table | table_name
+joined_table : aliased_table | table_name | derived_table
 
 group_by_clause : GROUP_BY _WS group_by_column ("," group_by_column)*
 group_by_column : value

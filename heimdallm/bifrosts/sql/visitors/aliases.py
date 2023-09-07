@@ -1,4 +1,5 @@
 from collections import defaultdict as dd
+from functools import partialmethod
 from typing import Any, cast
 from uuid import UUID
 
@@ -65,18 +66,25 @@ class AliasCollector(Visitor):
         return new_tree
 
     def _resolve_aliases(self):
-        """Processes all aggregated aliases, and resolves them to their authoritative
-        names."""
+        """Processes all aliases, resolves tables to their authoritative names, and
+        ensures that there are no conflicts between table aliases and column aliases."""
 
         table_aliases = {}
+        col_aliases = set()
         self._table_aliases = table_aliases
+        self._ignored_table_aliases = set()
 
         # first collect all of the table aliases that we know of. we'll also test that
         # there exist only one authoritative table name associated with each alias.
         for qa in self._query_aliases.values():
+            for col_alias in qa.columns.keys():
+                if col_alias in col_aliases:
+                    raise AliasConflict(alias=col_alias)
+                col_aliases.add(col_alias)
+
             for alias, auth_tables in qa.tables.items():
                 if len(auth_tables) > 1:
-                    raise AliasConflict(alias)
+                    raise AliasConflict(alias=alias)
                 table_aliases[alias] = next(iter(auth_tables))
 
         # look at the aliases for derived queries (aliased subqueries) and ensure that
@@ -86,8 +94,16 @@ class AliasCollector(Visitor):
         # that subquery is already checked for selectable tables and columns
         for qa in self._query_aliases.values():
             for alias in qa.subqueries.keys():
-                if alias in table_aliases:
-                    raise AliasConflict(alias)
+                if alias in table_aliases or alias in col_aliases:
+                    raise AliasConflict(alias=alias)
+                self._ignored_table_aliases.add(alias)
+
+        # let's ensure there's no alias conflicts.
+        # now let's check that col aliases and table aliases don't conflict
+        table_aliases_set = set(table_aliases.keys())
+        for alias in col_aliases:
+            if alias in table_aliases_set:
+                raise AliasConflict(alias=alias)
 
         # now that we've collected all of the aliases, we can resolve fully-qualfiied
         # column names that may have an alias for their table component.
@@ -101,8 +117,10 @@ class AliasCollector(Visitor):
         # TODO resolve qa.selected_table
         pass
 
-    def resolve_table(self, table: str) -> str:
+    def resolve_table(self, table: str) -> str | None:
         """For a table name, resolve it to its authoritative name."""
+        if table in self._ignored_table_aliases:
+            return None
         return self._table_aliases.get(table, table)
 
     def alias_scope(self, node: Tree) -> _QueryAliases:
@@ -117,32 +135,38 @@ class AliasCollector(Visitor):
             p = p.meta.parent
         raise RuntimeError("could not find wrapping query for node")
 
-    def selected_table(self, node: Tree):
-        """Called for tables targeted in the FROM clause of a SELECT statement."""
+    def join_or_selected_table(self, select: bool, node: Tree):
+        """Called for tables targeted in the FROM or JOIN clause of a SELECT
+        statement. The purpose is to... TODO"""
         aliases = self.alias_scope(node)
         table_type_node = node.children[0]
 
         # if we're selecting from a normal table, then use its name
         if table_type_node.data == "table_name":
             table_name = get_identifier(node, self._reserved_keywords)
-            aliases.selected_table = table_name
             aliases.tables[table_name].add(table_name)
+            if select:
+                aliases.selected_table = table_name
 
         # it's a derived table, aka an aliased subquery
         elif table_type_node.data == "derived_table":
             subquery, _as, alias_node = table_type_node.children
             alias_name = get_identifier(alias_node, self._reserved_keywords)
-            aliases.selected_table = alias_name
             sq_node = subquery.children[0]
             aliases.subqueries[alias_name] = cast(Any, sq_node.meta).id
+            if select:
+                aliases.selected_table = alias_name
 
         elif table_type_node.data == "aliased_table":
             table_node, _as, alias_node = table_type_node.children
             table_name = get_identifier(table_node, self._reserved_keywords)
             alias = get_identifier(alias_node, self._reserved_keywords)
             aliases.tables[alias].add(table_name)
+            if select:
+                aliases.selected_table = table_name
 
-    joined_table = selected_table
+    selected_table = partialmethod(join_or_selected_table, True)
+    joined_table = partialmethod(join_or_selected_table, False)
 
     def full_query(self, node: Tree):
         self._query_aliases.setdefault(cast(Any, node.meta).id, _QueryAliases())

@@ -11,21 +11,21 @@ from .utils import PermissiveConstraints
 
 
 @dialects()
-def test_where_eq(dialect: str, Bifrost: Type[Bifrost]):
+def test_where_condition(dialect: str, Bifrost: Type[Bifrost]):
     query = """
-SELECT employees.emp_no, employees.first_name, employees.last_name
-FROM dept_emp
-JOIN employees ON employees.emp_no = dept_emp.emp_no
-WHERE dept_emp.dept_no = (
-    SELECT dept_emp.dept_no
-    FROM dept_emp
-    WHERE dept_emp.emp_no = :employee_id
-    AND dept_emp.from_date <= FROM_UNIXTIME(:timestamp)
-    AND dept_emp.to_date > FROM_UNIXTIME(:timestamp)
-)
-AND dept_emp.emp_no != :employee_id
-AND dept_emp.from_date <= FROM_UNIXTIME(:timestamp)
-AND dept_emp.to_date > FROM_UNIXTIME(:timestamp);
+select t1.col from t1
+where t1.id=(select t2.id from t2)
+"""
+
+    bifrost = Bifrost.mocked(PermissiveConstraints())
+    bifrost.traverse(query)
+
+
+@dialects()
+def test_required_constraint(dialect: str, Bifrost: Type[Bifrost]):
+    query = """
+select t1.col from t1
+where t1.id=(select t2.id from t2)
 """
 
     bifrost = Bifrost.mocked(PermissiveConstraints())
@@ -146,22 +146,26 @@ select t1.t2col from (
     select t2.col as t2col from t2
 ) t1
     """
-    bifrost = Bifrost.mocked(PermissiveConstraints())
-    bifrost.traverse(query)
 
     class MyConstraints(PermissiveConstraints):
         def select_column_allowed(self, column: FqColumn) -> bool:
             return column.name in {"t2.col"}
 
     bifrost = Bifrost.mocked(MyConstraints())
-    # with pytest.raises(exc.IllegalSelectedColumn) as excinfo:
     bifrost.traverse(query)
 
-    # e = excinfo.value
-    # assert e.column == "t2.col"
+    class NoSelectConstraints(PermissiveConstraints):
+        def select_column_allowed(self, column: FqColumn) -> bool:
+            return False
+
+    bifrost = Bifrost.mocked(NoSelectConstraints())
+    with pytest.raises(exc.IllegalSelectedColumn) as e:
+        bifrost.traverse(query)
+        assert e.value.column == "t2.col"
 
 
-def test_subquery_alias_conflict():
+@dialects()
+def test_subquery_alias_conflict(dialect: str, Bifrost: Type[Bifrost]):
     """If a subquery is aliased, and that alias conflicts with a table name,
     then the query is ambiguous and should be rejected"""
 
@@ -169,58 +173,61 @@ def test_subquery_alias_conflict():
 select t1.col from t1
 join (
     select t2.col from t2
-) as t1
-    """  # noqa
-    raise NotImplementedError
+) as t1 on t1.id=t1.col
+    """
+
+    bifrost = Bifrost.mocked(PermissiveConstraints())
+    with pytest.raises(exc.AliasConflict) as e:
+        bifrost.traverse(query)
+        assert e.value.alias == "t1"
 
 
-def test_subquery_alias_conflict2():
+@dialects()
+def test_subquery_alias_conflict2(dialect: str, Bifrost: Type[Bifrost]):
+    """Alias conflicts anywhere in the query should be rejected"""
+
+    query = """
+select t1.col, t1.col2 as alias_col from (
+    select t2.col as alias_col from t2
+) as sq
+    """
+
+    bifrost = Bifrost.mocked(PermissiveConstraints())
+    with pytest.raises(exc.AliasConflict) as e:
+        bifrost.traverse(query)
+    assert e.value.alias == "alias_col"
+
+
+@dialects()
+def test_subquery_alias_conflict3(dialect: str, Bifrost: Type[Bifrost]):
     """Alias conflicts anywhere in the query should be rejected"""
 
     query = """
 select t1.col from (
-    select t2.col from t2
+    select t1.col from t2 as t1
 ) t1
-join t3 as t1
-    """  # noqa
-    raise NotImplementedError
+    """
+
+    bifrost = Bifrost.mocked(PermissiveConstraints())
+    with pytest.raises(exc.AliasConflict) as e:
+        bifrost.traverse(query)
+    assert e.value.alias == "t1"
 
 
-def test_subquery_alias_conflict3():
-    """Alias conflicts anywhere in the query should be rejected"""
-
-    query = """
-select t1.col from (
-    select t2.col from t2 as t1
-) t1
-    """  # noqa
-    raise NotImplementedError
-
-
-def test_subquery_fq():
+@dialects()
+def test_subquery_fq(dialect: str, Bifrost: Type[Bifrost]):
     """A subquery should be able to have its single columns fully-qualified
     automatically"""
 
     query = """
-select t1.col from (
-    select col from t2
+select t1.col, t1.col2 from (
+    select col, col2 from (
+        select thing from t3
+    ) t2
 ) t1
-    """  # noqa
-    raise NotImplementedError
-
-
-def test_subquery_alias_alignment():
-    """The table and column alias names for a column should be defined in the same
-    query."""
-
-    # fail because the table alias and the column alias for `t1.col` come from different
-    # queries
-    query = """
-select t1.col from (
-    select thing from t2
-) t1
-where id in (
-    select thing as col from t3
-)
-    """  # noqa
-    raise NotImplementedError
+    """
+    bifrost = Bifrost.mocked(PermissiveConstraints())
+    fixed = bifrost.traverse(query)
+    assert "t2.col" in fixed.lower()
+    assert "t2.col2" in fixed.lower()
+    assert "t3.thing" in fixed.lower()

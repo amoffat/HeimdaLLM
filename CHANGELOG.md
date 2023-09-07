@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0 -
+
+- Subquery support
+- PostgreSQL support
+- Renamed `required_constraints` to `parameterized_constraints`
+
 ## 0.3.0 - 7/15/23
 
 - Autofix non-qualified column names

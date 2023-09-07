@@ -4,7 +4,7 @@ from uuid import UUID
 
 from lark import Token, Tree, Visitor
 
-from heimdallm.bifrosts.sql.utils.context import in_subquery
+from heimdallm.bifrosts.sql.utils.context import has_subquery, in_subquery
 
 from .. import exc
 from ..common import FqColumn, JoinCondition, RequiredConstraint
@@ -62,7 +62,7 @@ class FacetCollector(Visitor):
         # should never happen
         raise RuntimeError(f"unknown column reference type: {type(node)}")
 
-    def _resolve_table(self, table_ref: Tree | Token):
+    def _resolve_table(self, table_ref: Tree | Token) -> str | None:
         if isinstance(table_ref, Tree):
             # it's clearly an aliased table, so we know the table name from this node
             if table_ref.data == "aliased_table":
@@ -89,6 +89,9 @@ class FacetCollector(Visitor):
         joined_table = node.children[1].children[0]
         joined_table_name = self._resolve_table(joined_table)
 
+        if joined_table_name is None:
+            raise exc.UnsupportedQuery(msg="JOIN on derived table")
+
         # if a required_comparison node exists, it means it is actually required
         # (enforced by the grammar, see grammar comments). a required comparison has
         # a placeholder for the RHS
@@ -102,6 +105,8 @@ class FacetCollector(Visitor):
             from_table_node, from_column_node = from_fq_column_node.children
             from_column = get_identifier(from_column_node, self._reserved_keywords)
             from_table = self._resolve_table(from_table_node)
+            if from_table is None:
+                raise exc.UnsupportedQuery(msg="JOIN condition on derived table")
 
             # conditions in a join are compared against are allowed conditions, so
             # record the LHS
@@ -125,6 +130,8 @@ class FacetCollector(Visitor):
             to_column = get_identifier(to_column_node, self._reserved_keywords)
 
             to_table = self._resolve_table(to_table)
+            if to_table is None:
+                raise exc.UnsupportedQuery(msg="JOIN condition on derived table")
 
             # the joined table must be one of the parts of the join condition
             if joined_table_name != from_table and joined_table_name != to_table:
@@ -193,6 +200,9 @@ class FacetCollector(Visitor):
 
             # if we've made it this far, we're sure we're dealing with a fully-qualified
             # column, or a non-column based expression
+            if has_subquery(child):
+                return
+
             try:
                 table_node = next(child.find_data("table_name"))
             # it's some non-column expression, which we don't care about
@@ -201,6 +211,13 @@ class FacetCollector(Visitor):
             # there's a fully qualified column there, so we'll record it
             else:
                 table_name = self._resolve_table(table_node)
+
+                # a none indicates that the table points to a derived table. we don't
+                # count that as a selected column, because we do separate validation on
+                # derived tables.
+                if table_name is None:
+                    return
+
                 # column_name will always be authoritative, even if it is aliased in
                 # this node
                 column_name = get_identifier(
@@ -322,6 +339,9 @@ class FacetCollector(Visitor):
         for fq_column_node in node.find_data("fq_column"):
             table_node, column_node = fq_column_node.children
             table_name = self._resolve_table(table_node)
+            if table_name is None:
+                raise exc.UnsupportedQuery(msg="WHERE condition on derived table")
+
             column_name = get_identifier(column_node, self._reserved_keywords)
             self._facets.condition_columns.add(
                 FqColumn(
