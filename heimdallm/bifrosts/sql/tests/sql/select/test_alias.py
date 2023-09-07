@@ -133,8 +133,7 @@ ORDER BY film_count DESC
 
 @dialects()
 def test_subquery_alias_bleed(dialect: str, Bifrost: Type[Bifrost]):
-    """attempt to use an alias from a subquery to mask the real column name in an outer
-    query"""
+    """An inner subquery alias should not mask an outer alias."""
 
     class GeneralConstraints(PermissiveConstraints):
         def condition_column_allowed(self, fq_column: FqColumn) -> bool:
@@ -152,9 +151,9 @@ def test_subquery_alias_bleed(dialect: str, Bifrost: Type[Bifrost]):
         where inner_alias=42
     ) and inner_alias=42
     """
-    with pytest.raises(exc.IllegalConditionColumn) as e:
+    with pytest.raises(exc.AliasConflict) as e:
         bifrost.traverse(query)
-    assert e.value.column.name == "t1.secret"
+    assert e.value.alias == "inner_alias"
 
 
 @dialects()
@@ -176,6 +175,6 @@ def test_subquery_as_alias(dialect: str, Bifrost: Type[Bifrost]):
             return column.name == "t1.col"
 
     bifrost = Bifrost.mocked(MyConstraints())
-    with pytest.raises(exc.IllegalSelectedColumn) as e:
+    with pytest.raises(exc.IllegalConditionColumn) as e:
         bifrost.traverse(query)
-    assert e.value.column == "t1.secret"
+    assert e.value.column.name == "t1.secret"

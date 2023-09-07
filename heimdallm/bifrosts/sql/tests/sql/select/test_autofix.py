@@ -95,6 +95,9 @@ def test_remove_illegal_columns(dialect: str, Bifrost: Type[Bifrost], conn):
     """show that we can automatically filter out illegal columns"""
 
     class MyConstraints(PermissiveConstraints):
+        def condition_column_allowed(self, column: FqColumn) -> bool:
+            return True
+
         def select_column_allowed(self, column: FqColumn) -> bool:
             return not column.name.endswith("_id")
 

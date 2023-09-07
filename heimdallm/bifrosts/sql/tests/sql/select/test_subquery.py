@@ -22,20 +22,8 @@ where t1.id=(select t2.id from t2)
 
 
 @dialects()
-def test_parameterized_constraint(dialect: str, Bifrost: Type[Bifrost]):
-    query = """
-select t1.col from t1
-where t1.id=(select t2.id from t2)
-"""
-
-    bifrost = Bifrost.mocked(PermissiveConstraints())
-    bifrost.traverse(query)
-
-
-@dialects()
 def test_where_in(dialect: str, Bifrost: Type[Bifrost]):
-    """WHERE X IN subquery, with subquery having columns that must be allowed by the
-    constraint validator"""
+    """A subquery's selected columns are subject to the constraint validator"""
 
     class Conservative(PermissiveConstraints):
         def select_column_allowed(self, column: FqColumn) -> bool:
@@ -49,8 +37,9 @@ where t1.id in (
 )
     """
     bifrost = Bifrost.mocked(Conservative())
-    with pytest.raises(exc.IllegalSelectedColumn):
+    with pytest.raises(exc.IllegalSelectedColumn) as e:
         bifrost.traverse(query)
+    assert e.value.column == "t1.id"
 
     class Liberal(PermissiveConstraints):
         def select_column_allowed(self, column: FqColumn) -> bool:
@@ -62,7 +51,7 @@ where t1.id in (
 
 @dialects()
 def test_subquery_bad_limit(dialect: str, Bifrost: Type[Bifrost]):
-    """Tests that a subquery must be limited by a LIMIT clause"""
+    """A subquery does not require a limit"""
 
     class MyConstraints(PermissiveConstraints):
         def max_limit(self):
@@ -73,41 +62,6 @@ select t1.col from t1
 where t1.id in (
     select t1.id from t1
     where t1.col='foo'
-)
-limit 10
-    """
-    bifrost = Bifrost.mocked(MyConstraints())
-    with pytest.raises(exc.TooManyRows) as e:
-        bifrost.traverse(query, autofix=False)
-        assert e.value.limit is None
-
-    query = """
-select t1.col from t1
-where t1.id in (
-    select t1.id from t1
-    where t1.col='foo'
-    limit 11
-)
-limit 10
-    """
-    bifrost = Bifrost.mocked(MyConstraints())
-    with pytest.raises(exc.TooManyRows) as e:
-        bifrost.traverse(query, autofix=False)
-        assert e.value.limit == 11
-
-
-@dialects()
-def test_subquery_good_limit(dialect: str, Bifrost: Type[Bifrost]):
-    class MyConstraints(PermissiveConstraints):
-        def max_limit(self):
-            return 10
-
-    query = """
-select t1.col from t1
-where t1.id in (
-    select t1.id from t1
-    where t1.col='foo'
-    limit 10
 )
 limit 10
     """
@@ -116,7 +70,9 @@ limit 10
 
 
 @dialects()
-def test_subquery_fix_limit(dialect: str, Bifrost: Type[Bifrost]):
+def test_subquery_dont_fix_limit(dialect: str, Bifrost: Type[Bifrost]):
+    """The reconstructor should NOT add a limit to a subquery"""
+
     class MyConstraints(PermissiveConstraints):
         def max_limit(self):
             return 10
@@ -134,7 +90,7 @@ limit 5
     # outer limit preserved
     assert "limit 5" in fixed.lower()
     # inner limit added
-    assert "limit 10" in fixed.lower()
+    assert "limit 10" not in fixed.lower()
 
 
 @dialects()

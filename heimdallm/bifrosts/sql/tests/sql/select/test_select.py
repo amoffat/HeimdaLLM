@@ -24,6 +24,9 @@ def test_aliased_select_column(dialect: str, Bifrost: Type[Bifrost]):
     """
 
     class MyConstraints(PermissiveConstraints):
+        def condition_column_allowed(self, column: FqColumn) -> bool:
+            return True
+
         def select_column_allowed(self, column: FqColumn) -> bool:
             return column.name in {"t2.col"}
 

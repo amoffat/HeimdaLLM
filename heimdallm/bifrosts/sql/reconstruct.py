@@ -3,6 +3,8 @@ from typing import Generator, Iterable, cast
 from lark import Discard, Token, Tree, v_args
 from lark.visitors import Transformer as _Transformer
 
+from heimdallm.bifrosts.sql.utils.context import has_subquery, in_subquery
+
 from . import exc
 from .common import FqColumn
 from .utils.identifier import get_identifier, is_count_function
@@ -112,16 +114,17 @@ class ReconstructTransformer(_Transformer):
 
     def select_statement(self, tree: Tree):
         """checks if a limit needs to be added or adjusted"""
-        max_limit = self._validator.max_limit()
+        if not in_subquery(tree):
+            max_limit = self._validator.max_limit()
 
-        if max_limit is not None:
-            for child in tree.children:
-                if not isinstance(child, Tree):
-                    continue
+            if max_limit is not None:
+                for child in tree.children:
+                    if not isinstance(child, Tree):
+                        continue
 
-                if child.data == "limit_placeholder":
-                    add_limit(child, max_limit)
-                    break
+                    if child.data == "limit_placeholder":
+                        add_limit(child, max_limit)
+                        break
 
         return self._copy_tree(tree)
 
@@ -136,12 +139,14 @@ class ReconstructTransformer(_Transformer):
         return self._copy_tree(tree)
 
     def column_alias(self, tree: Tree):
+        """Called for columns in a condition. Despite the name, it may not be an actual
+        alias, but rather a column name."""
         alias_name = get_identifier(tree.children[0], self._reserved_keywords)
 
         # if we can't find the actual table where this column alias comes from, assume
         # the selected table.
         aliases = self._collector.alias_scope(tree)
-        fq_columns = aliases.columns[alias_name]
+        fq_columns = aliases.columns.get(alias_name, set())
 
         # None means the alias is not based on any column (it's an expression of some
         # kind), so we leave this node alone
@@ -153,14 +158,18 @@ class ReconstructTransformer(_Transformer):
         # on that information.
         # FIXME, but what if there was a JOIN? TEST THIS
         elif len(fq_columns) == 0:
-            old_meta = tree.meta
-            tree = qualify_column(
-                FqColumn(
-                    table=cast(str, aliases.selected_table),
-                    column=alias_name,
+            if alias_name in self._collector.derived_table_aliases:
+                tree = self._copy_tree(tree)
+
+            else:
+                old_meta = tree.meta
+                tree = qualify_column(
+                    FqColumn(
+                        table=cast(str, aliases.selected_table),
+                        column=alias_name,
+                    )
                 )
-            )
-            tree._meta = old_meta
+                tree._meta = old_meta
 
         # if there's only one fq column associated with this alias, then we know it's
         # not a composite alias, so we can fully qualify it.
@@ -183,6 +192,11 @@ class ReconstructTransformer(_Transformer):
         constraint validation."""
         selected = tree.children[0]
         if is_count_function(selected):
+            pass
+
+        # if the column we're selecting is a derived table, then it doesn't make sense
+        # to drop it, because it can't fail ``select_column_allowed`` validation.
+        elif has_subquery(selected):
             pass
 
         elif isinstance(selected, Tree):

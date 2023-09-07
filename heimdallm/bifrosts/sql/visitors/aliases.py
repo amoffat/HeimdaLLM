@@ -1,4 +1,3 @@
-from collections import defaultdict as dd
 from functools import partialmethod
 from typing import Any, cast
 from uuid import UUID
@@ -28,7 +27,7 @@ class _QueryAliases:
         #
         # also, in addition to the keys being aliases, the keys may be authoritative
         # table names themselves.
-        self.tables: dict[str, set[str]] = dd(set)
+        self.tables: dict[str, set[str]] = {}
         # aliased column names from the SELECT clause. they map from the alias name to
         # the a collection of fully qualified column names. the reason why it's a
         # collection is because a single alias can be a composite alias consisting of
@@ -39,7 +38,7 @@ class _QueryAliases:
         #
         # each FqColumn in the set may contain aliases themselves, which is why we need
         # to resolve them in the .resolve() method.
-        self.columns: dict[str, set[FqColumn] | None] = dd(set)
+        self.columns: dict[str, set[FqColumn] | None] = {}
         # these represent subqueries that are aliased in the FROM and JOIN clauses. the
         # key is the alias for the subquery, and the value is the uuid associated with
         # the subquery node.
@@ -59,6 +58,7 @@ class AliasCollector(Visitor):
         self._query_aliases: dict[UUID, _QueryAliases] = {}
         self._reserved_keywords = reserved_keywords
         self._table_aliases: dict[str, str] = {}
+        self.derived_table_aliases: set[str] = set()
 
     def visit(self, tree: Tree) -> Tree:
         new_tree = super().visit(tree)
@@ -72,7 +72,6 @@ class AliasCollector(Visitor):
         table_aliases = {}
         col_aliases = set()
         self._table_aliases = table_aliases
-        self._ignored_table_aliases = set()
 
         # first collect all of the table aliases that we know of. we'll also test that
         # there exist only one authoritative table name associated with each alias.
@@ -96,7 +95,7 @@ class AliasCollector(Visitor):
             for alias in qa.subqueries.keys():
                 if alias in table_aliases or alias in col_aliases:
                     raise AliasConflict(alias=alias)
-                self._ignored_table_aliases.add(alias)
+                self.derived_table_aliases.add(alias)
 
         # let's ensure there's no alias conflicts.
         # now let's check that col aliases and table aliases don't conflict
@@ -119,7 +118,7 @@ class AliasCollector(Visitor):
 
     def resolve_table(self, table: str) -> str | None:
         """For a table name, resolve it to its authoritative name."""
-        if table in self._ignored_table_aliases:
+        if table in self.derived_table_aliases:
             return None
         return self._table_aliases.get(table, table)
 
@@ -144,7 +143,7 @@ class AliasCollector(Visitor):
         # if we're selecting from a normal table, then use its name
         if table_type_node.data == "table_name":
             table_name = get_identifier(node, self._reserved_keywords)
-            aliases.tables[table_name].add(table_name)
+            aliases.tables.setdefault(table_name, set()).add(table_name)
             if select:
                 aliases.selected_table = table_name
 
@@ -161,7 +160,7 @@ class AliasCollector(Visitor):
             table_node, _as, alias_node = table_type_node.children
             table_name = get_identifier(table_node, self._reserved_keywords)
             alias = get_identifier(alias_node, self._reserved_keywords)
-            aliases.tables[alias].add(table_name)
+            aliases.tables.setdefault(alias, set()).add(table_name)
             if select:
                 aliases.selected_table = table_name
 
@@ -204,7 +203,9 @@ class AliasCollector(Visitor):
 
             # do we already have a table alias for this column? use that instead for
             # the table name
-            composite_columns = cast(set[FqColumn], aliases.columns[alias_name])
+            composite_columns = cast(
+                set[FqColumn], aliases.columns.setdefault(alias_name, set())
+            )
             composite_columns.add(FqColumn(table=table_name, column=column_name))
             inserted_fq_alias = True
 

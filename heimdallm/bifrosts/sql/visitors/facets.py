@@ -57,7 +57,8 @@ class FacetCollector(Visitor):
         if node.data == "column_alias":
             maybe_alias = get_identifier(node, self._reserved_keywords)
             aliases = self._collector.alias_scope(node)
-            return aliases.columns[maybe_alias]
+            maybe_cols = aliases.columns.get(maybe_alias, set())
+            return maybe_cols
 
         # should never happen
         raise RuntimeError(f"unknown column reference type: {type(node)}")
@@ -364,13 +365,21 @@ class FacetCollector(Visitor):
             # we have no columns that resolve the alias. this is an error.
             else:
                 column_name = get_identifier(column_alias_node, self._reserved_keywords)
-                raise exc.UnqualifiedColumn(column=column_name)
+                if column_name in self._collector.derived_table_aliases:
+                    pass
+                else:
+                    raise exc.UnqualifiedColumn(column=column_name)
 
     where_condition = _collect_condition_column
     having_condition = _collect_condition_column
     order_column = _collect_condition_column
 
     def limit_placeholder(self, node: Tree):
+        # a subquery does not require a limit because the only limit we care about is
+        # the outermost query which yields the actual result set.
+        if in_subquery(node):
+            return
+
         if limit_nodes := list(node.find_data("limit")):
             limit_node = limit_nodes[0]
             limit = int(cast(Token, limit_node.children[0]).value)
