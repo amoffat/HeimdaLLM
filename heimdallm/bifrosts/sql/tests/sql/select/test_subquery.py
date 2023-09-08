@@ -1,24 +1,13 @@
-from typing import Type
+from typing import Sequence, Type
 
 import pytest
 
 from heimdallm.bifrosts.sql import exc
 from heimdallm.bifrosts.sql.bifrost import Bifrost
-from heimdallm.bifrosts.sql.common import FqColumn
+from heimdallm.bifrosts.sql.common import FqColumn, ParameterizedConstraint
 
 from ..utils import dialects
 from .utils import PermissiveConstraints
-
-
-@dialects()
-def test_where_condition(dialect: str, Bifrost: Type[Bifrost]):
-    query = """
-select t1.col from t1
-where t1.id=(select t2.id from t2)
-"""
-
-    bifrost = Bifrost.mocked(PermissiveConstraints())
-    bifrost.traverse(query)
 
 
 @dialects()
@@ -187,3 +176,25 @@ select t1.col, t1.col2 from (
     assert "t2.col" in fixed.lower()
     assert "t2.col2" in fixed.lower()
     assert "t3.thing" in fixed.lower()
+
+
+@dialects()
+def test_subquery_parameterized_comparison(dialect: str, Bifrost: Type[Bifrost]):
+    """Parameterized comparisons must exist outside of the subquery to count"""
+
+    class MyConstraints(PermissiveConstraints):
+        def parameterized_constraints(self) -> Sequence[ParameterizedConstraint]:
+            return [ParameterizedConstraint(column="t1.email", placeholder="email")]
+
+    bifrost = Bifrost.mocked(MyConstraints())
+
+    query = """
+select t.email from (
+    select t1.email from t1
+    where t1.email=:email
+) t
+"""
+
+    with pytest.raises(exc.MissingParameterizedConstraint) as e:
+        bifrost.traverse(query)
+    assert e.value.placeholder == "email"

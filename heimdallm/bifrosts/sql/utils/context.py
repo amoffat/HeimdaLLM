@@ -19,7 +19,10 @@ def get_containing_query(node: Tree) -> Tree:
 
 
 def in_subquery(node: Tree) -> bool:
-    return get_ancestor(node, "subquery") is not None
+    return (
+        get_ancestor(node, "subquery") is not None
+        or get_ancestor(node, "with_cte") is not None
+    )
 
 
 def has_subquery(node: Tree | Token) -> bool:

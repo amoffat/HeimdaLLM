@@ -1,5 +1,9 @@
-from typing import Type
+from typing import Sequence, Type
 
+import pytest
+
+from heimdallm.bifrosts.sql import exc
+from heimdallm.bifrosts.sql.common import ParameterizedConstraint
 from heimdallm.bifrosts.sql.sqlite.select.bifrost import Bifrost
 
 from ..utils import dialects
@@ -79,15 +83,22 @@ select cta_table.col from cta_table
 
 @dialects()
 def test_cte_parameterized_comparison(dialect: str, Bifrost: Type[Bifrost]):
-    """Parameterized comparisons must exist outside of the CTE"""
-    bifrost = Bifrost.mocked(PermissiveConstraints())
+    """Parameterized comparisons must exist outside of the CTE to count"""
+
+    class MyConstraints(PermissiveConstraints):
+        def parameterized_constraints(self) -> Sequence[ParameterizedConstraint]:
+            return [ParameterizedConstraint(column="t1.email", placeholder="email")]
+
+    bifrost = Bifrost.mocked(MyConstraints())
 
     query = """
 WITH cta_table as (
-    select t1.col from t1
-    join t2 on t1.id = t2.t1_id
+    select t1.email from t1
+    where t1.email=:email
 )
-select cta_table.col from cta_table
+select cta_table.email from cta_table
 """
 
-    bifrost.traverse(query)
+    with pytest.raises(exc.MissingParameterizedConstraint) as e:
+        bifrost.traverse(query)
+    assert e.value.placeholder == "email"
