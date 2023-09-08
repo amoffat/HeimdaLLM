@@ -3,8 +3,8 @@
 ## 1.0.0 -
 
 - Subquery support
-- PostgreSQL support
 - CTE (Common Table Expressions) support
+- PostgreSQL support
 - Renamed constraint method `required_constraints` to `parameterized_constraints`
 - Renamed Bifrost method `mocked` to `validation_only`
 
