@@ -1,5 +1,7 @@
 ?start : full_query
-full_query : select_statement unions?
+full_query : \
+    with_cte? \
+    select_statement unions?
 
 unions : union+
 union : UNION (ALL | DISTINCT)? select_statement
@@ -14,6 +16,9 @@ select_statement : \
     (_WS order_by_clause)? \
     limit_placeholder \
     SEMICOLON?
+
+with_cte : "with"i _WS cte ("," cte)*
+cte : generic_alias _WS "as"i _WS "(" full_query ")"
 
 // we use a placeholder for the limit clause because we need to be able to insert one
 // automatically in the case of reconstruction. if we didn't have a placeholder, we'd
@@ -97,10 +102,10 @@ comparison : \
     | GT
     | LTE
     | GTE
-    | NOT? LIKE _WS
-    | IS NOT? _WS
-    | SOUNDS_LIKE _WS
-    | NOT? (REGEXP | RLIKE) _WS
+    | _WS (NOT _WS)? LIKE _WS
+    | _WS IS _WS (NOT _WS)?
+    | _WS SOUNDS_LIKE _WS
+    | _WS (NOT _WS)? (REGEXP | RLIKE) _WS
 in_comparison : value _WS (NOT _WS)? IN _WS (in_list | subquery)
 in_list : "(" value ("," value)* ")"
 between_comparison : value (_WS NOT)? _WS BETWEEN _WS value _WS AND _WS value

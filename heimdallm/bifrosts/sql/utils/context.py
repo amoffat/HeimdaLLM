@@ -16,6 +16,7 @@ def in_subquery(node: Tree) -> bool:
 
 
 def has_subquery(node: Tree | Token) -> bool:
+    """Determines if a node has a subquery as a child."""
     if isinstance(node, Token):
         return False
 

@@ -9,6 +9,8 @@ from .utils import PermissiveConstraints
 @dialects("postgres")
 def test_type_cast(dialect: str, Bifrost: Type[Bifrost]):
     """Prove prefix type casts are allowed"""
+    # FIXME this doesn't do what is advertised
+    raise NotImplementedError
     bifrost = Bifrost.mocked(PermissiveConstraints())
 
     query = """
@@ -78,6 +80,8 @@ GROUP BY region, product;
 
 @dialects("postgres")
 def test_cte_join(dialect: str, Bifrost: Type[Bifrost]):
+    bifrost = Bifrost.mocked(PermissiveConstraints())
+
     query = """
 WITH director AS (
         SELECT crew.person_id
@@ -100,5 +104,21 @@ WHERE
     AND movies.revenue IS NOT NULL
     AND movies.budget >= 1000
     AND similarity(movies.title, 'Toy Story') <= 0.5;
-"""  # noqa
-    raise NotImplementedError
+"""
+    bifrost.traverse(query)
+
+
+@dialects()
+def test_cte_joins_separate(dialect: str, Bifrost: Type[Bifrost]):
+    """Joins that happen in a CTE are counted when determining JOIN connectivity"""
+    bifrost = Bifrost.mocked(PermissiveConstraints())
+
+    query = """
+WITH cta_table as (
+    select t1.col from t1
+    join t2 on t1.id = t2.t1_id
+)
+select cta_table.col from cta_table
+"""
+
+    bifrost.traverse(query)

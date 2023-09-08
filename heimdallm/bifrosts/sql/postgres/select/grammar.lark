@@ -103,8 +103,9 @@ comparison : \
     | GT
     | LTE
     | GTE
+    | SIMILARITY
     | _WS (NOT _WS)? LIKE _WS
-    | _WS IS (NOT _WS)? _WS
+    | _WS IS _WS (NOT _WS)?
     | _WS (NOT _WS)? ILIKE _WS
     | _WS SIMILAR_TO _WS
 in_comparison : value _WS (NOT _WS)? IN _WS (in_list | subquery)
@@ -200,6 +201,7 @@ NOT : "not"i
 REGEXP : "regexp"i
 ILIKE : "ilike"i
 SIMILAR_TO : "similar"i _WS "to"i
+SIMILARITY : "%"
 
 TRUE : "true"i
 FALSE : "false"i
