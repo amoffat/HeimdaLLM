@@ -178,3 +178,18 @@ def test_subquery_as_alias(dialect: str, Bifrost: Type[Bifrost]):
     with pytest.raises(exc.IllegalConditionColumn) as e:
         bifrost.traverse(query)
     assert e.value.column.name == "t1.secret"
+
+
+@dialects()
+def test_selected_table_alias(dialect: str, Bifrost: Type[Bifrost]):
+    """If the selected table is aliased and the query is reconstructed to have
+    authoritative column names, use the authoritative selected table name."""
+    bifrost = Bifrost.mocked(PermissiveConstraints())
+
+    query = """
+    select col
+    from t1 as table_alias
+    """
+
+    fixed = bifrost.traverse(query)
+    assert "t1.col" in fixed

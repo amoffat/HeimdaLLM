@@ -115,9 +115,6 @@ class AliasCollector(Visitor):
                         if fq_column.table in table_aliases:
                             fq_column.table = table_aliases[fq_column.table]
 
-        # TODO resolve qa.selected_table
-        pass
-
     def resolve_table(self, table: str) -> str | None:
         """For a table name, resolve it to its authoritative name."""
         if table in self.derived_table_aliases:
