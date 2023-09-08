@@ -131,7 +131,7 @@ wrapped_value : LPAREN value RPAREN
 ?arith_expr : value BINARY_OP value (BINARY_OP value)*
 
 // a function with any number of arguments
-function : FUNCTION_NAME "(" (value ("," value)*)? ")"
+function : FUNCTION_NAME "(" (AGG_FN_MODIFIER _WS)? (value ("," value)*)? ")"
     | SUBSTRING_FN_NAME "(" value (_WS "from"i _WS INT)? (_WS "for"i _WS INT)? ")"
     | EXTRACT_FN_NAME "(" DATE_PART "from"i value ")"
 FUNCTION_NAME : /[a-zA-Z_]+/

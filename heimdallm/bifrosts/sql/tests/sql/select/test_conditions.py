@@ -15,7 +15,7 @@ class MyConstraints(PermissiveConstraints):
         return [JoinCondition("t1.id", "t2.t1_id")]
 
     def condition_column_allowed(self, column: FqColumn) -> bool:
-        return column.name in {"t1.name", "t1.thing"}
+        return column.name in {"t1.cond", "t1.thing"}
 
 
 @dialects()
@@ -25,7 +25,7 @@ def test_allowed_where(dialect: str, Bifrost: Type[Bifrost]):
     query = """
     select t1.col from t1
     where
-        t1.`name`='foo'
+        t1.cond='foo'
         and t1.thing='bar'
         or t1.other='baz'
     """
@@ -37,7 +37,7 @@ def test_allowed_where(dialect: str, Bifrost: Type[Bifrost]):
     query = """
     select t1.col from t1
     where
-        t1.`name`='foo'
+        t1.cond='foo'
         and t1.thing='bar'
     """
     bifrost.traverse(query)
@@ -68,8 +68,8 @@ def test_allowed_having(dialect: str, Bifrost: Type[Bifrost]):
     bifrost = Bifrost.mocked(MyConstraints())
 
     query = """
-    select t1.`name` as `name`, sum(t1.amount) total from t1
-    group by `name`
+    select t1.cond as cond, sum(t1.amount) total from t1
+    group by cond
     having total > 100
     """
     with pytest.raises(exc.IllegalConditionColumn) as e:
@@ -77,8 +77,8 @@ def test_allowed_having(dialect: str, Bifrost: Type[Bifrost]):
     assert e.value.column.name == "t1.amount"
 
     query = """
-    select t1.`name` as `name`, sum(t1.thing) total from t1
-    group by `name`
+    select t1.cond as cond, sum(t1.thing) total from t1
+    group by cond
     having total > 100
     """
     bifrost.traverse(query)
@@ -98,6 +98,6 @@ def test_allowed_order_by(dialect: str, Bifrost: Type[Bifrost]):
 
     query = """
     select t1.id from t1
-    order by t1.`name`
+    order by t1.cond
     """
     bifrost.traverse(query)

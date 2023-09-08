@@ -45,7 +45,7 @@ def test_where_circumvent_with_precedence(dialect: str, Bifrost: Type[Bifrost]):
 
     # this query uses parentheses to ensure precedence
     query = """
-SELECT Track.`Name`
+SELECT Track.TrackName
 FROM Track
 INNER JOIN InvoiceLine ON Track.TrackId = InvoiceLine.TrackId
 INNER JOIN Invoice ON InvoiceLine.InvoiceId = Invoice.InvoiceId
@@ -70,7 +70,7 @@ def test_where_no_circumvent_and_very_nested(dialect: str, Bifrost: Type[Bifrost
     """a query with a very nested where clause, but does not try to circumvent
     the required constraint"""
     query = """
-SELECT Track.`Name`
+SELECT Track.TrackName
 FROM Track
 INNER JOIN InvoiceLine ON Track.TrackId = InvoiceLine.TrackId
 INNER JOIN Invoice ON InvoiceLine.InvoiceId = Invoice.InvoiceId
@@ -102,7 +102,7 @@ def test_top_level_where_circumvention(dialect: str, Bifrost: Type[Bifrost]):
 
     # no circumvention
     query = """
-SELECT Track.`Name`
+SELECT Track.TrackName
 FROM Track
 INNER JOIN InvoiceLine ON Track.TrackId = InvoiceLine.TrackId
 INNER JOIN Invoice ON InvoiceLine.InvoiceId = Invoice.InvoiceId
@@ -118,7 +118,7 @@ WHERE
 
     # same query, but with the required constraint circumvented with "OR"
     query = """
-SELECT Track.`Name`
+SELECT Track.TrackName
 FROM Track
 INNER JOIN InvoiceLine ON Track.TrackId = InvoiceLine.TrackId
 INNER JOIN Invoice ON InvoiceLine.InvoiceId = Invoice.InvoiceId

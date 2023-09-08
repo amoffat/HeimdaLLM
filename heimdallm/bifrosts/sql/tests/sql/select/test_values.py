@@ -54,7 +54,7 @@ JOIN inventory ON film.film_id = inventory.film_id
 JOIN rental ON inventory.inventory_id = rental.inventory_id
 JOIN customer ON rental.customer_id = customer.customer_id
 WHERE customer.customer_id = :customer_id
-AND category.`name` = 'Family'
+AND category.cat_name = 'Family'
 AND rental.return_date IS NOT NULL
 LIMIT 20;
     """
