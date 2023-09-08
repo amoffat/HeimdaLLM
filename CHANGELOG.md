@@ -5,7 +5,8 @@
 - Subquery support
 - PostgreSQL support
 - CTE (Common Table Expressions) support
-- Renamed `required_constraints` to `parameterized_constraints`
+- Renamed constraint method `required_constraints` to `parameterized_constraints`
+- Renamed Bifrost method `mocked` to `validation_only`
 
 ## 0.3.0 - 7/15/23
 

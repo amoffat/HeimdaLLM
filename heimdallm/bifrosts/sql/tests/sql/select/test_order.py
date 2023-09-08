@@ -21,5 +21,5 @@ ORDER BY COUNT(*) DESC
 LIMIT 20;
 """
 
-    bifrost = Bifrost.mocked(PermissiveConstraints())
+    bifrost = Bifrost.validation_only(PermissiveConstraints())
     bifrost.traverse(query)

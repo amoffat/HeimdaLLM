@@ -17,7 +17,7 @@ class MyConstraints(PermissiveConstraints):
 
 @dialects()
 def test_parameterized_constraints(dialect: str, Bifrost: Type[Bifrost]):
-    bifrost = Bifrost.mocked(MyConstraints())
+    bifrost = Bifrost.validation_only(MyConstraints())
 
     query = """
     select t1.col from t1
@@ -56,7 +56,7 @@ def test_parameterized_constraints(dialect: str, Bifrost: Type[Bifrost]):
 def test_parameterized_constraint_outer_query(dialect: str, Bifrost: Type[Bifrost]):
     """only the outer query should be checked for required constraints"""
 
-    bifrost = Bifrost.mocked(MyConstraints())
+    bifrost = Bifrost.validation_only(MyConstraints())
 
     query = """
     select t1.col from t1
@@ -72,7 +72,7 @@ def test_parameterized_constraint_outer_query(dialect: str, Bifrost: Type[Bifros
 
 @dialects()
 def test_parameterized_constraint_alias(dialect: str, Bifrost: Type[Bifrost]):
-    bifrost = Bifrost.mocked(MyConstraints())
+    bifrost = Bifrost.validation_only(MyConstraints())
 
     query = """
     select t1.col, t1.email email from t1
@@ -83,7 +83,7 @@ def test_parameterized_constraint_alias(dialect: str, Bifrost: Type[Bifrost]):
 
 @dialects()
 def test_backwards_placeholder(dialect: str, Bifrost: Type[Bifrost]):
-    bifrost = Bifrost.mocked(MyConstraints())
+    bifrost = Bifrost.validation_only(MyConstraints())
 
     query = """
     select t1.col, t1.email email from t1

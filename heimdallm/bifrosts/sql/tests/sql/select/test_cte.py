@@ -12,7 +12,7 @@ from .utils import PermissiveConstraints
 
 @dialects()
 def test_cte_select_from(dialect: str, Bifrost: Type[Bifrost]):
-    bifrost = Bifrost.mocked(PermissiveConstraints())
+    bifrost = Bifrost.validation_only(PermissiveConstraints())
 
     query = """
 WITH regional_sales AS (
@@ -37,7 +37,7 @@ GROUP BY region, product;
 
 @dialects("postgres")
 def test_cte_join(dialect: str, Bifrost: Type[Bifrost]):
-    bifrost = Bifrost.mocked(PermissiveConstraints())
+    bifrost = Bifrost.validation_only(PermissiveConstraints())
 
     query = """
 WITH director AS (
@@ -68,7 +68,7 @@ WHERE
 @dialects()
 def test_cte_joins_separate(dialect: str, Bifrost: Type[Bifrost]):
     """Joins that happen in a CTE are counted when determining JOIN connectivity"""
-    bifrost = Bifrost.mocked(PermissiveConstraints())
+    bifrost = Bifrost.validation_only(PermissiveConstraints())
 
     query = """
 WITH cta_table as (
@@ -89,7 +89,7 @@ def test_cte_parameterized_comparison(dialect: str, Bifrost: Type[Bifrost]):
         def parameterized_constraints(self) -> Sequence[ParameterizedConstraint]:
             return [ParameterizedConstraint(column="t1.email", placeholder="email")]
 
-    bifrost = Bifrost.mocked(MyConstraints())
+    bifrost = Bifrost.validation_only(MyConstraints())
 
     query = """
 WITH cta_table as (

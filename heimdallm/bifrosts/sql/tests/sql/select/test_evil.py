@@ -20,7 +20,7 @@ from t1
 left join t2 on t1.jid = t2.jid
     """
 
-    bifrost = Bifrost.mocked(PermissiveConstraints())
+    bifrost = Bifrost.validation_only(PermissiveConstraints())
     with pytest.raises(exc.IllegalJoinType) as e:
         bifrost.traverse(query)
     assert e.value.join_type == "OUTER_JOIN"
@@ -34,7 +34,7 @@ def test_no_select_star(dialect: str, Bifrost: Type[Bifrost]):
         def select_column_allowed(self, column: FqColumn) -> bool:
             return True
 
-    bifrost = Bifrost.mocked(MyConstraints())
+    bifrost = Bifrost.validation_only(MyConstraints())
     with pytest.raises(exc.IllegalSelectedColumn) as e:
         bifrost.traverse(query)
 
@@ -48,7 +48,7 @@ def test_allow_count_star(dialect: str, Bifrost: Type[Bifrost]):
             # count(*) doesn't count as a column that needs to be allowlisted
             return False
 
-    bifrost = Bifrost.mocked(MyConstraints())
+    bifrost = Bifrost.validation_only(MyConstraints())
 
     query = "select count(*) from t1"
     bifrost.traverse(query)
@@ -64,7 +64,7 @@ select t1.secret
 from t1 group
     """
 
-    bifrost = Bifrost.mocked(PermissiveConstraints())
+    bifrost = Bifrost.validation_only(PermissiveConstraints())
     with pytest.raises(exc.ReservedKeyword) as e:
         bifrost.traverse(query)
     assert e.value.keyword == "group"
@@ -84,7 +84,7 @@ select t1.secret group
 from t1
     """
 
-    bifrost = Bifrost.mocked(PermissiveConstraints())
+    bifrost = Bifrost.validation_only(PermissiveConstraints())
     with pytest.raises(exc.ReservedKeyword) as e:
         bifrost.traverse(query)
     assert e.value.keyword == "group"
@@ -104,5 +104,5 @@ select t1.col
 from t1
 where t1.col='let''s go'
     """
-    bifrost = Bifrost.mocked(PermissiveConstraints())
+    bifrost = Bifrost.validation_only(PermissiveConstraints())
     bifrost.traverse(query)

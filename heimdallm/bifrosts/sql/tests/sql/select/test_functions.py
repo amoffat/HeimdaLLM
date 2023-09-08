@@ -16,7 +16,7 @@ class MyConstraints(PermissiveConstraints):
 
 @dialects()
 def test_disallowed_in_select(dialect: str, Bifrost: Type[Bifrost]):
-    bifrost = Bifrost.mocked(MyConstraints())
+    bifrost = Bifrost.validation_only(MyConstraints())
 
     query = "select yep(t1.col) from t1"
     bifrost.traverse(query)
@@ -34,7 +34,7 @@ def test_disallowed_in_select(dialect: str, Bifrost: Type[Bifrost]):
 
 @dialects()
 def test_disallowed_in_where(dialect: str, Bifrost: Type[Bifrost]):
-    bifrost = Bifrost.mocked(MyConstraints())
+    bifrost = Bifrost.validation_only(MyConstraints())
 
     query = "select t1.col from t1 where yep(t1.col)=1"
     bifrost.traverse(query)
@@ -47,7 +47,7 @@ def test_disallowed_in_where(dialect: str, Bifrost: Type[Bifrost]):
 
 @dialects()
 def test_disallowed_in_join(dialect: str, Bifrost: Type[Bifrost]):
-    bifrost = Bifrost.mocked(MyConstraints())
+    bifrost = Bifrost.validation_only(MyConstraints())
 
     query = "select t1.col from t1 join t2 on t1.t2_id=t2.id and t2.col=nope()"
     with pytest.raises(exc.IllegalFunction) as e:
@@ -57,7 +57,7 @@ def test_disallowed_in_join(dialect: str, Bifrost: Type[Bifrost]):
 
 @dialects()
 def test_case_insensitive(dialect: str, Bifrost: Type[Bifrost]):
-    bifrost = Bifrost.mocked(MyConstraints())
+    bifrost = Bifrost.validation_only(MyConstraints())
 
     query = "select YEP(t1.col) from t1"
     bifrost.traverse(query)

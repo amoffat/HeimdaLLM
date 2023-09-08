@@ -12,7 +12,7 @@ from .utils import CustomerConstraints
 
 @dialects()
 def test_required_identity(dialect: str, Bifrost: Type[Bifrost]):
-    bifrost = Bifrost.mocked(CustomerConstraints())
+    bifrost = Bifrost.validation_only(CustomerConstraints())
 
     query = """select Customer.CustomerId from Customer"""
 
@@ -59,7 +59,7 @@ WHERE
 LIMIT 20;
 """
 
-    bifrost = Bifrost.mocked(CustomerConstraints())
+    bifrost = Bifrost.validation_only(CustomerConstraints())
 
     with pytest.raises(exc.MissingRequiredIdentity):
         bifrost.traverse(query)
@@ -91,7 +91,7 @@ WHERE
     )
 """
 
-    bifrost = Bifrost.mocked(CustomerConstraints())
+    bifrost = Bifrost.validation_only(CustomerConstraints())
     bifrost.traverse(query)
 
 
@@ -113,7 +113,7 @@ WHERE
     AND Customer.CustomerId > 0
 """
 
-    bifrost = Bifrost.mocked(CustomerConstraints())
+    bifrost = Bifrost.validation_only(CustomerConstraints())
     bifrost.traverse(query)
 
     # same query, but with the required constraint circumvented with "OR"
@@ -153,5 +153,5 @@ WHERE
     )
 """
 
-    bifrost = Bifrost.mocked(CustomerConstraints())
+    bifrost = Bifrost.validation_only(CustomerConstraints())
     bifrost.traverse(query)

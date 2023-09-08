@@ -25,7 +25,7 @@ where t1.id in (
     where t1.col='foo'
 )
     """
-    bifrost = Bifrost.mocked(Conservative())
+    bifrost = Bifrost.validation_only(Conservative())
     with pytest.raises(exc.IllegalSelectedColumn) as e:
         bifrost.traverse(query)
     assert e.value.column == "t1.id"
@@ -34,7 +34,7 @@ where t1.id in (
         def select_column_allowed(self, column: FqColumn) -> bool:
             return column.name in {"t1.col", "t1.id"}
 
-    bifrost = Bifrost.mocked(Liberal())
+    bifrost = Bifrost.validation_only(Liberal())
     bifrost.traverse(query)
 
 
@@ -54,7 +54,7 @@ where t1.id in (
 )
 limit 10
     """
-    bifrost = Bifrost.mocked(MyConstraints())
+    bifrost = Bifrost.validation_only(MyConstraints())
     bifrost.traverse(query, autofix=False)
 
 
@@ -74,7 +74,7 @@ where t1.id in (
 )
 limit 5
     """
-    bifrost = Bifrost.mocked(MyConstraints())
+    bifrost = Bifrost.validation_only(MyConstraints())
     fixed = bifrost.traverse(query)
     # outer limit preserved
     assert "limit 5" in fixed.lower()
@@ -96,14 +96,14 @@ select t1.t2col from (
         def select_column_allowed(self, column: FqColumn) -> bool:
             return column.name in {"t2.col"}
 
-    bifrost = Bifrost.mocked(MyConstraints())
+    bifrost = Bifrost.validation_only(MyConstraints())
     bifrost.traverse(query)
 
     class NoSelectConstraints(PermissiveConstraints):
         def select_column_allowed(self, column: FqColumn) -> bool:
             return False
 
-    bifrost = Bifrost.mocked(NoSelectConstraints())
+    bifrost = Bifrost.validation_only(NoSelectConstraints())
     with pytest.raises(exc.IllegalSelectedColumn) as e:
         bifrost.traverse(query)
         assert e.value.column == "t2.col"
@@ -121,7 +121,7 @@ join (
 ) as t1 on t1.id=t1.col
     """
 
-    bifrost = Bifrost.mocked(PermissiveConstraints())
+    bifrost = Bifrost.validation_only(PermissiveConstraints())
     with pytest.raises(exc.AliasConflict) as e:
         bifrost.traverse(query)
         assert e.value.alias == "t1"
@@ -137,7 +137,7 @@ select t1.col, t1.col2 as alias_col from (
 ) as sq
     """
 
-    bifrost = Bifrost.mocked(PermissiveConstraints())
+    bifrost = Bifrost.validation_only(PermissiveConstraints())
     with pytest.raises(exc.AliasConflict) as e:
         bifrost.traverse(query)
     assert e.value.alias == "alias_col"
@@ -153,7 +153,7 @@ select t1.col from (
 ) t1
     """
 
-    bifrost = Bifrost.mocked(PermissiveConstraints())
+    bifrost = Bifrost.validation_only(PermissiveConstraints())
     with pytest.raises(exc.AliasConflict) as e:
         bifrost.traverse(query)
     assert e.value.alias == "t1"
@@ -171,7 +171,7 @@ select t1.col, t1.col2 from (
     ) t2
 ) t1
     """
-    bifrost = Bifrost.mocked(PermissiveConstraints())
+    bifrost = Bifrost.validation_only(PermissiveConstraints())
     fixed = bifrost.traverse(query)
     assert "t2.col" in fixed.lower()
     assert "t2.col2" in fixed.lower()
@@ -186,7 +186,7 @@ def test_subquery_parameterized_comparison(dialect: str, Bifrost: Type[Bifrost])
         def parameterized_constraints(self) -> Sequence[ParameterizedConstraint]:
             return [ParameterizedConstraint(column="t1.email", placeholder="email")]
 
-    bifrost = Bifrost.mocked(MyConstraints())
+    bifrost = Bifrost.validation_only(MyConstraints())
 
     query = """
 select t.email from (

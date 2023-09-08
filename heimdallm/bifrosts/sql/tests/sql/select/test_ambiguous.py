@@ -11,7 +11,7 @@ def test_ambiguous_arith(dialect: str, Bifrost: Type[Bifrost]):
     """arith_expr is recursive, so the parser can interpret a long chain of arithmetic
     operations as a single expression, or different groups of sub expressions. our
     ambiguity resolver picks the longest expression"""
-    bifrost = Bifrost.mocked(PermissiveConstraints())
+    bifrost = Bifrost.validation_only(PermissiveConstraints())
 
     query = """
 SELECT

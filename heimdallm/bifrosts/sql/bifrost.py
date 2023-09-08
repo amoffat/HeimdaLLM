@@ -33,23 +33,20 @@ class Bifrost(_BaseBifrost, ABC):
         needs to succeed for validation to pass.
     """
 
-    # for tests
     @classmethod
-    def mocked(
+    def validation_only(
         cls,
         constraint_validators: Union[
             "heimdallm.bifrosts.sql.validator.ConstraintValidator",
             Sequence["heimdallm.bifrosts.sql.validator.ConstraintValidator"],
         ],
     ):
-        """A convenience method for our tests. This creates a Bifrost that assumes its
-        untrusted input is a SQL query already, so it does not need to communicate with
-        the LLM, only parse and validate it.
+        """A convenience method for doing just constraint validation. This creates a
+        Bifrost that assumes its untrusted input is a SQL query already, so it does not
+        need to communicate with the LLM, only parse and validate it.
 
         :param constraint_validators: A constraint validator or sequence of constraint
             validators to run on the untrusted input.
-
-        :meta private:
         """
         if not isinstance(constraint_validators, Sequence):
             constraint_validators = [constraint_validators]

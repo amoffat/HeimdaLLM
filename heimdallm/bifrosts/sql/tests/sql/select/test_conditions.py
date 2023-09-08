@@ -20,7 +20,7 @@ class MyConstraints(PermissiveConstraints):
 
 @dialects()
 def test_allowed_where(dialect: str, Bifrost: Type[Bifrost]):
-    bifrost = Bifrost.mocked(MyConstraints())
+    bifrost = Bifrost.validation_only(MyConstraints())
 
     query = """
     select t1.col from t1
@@ -45,7 +45,7 @@ def test_allowed_where(dialect: str, Bifrost: Type[Bifrost]):
 
 @dialects()
 def test_allowed_join(dialect: str, Bifrost: Type[Bifrost]):
-    bifrost = Bifrost.mocked(MyConstraints())
+    bifrost = Bifrost.validation_only(MyConstraints())
 
     query = """
     select t1.col from t1
@@ -65,7 +65,7 @@ def test_allowed_join(dialect: str, Bifrost: Type[Bifrost]):
 
 @dialects()
 def test_allowed_having(dialect: str, Bifrost: Type[Bifrost]):
-    bifrost = Bifrost.mocked(MyConstraints())
+    bifrost = Bifrost.validation_only(MyConstraints())
 
     query = """
     select t1.cond as cond, sum(t1.amount) total from t1
@@ -86,7 +86,7 @@ def test_allowed_having(dialect: str, Bifrost: Type[Bifrost]):
 
 @dialects()
 def test_allowed_order_by(dialect: str, Bifrost: Type[Bifrost]):
-    bifrost = Bifrost.mocked(MyConstraints())
+    bifrost = Bifrost.validation_only(MyConstraints())
 
     query = """
     select t1.id from t1

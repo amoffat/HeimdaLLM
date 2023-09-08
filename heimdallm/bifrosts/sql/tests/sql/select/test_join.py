@@ -24,7 +24,7 @@ JOIN Invoice i ON il.InvoiceId = i.InvoiceId AND i.CustomerId = :customer_id
 WHERE i.InvoiceDate <= :timestamp
 LIMIT 20;
 """
-    bifrost = Bifrost.mocked(CustomerConstraints())
+    bifrost = Bifrost.validation_only(CustomerConstraints())
     bifrost.traverse(query)
 
     # same query, minus the required join constraint
@@ -56,7 +56,7 @@ def test_join_allowlist(dialect: str, Bifrost: Type[Bifrost]):
                 JoinCondition("subscriber.provider_id", "provider.id"),
             ]
 
-    bifrost = Bifrost.mocked(JoinAllowlist())
+    bifrost = Bifrost.validation_only(JoinAllowlist())
 
     # allowed join
     query = """
@@ -95,6 +95,6 @@ join provider p on other_table.provider_id = p.id
                 JoinCondition("provider.id", "other_table.provider_id"),
             ]
 
-    bifrost = Bifrost.mocked(JoinAllowlist())
+    bifrost = Bifrost.validation_only(JoinAllowlist())
     with pytest.raises(exc.DisconnectedTable):
         bifrost.traverse(query)
