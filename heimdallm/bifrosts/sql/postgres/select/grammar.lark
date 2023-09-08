@@ -61,7 +61,7 @@ join : join_type _WS joined_table _WS "on"i join_condition (_WS "and"i join_cond
 join_type : legal_join | illegal_join
 legal_join : INNER_JOIN
 illegal_join : CROSS_JOIN | NATURAL_JOIN | OUTER_JOIN | NATURAL_OUTER_JOIN
-join_condition : connecting_join_condition | required_comparison
+join_condition : connecting_join_condition | parameterized_comparison
 // one side can be any value, but the other side must be a column
 connecting_join_condition : fq_column EQUI_JOIN value
 joined_table : aliased_table | table_name | derived_table
@@ -83,16 +83,16 @@ offset : NUMBER
 where_clause : WHERE _WS where_conditions
 where_conditions : where_condition (_WS WHERE_TYPE _WS where_condition)*
 where_condition : \
-    | required_comparison
+    | parameterized_comparison
     | relational_comparison
     | in_comparison
     | between_comparison
     | fts_comparison
     | "(" where_conditions ")"
 
-// a required comparison is a parameterized, equality-based comparison that
+// a parameterized comparison is a parameterized, equality-based comparison that
 // enforces a constraint on the returned rows.
-required_comparison.1 : lhs_req_comparison | rhs_req_comparison
+parameterized_comparison.1 : lhs_req_comparison | rhs_req_comparison
 lhs_req_comparison : (fq_column | column_alias) "=" placeholder
 rhs_req_comparison : placeholder "=" (fq_column | column_alias)
 relational_comparison : value comparison (value | subquery)

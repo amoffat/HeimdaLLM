@@ -4,6 +4,8 @@ from uuid import UUID
 
 from lark import Tree, Visitor
 
+from heimdallm.bifrosts.sql.utils.context import get_containing_query
+
 from ..common import FqColumn
 from ..exc import AliasConflict
 from ..utils.identifier import get_identifier, is_count_function, is_subquery
@@ -125,14 +127,9 @@ class AliasCollector(Visitor):
     def alias_scope(self, node: Tree) -> _QueryAliases:
         """Finds the wrapping query for a given node, and returns the aliases for it.
         This is the scope of aliases that are available to the current node."""
-        p = cast(Any, node.meta).parent
-        while p is not None:
-            if p.data == "full_query":
-                aliases = self._query_aliases.setdefault(p.meta.id, _QueryAliases())
-                return aliases
-
-            p = p.meta.parent
-        raise RuntimeError("could not find wrapping query for node")
+        query = cast(Any, get_containing_query(node))
+        scope = self._query_aliases.setdefault(query.meta.id, _QueryAliases())
+        return scope
 
     def join_or_selected_table(self, select: bool, node: Tree):
         """Called for tables targeted in the FROM or JOIN clause of a SELECT

@@ -4,7 +4,11 @@ from uuid import UUID
 
 from lark import Token, Tree, Visitor
 
-from heimdallm.bifrosts.sql.utils.context import has_subquery, in_subquery
+from heimdallm.bifrosts.sql.utils.context import (
+    get_containing_query,
+    has_subquery,
+    in_subquery,
+)
 
 from .. import exc
 from ..common import FqColumn, JoinCondition, ParameterizedConstraint
@@ -12,10 +16,7 @@ from ..utils.identifier import get_identifier, is_count_function
 from .aliases import AliasCollector
 
 
-class Facets:
-    """this simple class is used to collect all of the facets of a query, so
-    that we can easily validate them with a constraint validator"""
-
+class _QueryScope:
     def __init__(self) -> None:
         # tables that were joined but do not reference the table in the join
         # condition. if this list has values, validation fails.
@@ -26,6 +27,14 @@ class Facets:
         # the tables joined to the query, this could include the table selected
         # in the FROM clause, if there are JOINs in the query
         self.joined_tables: MutableMapping[str, set[JoinCondition]] = dd(set)
+
+
+class Facets:
+    """this simple class is used to collect all of the facets of a query, so
+    that we can easily validate them with a constraint validator"""
+
+    def __init__(self) -> None:
+        self.scopes: dict[UUID, _QueryScope] = {}
         # the columns selected in the query
         self.selected_columns: set[FqColumn] = set()
         # the columns used in the WHERE, JOIN, HAVING, and ORDER BY clauses
@@ -82,7 +91,16 @@ class FacetCollector(Visitor):
         # should never happen
         raise RuntimeError(f"unknown table reference type: {type(table_ref)}")
 
+    def query_scope(self, node: Tree) -> _QueryScope:
+        """Finds the wrapping query for a given node, and returns the aliases for it.
+        This is the scope of aliases that are available to the current node."""
+        query = cast(Any, get_containing_query(node))
+        scope = self._facets.scopes.setdefault(query.meta.id, _QueryScope())
+        return scope
+
     def join(self, node: Tree):
+        scope = self.query_scope(node)
+
         if join_type_nodes := list(node.find_data("illegal_join")):
             join_type = cast(Token, join_type_nodes[0].children[0]).type
             raise exc.IllegalJoinType(join_type=join_type)
@@ -93,11 +111,11 @@ class FacetCollector(Visitor):
         if joined_table_name is None:
             raise exc.UnsupportedQuery(msg="JOIN on derived table")
 
-        # if a required_comparison node exists, it means it is actually required
-        # (enforced by the grammar, see grammar comments). a required comparison has
-        # a placeholder for the RHS
-        for required_comparison in node.find_data("required_comparison"):
-            self._add_required_comparison(required_comparison)
+        # if a parameterized_comparison node exists, it means it is actually required
+        # (enforced by the grammar, see grammar comments). a parameterized comparison
+        # has a placeholder for the RHS
+        for parameterized_comparison in node.find_data("parameterized_comparison"):
+            self._add_parameterized_comparison(parameterized_comparison)
 
         for condition in node.find_data("connecting_join_condition"):
             # from_table may be an alias, but from_column will always be authoritative.
@@ -136,7 +154,7 @@ class FacetCollector(Visitor):
 
             # the joined table must be one of the parts of the join condition
             if joined_table_name != from_table and joined_table_name != to_table:
-                self._facets.bad_joins.append(joined_table_name)
+                scope.bad_joins.append(joined_table_name)
                 continue
 
             # conditions in a join are compared against are allowed conditions, so
@@ -149,13 +167,14 @@ class FacetCollector(Visitor):
                 f"{from_table}.{from_column}",
                 f"{to_table}.{to_column}",
             )
-            self._facets.joined_tables[from_table].add(join_spec)
-            self._facets.joined_tables[to_table].add(join_spec)
+            scope.joined_tables[from_table].add(join_spec)
+            scope.joined_tables[to_table].add(join_spec)
 
     def selected_table(self, node: Tree):
+        scope = self.query_scope(node)
         table_node = list(node.find_data("table_name"))[0]
         table_name = get_identifier(table_node, self._reserved_keywords)
-        self._facets.selected_table = table_name
+        scope.selected_table = table_name
 
     def selected_column(self, node: Tree):
         child = node.children[0]
@@ -232,12 +251,12 @@ class FacetCollector(Visitor):
                     )
                 )
 
-    def _add_required_comparison(self, node: Tree):
-        """takes a node representing a required comparison and adds it to the
+    def _add_parameterized_comparison(self, node: Tree):
+        """takes a node representing a parameterized comparison and adds it to the
         facets"""
 
-        # if we're in a subquery, don't count it as a required comparison, because a
-        # required comparison must exist in the outermost query
+        # if we're in a subquery, don't count it as a parameterized comparison, because
+        # a parameterized comparison must exist in the outermost query
         if in_subquery(node):
             return
 
@@ -307,7 +326,7 @@ class FacetCollector(Visitor):
         if a level is tainted, then all of its children (WHERE subclauses) are
         tainted as well, so we will not process them.
 
-        the end result is that we only collect a required comparison node IFF it
+        the end result is that we only collect a parameterized comparison node IFF it
         is not joined by an OR anywhere in the WHERE clause, either at its
         level, or at any level above it. only then can we know that the
         comparison is actually constraining to the query"""
@@ -329,8 +348,8 @@ class FacetCollector(Visitor):
 
             for child in reversed(level_stack):
                 stack.append(child)
-                if child.data == "required_comparison":
-                    self._add_required_comparison(child)
+                if child.data == "parameterized_comparison":
+                    self._add_parameterized_comparison(child)
 
     def _collect_condition_column(self, node: Tree):
         """here we'll parse out the columns that are referenced anywhere in the

@@ -4,6 +4,7 @@
 
 - Subquery support
 - PostgreSQL support
+- CTE (Common Table Expressions) support
 - Renamed `required_constraints` to `parameterized_constraints`
 
 ## 0.3.0 - 7/15/23

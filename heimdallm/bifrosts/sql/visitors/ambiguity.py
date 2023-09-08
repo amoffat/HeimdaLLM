@@ -38,13 +38,13 @@ class AmbiguityResolver(Transformer):
 
     def test_req_comparisons(self, i, tree, trees) -> bool:
         """in a where_condition rule, the children can include
-        `relational_comparison` and `required_comparison` rules, which are
-        ambiguous, because required comparisons are a subset of relational
-        comparisons. we always prefer to interpret the ambiguity as a required
+        `relational_comparison` and `parameterized_comparison` rules, which are
+        ambiguous, because parameterized comparisons are a subset of relational
+        comparisons. we always prefer to interpret the ambiguity as a parameterized
         comparison though, because it is more strict, and it satisfies our
-        required comparison validator constraints"""
+        parameterized comparison validator constraints"""
         if tree.data in ("where_condition", "join_condition"):
-            return tree.children[0].data == "required_comparison"
+            return tree.children[0].data == "parameterized_comparison"
         return True
 
     def test_arith_expr(self, i, tree, trees) -> bool:

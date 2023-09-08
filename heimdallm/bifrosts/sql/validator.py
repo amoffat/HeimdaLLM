@@ -206,26 +206,28 @@ class ConstraintValidator(_BaseConstraintValidator):
             if not self.select_column_allowed(fq_column):
                 raise exc.IllegalSelectedColumn(column=fq_column.name)
 
-        # check the join condition allowlist
-        any_join_cond_allowed = ANY_JOIN in self.allowed_joins()
-        for table, join_specs in facets.joined_tables.items():
-            for join_spec in join_specs:
-                allowed = any_join_cond_allowed or join_spec in self.allowed_joins()
-                if not allowed:
-                    raise exc.IllegalJoinTable(join=join_spec)
+        for scope in facets.scopes.values():
+            # check the join condition allowlist
+            any_join_cond_allowed = ANY_JOIN in self.allowed_joins()
+            for table, join_specs in scope.joined_tables.items():
+                for join_spec in join_specs:
+                    allowed = any_join_cond_allowed or join_spec in self.allowed_joins()
+                    if not allowed:
+                        raise exc.IllegalJoinTable(join=join_spec)
 
-        # ensure that the selected table is joined to another table, if joins exist
-        if (
-            facets.joined_tables
-            and not facets.joined_tables[cast(str, facets.selected_table)]
-        ):
-            raise exc.DisconnectedTable(table=cast(str, facets.selected_table))
+            # ensure that the selected table is joined to another table, if joins exist
+            if (
+                scope.joined_tables
+                and not scope.joined_tables[cast(str, scope.selected_table)]
+            ):
+                raise exc.DisconnectedTable(table=cast(str, scope.selected_table))
 
-        # ensure that all joins were joined on columns that exist on the joined tables
-        if facets.bad_joins:
-            raise exc.BogusJoinedTable(
-                table=facets.bad_joins[0],
-            )
+            # ensure that all joins were joined on columns that exist on the joined
+            # tables
+            if scope.bad_joins:
+                raise exc.BogusJoinedTable(
+                    table=scope.bad_joins[0],
+                )
 
         # all columns specified in the join conditions are automatically included in the
         # condition column allowlist
