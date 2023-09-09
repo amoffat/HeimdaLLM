@@ -19,8 +19,6 @@ More databases
 
 I will be adding support for more SQL-based databases:
 
-* MySQL
-* PostgreSQL
 * SQL Server
 * Oracle
 * Snowflake
