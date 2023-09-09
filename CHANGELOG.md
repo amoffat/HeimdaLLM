@@ -7,6 +7,7 @@
 - PostgreSQL support
 - Renamed constraint method `required_constraints` to `parameterized_constraints`
 - Renamed Bifrost method `mocked` to `validation_only`
+- All exceptions include a `ctx` property for debugging
 
 ## 0.3.0 - 7/15/23
 
