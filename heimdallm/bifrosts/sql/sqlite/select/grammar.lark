@@ -8,7 +8,7 @@ union : UNION (ALL | DISTINCT)? select_statement
 
 select_statement : \
     SELECT _WS DISTINCT? selected_columns \
-    _WS FROM selected_table \
+    _WS FROM _WS selected_table \
     (_WS joins)? \
     (_WS where_clause)? \
     (_WS group_by_clause)? \
@@ -55,7 +55,7 @@ column_alias : generic_alias
 generic_alias : quoted_identifier | unquoted_identifier
 
 joins : join+
-join : join_type _WS joined_table _WS "on"i join_condition (_WS "and"i join_condition)*
+join : join_type _WS joined_table _WS "on"i _WS join_condition (_WS "and"i join_condition)*
 // note we do not allow outer joins. this is because we cannot control
 // the rows that are returned by the outer join, and we cannot depend on the
 // join conditions to restrict the returned rows.
