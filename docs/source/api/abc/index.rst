@@ -10,5 +10,6 @@ intended for direct use.
     envelope
     validator
     llm_integration
+    context
 
     sql/index

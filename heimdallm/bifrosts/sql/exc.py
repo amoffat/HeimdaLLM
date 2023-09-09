@@ -5,8 +5,10 @@ import lark
 from heimdallm.context import TraverseContext
 from heimdallm.support.github import make_ambiguous_parse_issue
 
+from .common import JoinCondition, ParameterizedConstraint
+
 if TYPE_CHECKING:
-    from .common import FqColumn, JoinCondition, ParameterizedConstraint
+    from .common import FqColumn
 
 
 class BaseException(Exception):
@@ -160,7 +162,7 @@ class MissingRequiredIdentity(BaseException):
     def __init__(
         self,
         *,
-        identities: set["ParameterizedConstraint"],
+        identities: set[ParameterizedConstraint],
         ctx: TraverseContext,
     ):
         message = f"Missing one required identities: {identities!r}"
@@ -176,7 +178,7 @@ class IllegalJoinTable(BaseException):
     :param ctx: The context of the Bifrost traversal.
     """
 
-    def __init__(self, *, join: "JoinCondition", ctx: TraverseContext):
+    def __init__(self, *, join: JoinCondition, ctx: TraverseContext):
         message = f"Join condition {join} is not allowed"
         super().__init__(message, ctx=ctx)
         self.join = join
