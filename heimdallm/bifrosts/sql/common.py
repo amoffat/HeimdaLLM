@@ -1,7 +1,5 @@
 from typing import Any, Optional, Sequence
 
-from . import exc
-
 
 class ParameterizedConstraint:
     """This represents a constraint that *must* be applied to the query.
@@ -60,7 +58,9 @@ class FqColumn:
         :param fq_column_name: The fully-qualified column name.
         :raises UnqualifiedColumn: If the string does not contain a period."""
         if "." not in fq_column_name:
-            raise exc.UnqualifiedColumn(fq_column_name)
+            raise RuntimeError(
+                f"Expected fully-qualified column name: {fq_column_name}"
+            )
         table, column = fq_column_name.split(".")
         return cls(table=table, column=column)
 

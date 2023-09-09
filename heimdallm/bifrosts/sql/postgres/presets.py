@@ -228,6 +228,13 @@ safe_enum_functions = {
     "enum_range",
 }
 
+safe_trgm_functions = {
+    "similarity",
+    "show_trgm",
+    "word_similarity",
+    "strict_word_similarity",
+}
+
 safe_functions = (
     safe_date_functions
     | safe_text_search_functions
@@ -237,6 +244,7 @@ safe_functions = (
     | safe_json_functions
     | safe_agg_functions
     | safe_enum_functions
+    | safe_trgm_functions
 )
 
 # https://www.postgresql.org/docs/current/sql-keywords-appendix.html

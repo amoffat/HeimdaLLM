@@ -91,8 +91,7 @@ class Bifrost(_BaseBifrost, ABC):
         """
         raise NotImplementedError
 
-    @classmethod
-    def build_tree_producer(cls) -> Callable[[Lark, str], ParseTree]:
+    def build_tree_producer(self) -> Callable[[Lark, str], ParseTree]:
         """
         Produces a that can create a single parse tree. May be implemented in a subclass
         if you want to do custom ambiguity resolution.
@@ -105,8 +104,8 @@ class Bifrost(_BaseBifrost, ABC):
             ambig_tree = grammar.parse(untrusted_query)
             try:
                 final_tree = AmbiguityResolver(
-                    untrusted_query,
-                    cls.reserved_keywords(),
+                    ctx=self.ctx,
+                    reserved_keywords=self.reserved_keywords(),
                 ).transform(ambig_tree)
             except VisitError as e:
                 if isinstance(e.orig_exc, exc.BaseException):
@@ -180,10 +179,10 @@ class Bifrost(_BaseBifrost, ABC):
         try:
             return super().parse(untrusted_llm_output)
         except lark.exceptions.UnexpectedEOF as e:
-            raise exc.InvalidQuery(query=untrusted_llm_output) from e
+            raise exc.InvalidQuery(ctx=self.ctx) from e
         except lark.exceptions.UnexpectedCharacters as e:
-            raise exc.InvalidQuery(query=untrusted_llm_output) from e
+            raise exc.InvalidQuery(ctx=self.ctx) from e
         except exc.BaseException as e:
             raise e
         except Exception as e:
-            raise exc.InvalidQuery(query=untrusted_llm_output) from e
+            raise exc.InvalidQuery(ctx=self.ctx) from e

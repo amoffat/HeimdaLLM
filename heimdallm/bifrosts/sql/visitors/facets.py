@@ -9,6 +9,7 @@ from heimdallm.bifrosts.sql.utils.context import (
     has_subquery,
     in_subquery,
 )
+from heimdallm.context import TraverseContext
 
 from .. import exc
 from ..common import FqColumn, JoinCondition, ParameterizedConstraint
@@ -54,17 +55,20 @@ class FacetCollector(Visitor):
 
     def __init__(
         self,
+        *,
         facets: Facets,
         collector: AliasCollector,
         reserved_keywords: set[str],
-    ):
+        ctx: TraverseContext,
+    ) -> None:
         self._collector = collector
         self._facets = facets
         self._reserved_keywords = reserved_keywords
+        self._ctx = ctx
 
     def _resolve_column(self, node: Tree) -> set[FqColumn] | None:
         if node.data == "column_alias":
-            maybe_alias = get_identifier(node, self._reserved_keywords)
+            maybe_alias = get_identifier(self._ctx, node, self._reserved_keywords)
             aliases = self._collector.alias_scope(node)
             maybe_cols = aliases.columns.get(maybe_alias, set())
             return maybe_cols
@@ -76,12 +80,20 @@ class FacetCollector(Visitor):
         if isinstance(table_ref, Tree):
             # it's clearly an aliased table, so we know the table name from this node
             if table_ref.data == "aliased_table":
-                table_name = get_identifier(table_ref, self._reserved_keywords)
+                table_name = get_identifier(
+                    self._ctx,
+                    table_ref,
+                    self._reserved_keywords,
+                )
                 return table_name
 
             # it's a table name, but it may be an alias, so we need to do a lookup
             elif table_ref.data == "table_name":
-                maybe_alias = get_identifier(table_ref, self._reserved_keywords)
+                maybe_alias = get_identifier(
+                    self._ctx,
+                    table_ref,
+                    self._reserved_keywords,
+                )
                 table = self._collector.resolve_table(maybe_alias)
                 return table
 
@@ -103,13 +115,16 @@ class FacetCollector(Visitor):
 
         if join_type_nodes := list(node.find_data("illegal_join")):
             join_type = cast(Token, join_type_nodes[0].children[0]).type
-            raise exc.IllegalJoinType(join_type=join_type)
+            raise exc.IllegalJoinType(join_type=join_type, ctx=self._ctx)
 
         joined_table = node.children[1].children[0]
         joined_table_name = self._resolve_table(joined_table)
 
         if joined_table_name is None:
-            raise exc.UnsupportedQuery(msg="JOIN on derived table")
+            raise exc.UnsupportedQuery(
+                msg="JOIN on derived table",
+                ctx=self._ctx,
+            )
 
         # if a parameterized_comparison node exists, it means it is actually required
         # (enforced by the grammar, see grammar comments). a parameterized comparison
@@ -122,10 +137,17 @@ class FacetCollector(Visitor):
             # the LHS of the join condition is always a fully-qualified column
             from_fq_column_node = condition.children[0]
             from_table_node, from_column_node = from_fq_column_node.children
-            from_column = get_identifier(from_column_node, self._reserved_keywords)
+            from_column = get_identifier(
+                self._ctx,
+                from_column_node,
+                self._reserved_keywords,
+            )
             from_table = self._resolve_table(from_table_node)
             if from_table is None:
-                raise exc.UnsupportedQuery(msg="JOIN condition on derived table")
+                raise exc.UnsupportedQuery(
+                    msg="JOIN condition on derived table",
+                    ctx=self._ctx,
+                )
 
             # conditions in a join are compared against are allowed conditions, so
             # record the LHS
@@ -146,11 +168,18 @@ class FacetCollector(Visitor):
                 continue
 
             to_table, to_column_node = to_fq_column_node.children
-            to_column = get_identifier(to_column_node, self._reserved_keywords)
+            to_column = get_identifier(
+                self._ctx,
+                to_column_node,
+                self._reserved_keywords,
+            )
 
             to_table = self._resolve_table(to_table)
             if to_table is None:
-                raise exc.UnsupportedQuery(msg="JOIN condition on derived table")
+                raise exc.UnsupportedQuery(
+                    msg="JOIN condition on derived table",
+                    ctx=self._ctx,
+                )
 
             # the joined table must be one of the parts of the join condition
             if joined_table_name != from_table and joined_table_name != to_table:
@@ -173,7 +202,11 @@ class FacetCollector(Visitor):
     def selected_table(self, node: Tree):
         scope = self.query_scope(node)
         table_node = list(node.find_data("table_name"))[0]
-        table_name = get_identifier(table_node, self._reserved_keywords)
+        table_name = get_identifier(
+            self._ctx,
+            table_node,
+            self._reserved_keywords,
+        )
         scope.selected_table = table_name
 
     def selected_column(self, node: Tree):
@@ -183,7 +216,10 @@ class FacetCollector(Visitor):
             return
 
         elif isinstance(child, Token) and child.type == "ALL_COLUMNS":
-            raise exc.IllegalSelectedColumn(column="*")
+            raise exc.IllegalSelectedColumn(
+                column="*",
+                ctx=self._ctx,
+            )
 
         # if we're aliasing COUNT(*), it's safe to ignore, since it doesn't
         # reveal any of the underlying values
@@ -202,21 +238,38 @@ class FacetCollector(Visitor):
                     return
 
                 if list(alias_child.find_data("generic_alias")):
-                    alias = get_identifier(alias_child, self._reserved_keywords)
-                    raise exc.UnqualifiedColumn(column=alias)
+                    alias = get_identifier(
+                        self._ctx,
+                        alias_child,
+                        self._reserved_keywords,
+                    )
+                    raise exc.UnqualifiedColumn(
+                        column=alias,
+                        ctx=self._ctx,
+                    )
 
             # if the column looks like a column alias (meaning a non-fully-qualified
             # column), then that's an error, because we only work with fully-qualified
             # columns
             elif child.data == "generic_alias":
-                alias = get_identifier(child, self._reserved_keywords)
-                raise exc.UnqualifiedColumn(column=alias)
+                alias = get_identifier(self._ctx, child, self._reserved_keywords)
+                raise exc.UnqualifiedColumn(
+                    column=alias,
+                    ctx=self._ctx,
+                )
 
             # if we're not an aliased column, but we contain a column alias somewhere,
             # that's an error, because we only work with fully-qualified columns
             elif column_alias := list(child.find_data("generic_alias")):
-                alias = get_identifier(column_alias[0], self._reserved_keywords)
-                raise exc.UnqualifiedColumn(column=alias)
+                alias = get_identifier(
+                    self._ctx,
+                    column_alias[0],
+                    self._reserved_keywords,
+                )
+                raise exc.UnqualifiedColumn(
+                    column=alias,
+                    ctx=self._ctx,
+                )
 
             # if we've made it this far, we're sure we're dealing with a fully-qualified
             # column, or a non-column based expression
@@ -241,6 +294,7 @@ class FacetCollector(Visitor):
                 # column_name will always be authoritative, even if it is aliased in
                 # this node
                 column_name = get_identifier(
+                    self._ctx,
                     list(child.find_data("column_name"))[0],
                     self._reserved_keywords,
                 )
@@ -304,7 +358,11 @@ class FacetCollector(Visitor):
             table_node, column_node = fq_column_node.children
 
             table_name = self._resolve_table(table_node)
-            column_name = get_identifier(column_node, self._reserved_keywords)
+            column_name = get_identifier(
+                self._ctx,
+                column_node,
+                self._reserved_keywords,
+            )
 
             self._facets.parameterized_constraints.add(
                 ParameterizedConstraint(
@@ -360,9 +418,16 @@ class FacetCollector(Visitor):
             table_node, column_node = fq_column_node.children
             table_name = self._resolve_table(table_node)
             if table_name is None:
-                raise exc.UnsupportedQuery(msg="WHERE condition on derived table")
+                raise exc.UnsupportedQuery(
+                    msg="WHERE condition on derived table",
+                    ctx=self._ctx,
+                )
 
-            column_name = get_identifier(column_node, self._reserved_keywords)
+            column_name = get_identifier(
+                self._ctx,
+                column_node,
+                self._reserved_keywords,
+            )
             self._facets.condition_columns.add(
                 FqColumn(
                     table=table_name,
@@ -383,11 +448,18 @@ class FacetCollector(Visitor):
                 self._facets.condition_columns.update(maybe_fq_columns)
             # we have no columns that resolve the alias. this is an error.
             else:
-                column_name = get_identifier(column_alias_node, self._reserved_keywords)
+                column_name = get_identifier(
+                    self._ctx,
+                    column_alias_node,
+                    self._reserved_keywords,
+                )
                 if column_name in self._collector.derived_table_aliases:
                     pass
                 else:
-                    raise exc.UnqualifiedColumn(column=column_name)
+                    raise exc.UnqualifiedColumn(
+                        column=column_name,
+                        ctx=self._ctx,
+                    )
 
     where_condition = _collect_condition_column
     having_condition = _collect_condition_column

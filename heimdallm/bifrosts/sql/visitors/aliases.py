@@ -5,6 +5,7 @@ from uuid import UUID
 from lark import Tree, Visitor
 
 from heimdallm.bifrosts.sql.utils.context import get_containing_query
+from heimdallm.context import TraverseContext
 
 from ..common import FqColumn
 from ..exc import AliasConflict
@@ -56,22 +57,23 @@ class AliasCollector(Visitor):
     because the tree may not evaluate in the order that would allow us to resolve
     aliases."""
 
-    def __init__(self, reserved_keywords: set[str]):
+    def __init__(self, ctx: TraverseContext, reserved_keywords: set[str]):
         self._query_aliases: dict[UUID, _QueryAliases] = {}
         self._reserved_keywords = reserved_keywords
         self._table_aliases: dict[str, str] = {}
         self.derived_table_aliases: set[str] = set()
+        self._ctx = ctx
 
     def visit(self, tree: Tree) -> Tree:
         new_tree = super().visit(tree)
         self._resolve_aliases()
         return new_tree
 
-    def _resolve_aliases(self):
+    def _resolve_aliases(self) -> None:
         """Processes all aliases, resolves tables to their authoritative names, and
         ensures that there are no conflicts between table aliases and column aliases."""
 
-        table_aliases = {}
+        table_aliases: dict[str, str] = {}
         col_aliases = set()
         self._table_aliases = table_aliases
 
@@ -80,12 +82,12 @@ class AliasCollector(Visitor):
         for qa in self._query_aliases.values():
             for col_alias in qa.columns.keys():
                 if col_alias in col_aliases:
-                    raise AliasConflict(alias=col_alias)
+                    raise AliasConflict(alias=col_alias, ctx=self._ctx)
                 col_aliases.add(col_alias)
 
             for alias, auth_tables in qa.tables.items():
                 if len(auth_tables) > 1:
-                    raise AliasConflict(alias=alias)
+                    raise AliasConflict(alias=alias, ctx=self._ctx)
                 table_aliases[alias] = next(iter(auth_tables))
 
         # look at the aliases for derived queries (aliased subqueries) and ensure that
@@ -96,7 +98,7 @@ class AliasCollector(Visitor):
         for qa in self._query_aliases.values():
             for alias in qa.subqueries.keys():
                 if alias in table_aliases or alias in col_aliases:
-                    raise AliasConflict(alias=alias)
+                    raise AliasConflict(alias=alias, ctx=self._ctx)
                 self.derived_table_aliases.add(alias)
 
         # let's ensure there's no alias conflicts.
@@ -104,7 +106,7 @@ class AliasCollector(Visitor):
         table_aliases_set = set(table_aliases.keys())
         for alias in col_aliases:
             if alias in table_aliases_set:
-                raise AliasConflict(alias=alias)
+                raise AliasConflict(alias=alias, ctx=self._ctx)
 
         # now that we've collected all of the aliases, we can resolve fully-qualfiied
         # column names that may have an alias for their table component.
@@ -136,7 +138,7 @@ class AliasCollector(Visitor):
 
         # if we're selecting from a normal table, then use its name
         if table_type_node.data == "table_name":
-            table_name = get_identifier(node, self._reserved_keywords)
+            table_name = get_identifier(self._ctx, node, self._reserved_keywords)
             aliases.tables.setdefault(table_name, set()).add(table_name)
             if select:
                 aliases.selected_table = table_name
@@ -144,7 +146,7 @@ class AliasCollector(Visitor):
         # it's a derived table, aka an aliased subquery
         elif table_type_node.data == "derived_table":
             subquery, _as, alias_node = table_type_node.children
-            alias_name = get_identifier(alias_node, self._reserved_keywords)
+            alias_name = get_identifier(self._ctx, alias_node, self._reserved_keywords)
             sq_node = subquery.children[0]
             aliases.subqueries[alias_name] = cast(Any, sq_node.meta).id
             if select:
@@ -152,8 +154,8 @@ class AliasCollector(Visitor):
 
         elif table_type_node.data == "aliased_table":
             table_node, _as, alias_node = table_type_node.children
-            table_name = get_identifier(table_node, self._reserved_keywords)
-            alias = get_identifier(alias_node, self._reserved_keywords)
+            table_name = get_identifier(self._ctx, table_node, self._reserved_keywords)
+            alias = get_identifier(self._ctx, alias_node, self._reserved_keywords)
             aliases.tables.setdefault(alias, set()).add(table_name)
             if select:
                 aliases.selected_table = table_name
@@ -170,7 +172,7 @@ class AliasCollector(Visitor):
         the table name may be an alias itself."""
         aliases = self.alias_scope(node)
         value_node, _as, alias_node = node.children
-        alias_name = get_identifier(alias_node, self._reserved_keywords)
+        alias_name = get_identifier(self._ctx, alias_node, self._reserved_keywords)
 
         # if it's a count function, we don't care what it's composed of, because it
         # doesn't reveal any information about the underlying data. so we don't use it
@@ -192,8 +194,12 @@ class AliasCollector(Visitor):
         inserted_fq_alias = False
         for fq_column_node in value_node.find_data("fq_column"):
             table_node, column_node = fq_column_node.children
-            table_name = get_identifier(table_node, self._reserved_keywords)
-            column_name = get_identifier(column_node, self._reserved_keywords)
+            table_name = get_identifier(self._ctx, table_node, self._reserved_keywords)
+            column_name = get_identifier(
+                self._ctx,
+                column_node,
+                self._reserved_keywords,
+            )
 
             # do we already have a table alias for this column? use that instead for
             # the table name

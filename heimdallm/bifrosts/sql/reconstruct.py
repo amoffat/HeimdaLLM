@@ -4,6 +4,7 @@ from lark import Discard, Token, Tree, v_args
 from lark.visitors import Transformer as _Transformer
 
 from heimdallm.bifrosts.sql.utils.context import has_subquery, in_subquery
+from heimdallm.context import TraverseContext
 
 from . import exc
 from .common import FqColumn
@@ -98,11 +99,18 @@ class ReconstructTransformer(_Transformer):
         - removing illegal selected columns
     """
 
-    def __init__(self, validator: ConstraintValidator, reserved_keywords: set[str]):
+    def __init__(
+        self,
+        *,
+        validator: ConstraintValidator,
+        reserved_keywords: set[str],
+        ctx: TraverseContext
+    ):
         self._validator = validator
-        self._collector = AliasCollector(reserved_keywords=reserved_keywords)
+        self._collector = AliasCollector(reserved_keywords=reserved_keywords, ctx=ctx)
         self._last_discarded_column: FqColumn | None = None
         self._reserved_keywords = reserved_keywords
+        self._ctx = ctx
         super().__init__()
 
     def transform(self, tree):
@@ -134,14 +142,19 @@ class ReconstructTransformer(_Transformer):
         # go ahead and raise an exception about illegal column.
         if not tree.children:
             raise exc.IllegalSelectedColumn(
-                column=cast(FqColumn, self._last_discarded_column).name
+                column=cast(FqColumn, self._last_discarded_column).name,
+                ctx=self._ctx,
             )
         return self._copy_tree(tree)
 
     def column_alias(self, tree: Tree):
         """Called for columns in a condition. Despite the name, it may not be an actual
         alias, but rather a column name."""
-        alias_name = get_identifier(tree.children[0], self._reserved_keywords)
+        alias_name = get_identifier(
+            self._ctx,
+            tree.children[0],
+            self._reserved_keywords,
+        )
 
         # if we can't find the actual table where this column alias comes from, assume
         # the selected table.
@@ -203,8 +216,16 @@ class ReconstructTransformer(_Transformer):
             for fq_column_node in selected.find_data("fq_column"):
                 table_node, column_node = fq_column_node.children
 
-                maybe_table_alias = get_identifier(table_node, self._reserved_keywords)
-                column_name = get_identifier(column_node, self._reserved_keywords)
+                maybe_table_alias = get_identifier(
+                    self._ctx,
+                    table_node,
+                    self._reserved_keywords,
+                )
+                column_name = get_identifier(
+                    self._ctx,
+                    column_node,
+                    self._reserved_keywords,
+                )
 
                 table_name = self._collector.resolve_table(maybe_table_alias)
                 if table_name is not None:
