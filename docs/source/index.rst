@@ -94,6 +94,7 @@ browse the navigation on the left.
    :maxdepth: 5
 
    quickstart
+   blog/index
    bifrost
    api/index
    reconstruction

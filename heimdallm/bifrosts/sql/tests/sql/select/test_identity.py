@@ -3,7 +3,7 @@ from typing import Type
 import pytest
 
 from heimdallm.bifrosts.sql import exc
-from heimdallm.bifrosts.sql.common import RequiredConstraint
+from heimdallm.bifrosts.sql.common import ParameterizedConstraint
 from heimdallm.bifrosts.sql.sqlite.select.bifrost import Bifrost
 
 from ..utils import dialects
@@ -12,7 +12,7 @@ from .utils import CustomerConstraints
 
 @dialects()
 def test_required_identity(dialect: str, Bifrost: Type[Bifrost]):
-    bifrost = Bifrost.mocked(CustomerConstraints())
+    bifrost = Bifrost.validation_only(CustomerConstraints())
 
     query = """select Customer.CustomerId from Customer"""
 
@@ -21,11 +21,11 @@ def test_required_identity(dialect: str, Bifrost: Type[Bifrost]):
 
     e = excinfo.value
     assert e.identities == {
-        RequiredConstraint(
+        ParameterizedConstraint(
             column="Customer.CustomerId",
             placeholder="customer_id",
         ),
-        RequiredConstraint(
+        ParameterizedConstraint(
             column="Invoice.CustomerId",
             placeholder="customer_id",
         ),
@@ -45,7 +45,7 @@ def test_where_circumvent_with_precedence(dialect: str, Bifrost: Type[Bifrost]):
 
     # this query uses parentheses to ensure precedence
     query = """
-SELECT Track.`Name`
+SELECT Track.TrackName
 FROM Track
 INNER JOIN InvoiceLine ON Track.TrackId = InvoiceLine.TrackId
 INNER JOIN Invoice ON InvoiceLine.InvoiceId = Invoice.InvoiceId
@@ -59,7 +59,7 @@ WHERE
 LIMIT 20;
 """
 
-    bifrost = Bifrost.mocked(CustomerConstraints())
+    bifrost = Bifrost.validation_only(CustomerConstraints())
 
     with pytest.raises(exc.MissingRequiredIdentity):
         bifrost.traverse(query)
@@ -70,7 +70,7 @@ def test_where_no_circumvent_and_very_nested(dialect: str, Bifrost: Type[Bifrost
     """a query with a very nested where clause, but does not try to circumvent
     the required constraint"""
     query = """
-SELECT Track.`Name`
+SELECT Track.TrackName
 FROM Track
 INNER JOIN InvoiceLine ON Track.TrackId = InvoiceLine.TrackId
 INNER JOIN Invoice ON InvoiceLine.InvoiceId = Invoice.InvoiceId
@@ -91,7 +91,7 @@ WHERE
     )
 """
 
-    bifrost = Bifrost.mocked(CustomerConstraints())
+    bifrost = Bifrost.validation_only(CustomerConstraints())
     bifrost.traverse(query)
 
 
@@ -102,7 +102,7 @@ def test_top_level_where_circumvention(dialect: str, Bifrost: Type[Bifrost]):
 
     # no circumvention
     query = """
-SELECT Track.`Name`
+SELECT Track.TrackName
 FROM Track
 INNER JOIN InvoiceLine ON Track.TrackId = InvoiceLine.TrackId
 INNER JOIN Invoice ON InvoiceLine.InvoiceId = Invoice.InvoiceId
@@ -113,12 +113,12 @@ WHERE
     AND Customer.CustomerId > 0
 """
 
-    bifrost = Bifrost.mocked(CustomerConstraints())
+    bifrost = Bifrost.validation_only(CustomerConstraints())
     bifrost.traverse(query)
 
     # same query, but with the required constraint circumvented with "OR"
     query = """
-SELECT Track.`Name`
+SELECT Track.TrackName
 FROM Track
 INNER JOIN InvoiceLine ON Track.TrackId = InvoiceLine.TrackId
 INNER JOIN Invoice ON InvoiceLine.InvoiceId = Invoice.InvoiceId
@@ -153,5 +153,5 @@ WHERE
     )
 """
 
-    bifrost = Bifrost.mocked(CustomerConstraints())
+    bifrost = Bifrost.validation_only(CustomerConstraints())
     bifrost.traverse(query)

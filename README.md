@@ -101,6 +101,7 @@ the mitigations.
 
 - Sqlite
 - MySQL
+- Postgres
 
 There is active development for the other top relational SQL databases. To help me
 prioritize, please vote on which database you would like to see supported:

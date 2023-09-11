@@ -7,6 +7,8 @@ from lark.exceptions import VisitError
 
 from heimdallm.bifrost import Bifrost as _BaseBifrost
 from heimdallm.bifrosts.sql import exc
+from heimdallm.bifrosts.sql.visitors.id_setter import IdSetter
+from heimdallm.bifrosts.sql.visitors.parent import ParentSetter
 from heimdallm.llm import LLMIntegration
 from heimdallm.llm_providers.mock import EchoMockLLM
 
@@ -31,23 +33,20 @@ class Bifrost(_BaseBifrost, ABC):
         needs to succeed for validation to pass.
     """
 
-    # for tests
     @classmethod
-    def mocked(
+    def validation_only(
         cls,
         constraint_validators: Union[
             "heimdallm.bifrosts.sql.validator.ConstraintValidator",
             Sequence["heimdallm.bifrosts.sql.validator.ConstraintValidator"],
         ],
     ):
-        """A convenience method for our tests. This creates a Bifrost that assumes its
-        untrusted input is a SQL query already, so it does not need to communicate with
-        the LLM, only parse and validate it.
+        """A convenience method for doing just constraint validation. This creates a
+        Bifrost that assumes its untrusted input is a SQL query already, so it does not
+        need to communicate with the LLM, only parse and validate it.
 
         :param constraint_validators: A constraint validator or sequence of constraint
             validators to run on the untrusted input.
-
-        :meta private:
         """
         if not isinstance(constraint_validators, Sequence):
             constraint_validators = [constraint_validators]
@@ -92,8 +91,7 @@ class Bifrost(_BaseBifrost, ABC):
         """
         raise NotImplementedError
 
-    @classmethod
-    def build_tree_producer(cls) -> Callable[[Lark, str], ParseTree]:
+    def build_tree_producer(self) -> Callable[[Lark, str], ParseTree]:
         """
         Produces a that can create a single parse tree. May be implemented in a subclass
         if you want to do custom ambiguity resolution.
@@ -106,13 +104,16 @@ class Bifrost(_BaseBifrost, ABC):
             ambig_tree = grammar.parse(untrusted_query)
             try:
                 final_tree = AmbiguityResolver(
-                    untrusted_query,
-                    cls.reserved_keywords(),
+                    ctx=self.ctx,
+                    reserved_keywords=self.reserved_keywords(),
                 ).transform(ambig_tree)
             except VisitError as e:
                 if isinstance(e.orig_exc, exc.BaseException):
                     raise e.orig_exc
                 raise e
+
+            final_tree = ParentSetter().visit(final_tree)
+            final_tree = IdSetter().visit(final_tree)
             return final_tree
 
         return parse
@@ -178,10 +179,10 @@ class Bifrost(_BaseBifrost, ABC):
         try:
             return super().parse(untrusted_llm_output)
         except lark.exceptions.UnexpectedEOF as e:
-            raise exc.InvalidQuery(query=untrusted_llm_output) from e
+            raise exc.InvalidQuery(ctx=self.ctx) from e
         except lark.exceptions.UnexpectedCharacters as e:
-            raise exc.InvalidQuery(query=untrusted_llm_output) from e
+            raise exc.InvalidQuery(ctx=self.ctx) from e
         except exc.BaseException as e:
             raise e
         except Exception as e:
-            raise exc.InvalidQuery(query=untrusted_llm_output) from e
+            raise exc.InvalidQuery(ctx=self.ctx) from e

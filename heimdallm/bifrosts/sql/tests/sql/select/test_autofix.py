@@ -18,8 +18,8 @@ def test_alter_limit(dialect: str, Bifrost: Type[Bifrost]):
         def max_limit(self):
             return limit
 
-    bifrost = Bifrost.mocked(LimitConstraints())
-    unlimited_bifrost = Bifrost.mocked(PermissiveConstraints())
+    bifrost = Bifrost.validation_only(LimitConstraints())
+    unlimited_bifrost = Bifrost.validation_only(PermissiveConstraints())
 
     # no limit
     query = "select t1.col from t1"
@@ -59,7 +59,7 @@ def test_limit_preserve_offset():
         def max_limit(self):
             return limit
 
-    bifrost = Bifrost.mocked(LimitConstraints())
+    bifrost = Bifrost.validation_only(LimitConstraints())
     query = f"select t1.col from t1 limit {limit *2} offset {offset}"
     trusted_query = bifrost.traverse(query)
     assert f"limit {limit}" in trusted_query.lower()
@@ -70,7 +70,7 @@ def test_limit_preserve_offset():
 def test_good_formatting(dialect: str, Bifrost: Type[Bifrost]):
     """verify that the reconstructed query has decent formatting. doesn't have to match
     the original, just look good enough and be semantically the same"""
-    bifrost = Bifrost.mocked(PermissiveConstraints())
+    bifrost = Bifrost.validation_only(PermissiveConstraints())
 
     query = """
 SELECT f.title,f.rating, f.release_year
@@ -95,10 +95,13 @@ def test_remove_illegal_columns(dialect: str, Bifrost: Type[Bifrost], conn):
     """show that we can automatically filter out illegal columns"""
 
     class MyConstraints(PermissiveConstraints):
+        def condition_column_allowed(self, column: FqColumn) -> bool:
+            return True
+
         def select_column_allowed(self, column: FqColumn) -> bool:
             return not column.name.endswith("_id")
 
-    bifrost = Bifrost.mocked(MyConstraints())
+    bifrost = Bifrost.validation_only(MyConstraints())
 
     query = """
 SELECT f.film_id, f.title, f.description, f.release_year, f.language_id, r.rental_date,
@@ -120,7 +123,8 @@ WHERE c.customer_id = :customer_id
 
 
 @pytest.mark.skip("TODO")
-def test_leave_illegal_columns(conn):
+@dialects()
+def test_leave_illegal_columns(dialect: str, Bifrost: Type[Bifrost]):
     """columns referenced in an aggregate function should not be removed, since they
     don't reveal information"""
 
@@ -128,7 +132,7 @@ def test_leave_illegal_columns(conn):
         def select_column_allowed(self, column: FqColumn) -> bool:
             return not column.name.endswith("_id")
 
-    bifrost = Bifrost.mocked(MyConstraints())
+    bifrost = Bifrost.validation_only(MyConstraints())
 
     query = """
 SELECT film.film_id, film.title, COUNT(rental.rental_id) AS rental_count
@@ -147,7 +151,7 @@ LIMIT 10;
 @dialects()
 def test_unqualified_columns(dialect: str, Bifrost: Type[Bifrost]):
     """an unqualified column should be qualified with the table name from the select"""
-    bifrost = Bifrost.mocked(PermissiveConstraints())
+    bifrost = Bifrost.validation_only(PermissiveConstraints())
 
     query = """
 SELECT salary
@@ -159,3 +163,10 @@ AND to_date >= DATE(:timestamp)
 
     trusted_query = bifrost.traverse(query)
     assert "salaries.salary" in trusted_query
+
+
+@pytest.mark.skip("TODO")
+@dialects()
+def test_add_parameterized_constraints(dialect: str, Bifrost: Type[Bifrost]):
+    """show that we can add a parameterized_constraint to a query"""
+    raise NotImplementedError

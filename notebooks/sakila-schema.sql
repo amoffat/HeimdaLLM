@@ -1,3 +1,4 @@
+/* when matching against `first_name` and `last_name`, use LIKE */
 CREATE TABLE actor (
   actor_id numeric NOT NULL ,
   first_name VARCHAR(45) NOT NULL,
@@ -17,6 +18,7 @@ CREATE TABLE address (
   PRIMARY KEY  (address_id),
   CONSTRAINT fk_address_city FOREIGN KEY (city_id) REFERENCES city (city_id) ON DELETE NO ACTION ON UPDATE CASCADE
 );
+/* when matching against `name`, use LIKE */
 CREATE TABLE category (
   category_id SMALLINT NOT NULL,
   name VARCHAR(25) NOT NULL,
@@ -91,12 +93,6 @@ CREATE TABLE film_category (
   PRIMARY KEY (film_id, category_id),
   CONSTRAINT fk_film_category_film FOREIGN KEY (film_id) REFERENCES film (film_id) ON DELETE NO ACTION ON UPDATE CASCADE,
   CONSTRAINT fk_film_category_category FOREIGN KEY (category_id) REFERENCES category (category_id) ON DELETE NO ACTION ON UPDATE CASCADE
-);
-CREATE TABLE film_text (
-  film_id SMALLINT NOT NULL,
-  title VARCHAR(255) NOT NULL,
-  description BLOB SUB_TYPE TEXT,
-  PRIMARY KEY  (film_id)
 );
 CREATE TABLE inventory (
   inventory_id INT NOT NULL,

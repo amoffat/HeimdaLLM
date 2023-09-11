@@ -30,11 +30,6 @@ class Bifrost(_SQLBifrost):
 
         noteworthy:
             - no outer joins
-            - no subqueries
-
-        Theoretically, subqueries could be allowed, but it would be more work, and
-        I'm not yet convinced that an LLM produces subqueries often enough to make
-        it worth it.
 
         Outer joins are unsafe because the join constraint is not applied to the
         rows that would be considered "outer."

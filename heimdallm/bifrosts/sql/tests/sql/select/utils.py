@@ -4,7 +4,7 @@ from heimdallm.bifrosts.sql.common import (
     ANY_JOIN,
     FqColumn,
     JoinCondition,
-    RequiredConstraint,
+    ParameterizedConstraint,
 )
 from heimdallm.bifrosts.sql.validator import ConstraintValidator
 
@@ -12,10 +12,10 @@ from heimdallm.bifrosts.sql.validator import ConstraintValidator
 class PermissiveConstraints(ConstraintValidator):
     """allows basically anything in the query"""
 
-    def requester_identities(self):
+    def requester_identities(self) -> Sequence[ParameterizedConstraint]:
         return []
 
-    def required_constraints(self) -> Sequence[RequiredConstraint]:
+    def parameterized_constraints(self) -> Sequence[ParameterizedConstraint]:
         return []
 
     def select_column_allowed(self, column: FqColumn) -> bool:
@@ -31,21 +31,21 @@ class PermissiveConstraints(ConstraintValidator):
         return True
 
     def condition_column_allowed(self, column: FqColumn) -> bool:
-        return True
+        return self.select_column_allowed(column)
 
 
 class CustomerConstraints(PermissiveConstraints):
     def requester_identities(self):
         return [
-            RequiredConstraint(
+            ParameterizedConstraint(
                 column="Customer.CustomerId",
                 placeholder="customer_id",
             ),
-            RequiredConstraint(
+            ParameterizedConstraint(
                 column="Invoice.CustomerId",
                 placeholder="customer_id",
             ),
         ]
 
-    def required_constraints(self) -> Sequence[RequiredConstraint]:
+    def parameterized_constraints(self) -> Sequence[ParameterizedConstraint]:
         return []

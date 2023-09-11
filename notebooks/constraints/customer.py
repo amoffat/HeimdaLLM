@@ -1,6 +1,10 @@
 from typing import Optional, Sequence
 
-from heimdallm.bifrosts.sql.common import FqColumn, JoinCondition, RequiredConstraint
+from heimdallm.bifrosts.sql.common import (
+    FqColumn,
+    JoinCondition,
+    ParameterizedConstraint,
+)
 from heimdallm.bifrosts.sql.sqlite.select.validator import ConstraintValidator
 
 
@@ -8,19 +12,19 @@ class DataConstraints(ConstraintValidator):
     """A relatively-permissive customer constraints validator for the Sakila database.
     This validator allows the customer to access tables joined by their customer id."""
 
-    def requester_identities(self) -> Sequence[RequiredConstraint]:
+    def requester_identities(self) -> Sequence[ParameterizedConstraint]:
         """tells our validator that the query must have some constraint, either
         in the WHERE or on a JOIN, that constrains a particular column to a
         named placeholder, whose placeholder value we will pass in at query
         execution time."""
         return [
-            RequiredConstraint(
+            ParameterizedConstraint(
                 column="customer.customer_id",
                 placeholder="customer_id",
             ),
         ]
 
-    def required_constraints(self) -> Sequence[RequiredConstraint]:
+    def parameterized_constraints(self) -> Sequence[ParameterizedConstraint]:
         """additional constraints that must be present in the query, separate
         from the requester's identity. ALL of these constraints must be present
         in the query."""
@@ -66,6 +70,7 @@ class DataConstraints(ConstraintValidator):
             JoinCondition("film_category.film_id", "inventory.film_id"),
             JoinCondition("film.film_id", "film_actor.film_id"),
             JoinCondition("film.film_id", "film_category.film_id"),
+            JoinCondition("film.film_id", "film_fts.film_id"),
             JoinCondition("film.original_language_id", "language.language_id"),
             JoinCondition("inventory.film_id", "film.film_id"),
             JoinCondition("inventory.inventory_id", "rental.inventory_id"),
@@ -87,14 +92,14 @@ class GeneralConstraints(ConstraintValidator):
     """A constraints validator for general customer access to data that may not be
     theirs, but is not sensitive."""
 
-    def requester_identities(self) -> Sequence[RequiredConstraint]:
+    def requester_identities(self) -> Sequence[ParameterizedConstraint]:
         """tells our validator that the query must have some constraint, either
         in the WHERE or on a JOIN, that constrains a particular column to a
         named placeholder, whose placeholder value we will pass in at query
         execution time."""
         return []
 
-    def required_constraints(self) -> Sequence[RequiredConstraint]:
+    def parameterized_constraints(self) -> Sequence[ParameterizedConstraint]:
         """additional constraints that must be present in the query, separate
         from the requester's identity. ALL of these constraints must be present
         in the query."""
@@ -124,6 +129,7 @@ class GeneralConstraints(ConstraintValidator):
             JoinCondition("film_category.film_id", "inventory.film_id"),
             JoinCondition("film.film_id", "film_actor.film_id"),
             JoinCondition("film.film_id", "film_category.film_id"),
+            JoinCondition("film.film_id", "film_fts.film_id"),
             JoinCondition("film.original_language_id", "language.language_id"),
             JoinCondition("inventory.film_id", "film.film_id"),
             JoinCondition("store.address_id", "address.address_id"),

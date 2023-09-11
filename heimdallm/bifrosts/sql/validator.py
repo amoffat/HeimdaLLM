@@ -10,8 +10,9 @@ from heimdallm.bifrost import Bifrost
 from heimdallm.bifrosts.sql import exc
 from heimdallm.bifrosts.sql.bifrost import Bifrost as _SQLBifrost
 from heimdallm.constraints import ConstraintValidator as _BaseConstraintValidator
+from heimdallm.context import TraverseContext
 
-from .common import ANY_JOIN, FqColumn, JoinCondition, RequiredConstraint
+from .common import ANY_JOIN, FqColumn, JoinCondition, ParameterizedConstraint
 from .visitors.aliases import AliasCollector
 from .visitors.facets import FacetCollector, Facets
 
@@ -22,7 +23,7 @@ class ConstraintValidator(_BaseConstraintValidator):
     class and implement its methods."""
 
     @abstractmethod
-    def requester_identities(self) -> Sequence[RequiredConstraint]:
+    def requester_identities(self) -> Sequence[ParameterizedConstraint]:
         """Returns the possible identities of the requester, as represented in the
         database. This is used to instruct the LLM how to constrain the query that it
         generates. Only one of these identities needs to match for the query to be
@@ -58,7 +59,7 @@ class ConstraintValidator(_BaseConstraintValidator):
 
         Both ``rental.customer_id`` and ``customer.customer_id`` are valid requester
         identities, so ou need to specify both of them by returning a
-        :class:`heimdallm.bifrosts.sql.common.RequiredConstraint` for each of them.
+        :class:`heimdallm.bifrosts.sql.common.ParameterizedConstraint` for each of them.
 
         :return: The sequence of possible requester identities.
         """
@@ -68,7 +69,7 @@ class ConstraintValidator(_BaseConstraintValidator):
         )
 
     @abstractmethod
-    def required_constraints(self) -> Sequence[RequiredConstraint]:
+    def parameterized_constraints(self) -> Sequence[ParameterizedConstraint]:
         """
         Returns a sequence of constraints that must exist in either the ``WHERE`` clause
         of the query or in a ``JOIN`` condition. It doesn't matter where the constraint
@@ -78,7 +79,7 @@ class ConstraintValidator(_BaseConstraintValidator):
         :return: The sequence of required constraints.
         """
         raise NotImplementedError(
-            "You must explicitly provide a sequence of required constraints, "
+            "You must explicitly provide a sequence of parameterized constraints, "
             "or an empty list for no constraints"
         )
 
@@ -144,7 +145,14 @@ class ConstraintValidator(_BaseConstraintValidator):
         # let's default to "if you can see it, you can use it"
         return self.select_column_allowed(fq_column)
 
-    def fix(self, bifrost: Bifrost, grammar: Lark, tree: ParseTree) -> str:
+    def fix(
+        self,
+        *,
+        bifrost: Bifrost,
+        grammar: Lark,
+        ctx: TraverseContext,
+        tree: ParseTree,
+    ) -> str:
         """A parse tree may be valid SQL, but it may not be valid according to
         the validator's constraints. we may be able to make intelligent
         decisions about those constraints, and fix the parse tree though, for
@@ -157,8 +165,9 @@ class ConstraintValidator(_BaseConstraintValidator):
         from heimdallm.bifrosts.sql import reconstruct
 
         transform = reconstruct.ReconstructTransformer(
-            self,
-            cast(_SQLBifrost, bifrost).reserved_keywords(),
+            validator=self,
+            reserved_keywords=cast(_SQLBifrost, bifrost).reserved_keywords(),
+            ctx=ctx,
         )
         try:
             fixed_tree = transform.transform(tree)
@@ -176,7 +185,13 @@ class ConstraintValidator(_BaseConstraintValidator):
         )
         return output
 
-    def validate(self, bifrost: Bifrost, untrusted_input: str, tree: ParseTree):
+    def validate(
+        self,
+        *,
+        bifrost: Bifrost,
+        ctx: TraverseContext,
+        tree: ParseTree,
+    ):
         """Analyze the parsed tree and validate it against our SQL constraints
 
         :param untrusted_input: The original query string. This is passed in so that if
@@ -185,47 +200,55 @@ class ConstraintValidator(_BaseConstraintValidator):
 
         :meta private:
         """
-        try:
-            alias_collector = AliasCollector(
-                cast(_SQLBifrost, bifrost).reserved_keywords()
-            )
-            alias_collector.visit(tree)
+        alias_collector = AliasCollector(
+            ctx=ctx,
+            reserved_keywords=cast(_SQLBifrost, bifrost).reserved_keywords(),
+        )
+        alias_collector.visit(tree)
 
-            facets = Facets()
-            facet_collector = FacetCollector(
-                facets,
-                alias_collector,
-                cast(_SQLBifrost, bifrost).reserved_keywords(),
-            )
-            facet_collector.visit(tree)
-        except exc.GeneralParseError:
-            raise exc.InvalidQuery(query=untrusted_input)
+        facets = Facets()
+        facet_collector = FacetCollector(
+            facets=facets,
+            collector=alias_collector,
+            reserved_keywords=cast(_SQLBifrost, bifrost).reserved_keywords(),
+            ctx=ctx,
+        )
+        facet_collector.visit(tree)
 
         # check the select column allowlist
         for fq_column in facets.selected_columns:
             if not self.select_column_allowed(fq_column):
-                raise exc.IllegalSelectedColumn(column=fq_column.name)
+                raise exc.IllegalSelectedColumn(
+                    column=fq_column.name,
+                    ctx=ctx,
+                )
 
-        # check the join condition allowlist
-        any_join_cond_allowed = ANY_JOIN in self.allowed_joins()
-        for table, join_specs in facets.joined_tables.items():
-            for join_spec in join_specs:
-                allowed = any_join_cond_allowed or join_spec in self.allowed_joins()
-                if not allowed:
-                    raise exc.IllegalJoinTable(join=join_spec)
+        for scope in facets.scopes.values():
+            # check the join condition allowlist
+            any_join_cond_allowed = ANY_JOIN in self.allowed_joins()
+            for table, join_specs in scope.joined_tables.items():
+                for join_spec in join_specs:
+                    allowed = any_join_cond_allowed or join_spec in self.allowed_joins()
+                    if not allowed:
+                        raise exc.IllegalJoinTable(join=join_spec, ctx=ctx)
 
-        # ensure that the selected table is joined to another table, if joins exist
-        if (
-            facets.joined_tables
-            and not facets.joined_tables[cast(str, facets.selected_table)]
-        ):
-            raise exc.DisconnectedTable(table=cast(str, facets.selected_table))
+            # ensure that the selected table is joined to another table, if joins exist
+            if (
+                scope.joined_tables
+                and not scope.joined_tables[cast(str, scope.selected_table)]
+            ):
+                raise exc.DisconnectedTable(
+                    table=cast(str, scope.selected_table),
+                    ctx=ctx,
+                )
 
-        # ensure that all joins were joined on columns that exist on the joined tables
-        if facets.bad_joins:
-            raise exc.BogusJoinedTable(
-                table=facets.bad_joins[0],
-            )
+            # ensure that all joins were joined on columns that exist on the joined
+            # tables
+            if scope.bad_joins:
+                raise exc.BogusJoinedTable(
+                    table=scope.bad_joins[0],
+                    ctx=ctx,
+                )
 
         # all columns specified in the join conditions are automatically included in the
         # condition column allowlist
@@ -244,15 +267,17 @@ class ConstraintValidator(_BaseConstraintValidator):
             if not self.condition_column_allowed(fq_column):
                 raise exc.IllegalConditionColumn(
                     column=fq_column,
+                    ctx=ctx,
                 )
 
         # get all of the constraints that the query MUST be constrained by in
         # the WHERE clause
-        for constraint in self.required_constraints():
-            if constraint not in facets.required_constraints:
-                raise exc.MissingRequiredConstraint(
+        for constraint in self.parameterized_constraints():
+            if constraint not in facets.parameterized_constraints:
+                raise exc.MissingParameterizedConstraint(
                     column=constraint.fq_column,
                     placeholder=constraint.placeholder,
+                    ctx=ctx,
                 )
 
         # verify that the query is constrained by at least one of the
@@ -270,18 +295,28 @@ class ConstraintValidator(_BaseConstraintValidator):
         if all_req_identities:
             found_id = False
             for one_id in all_req_identities:
-                if one_id in facets.required_constraints:
+                if one_id in facets.parameterized_constraints:
                     found_id = True
                     break
             if not found_id:
-                raise exc.MissingRequiredIdentity(identities=all_req_identities)
+                raise exc.MissingRequiredIdentity(
+                    identities=all_req_identities,
+                    ctx=ctx,
+                )
 
         # check that the query limits the rows correctly, if we restrict to a limit
         if (max_limit := self.max_limit()) is not None:
-            if facets.limit is None or facets.limit > max_limit:
-                raise exc.TooManyRows(limit=facets.limit)
+            for limit in facets.limits.values():
+                if limit is None or limit > max_limit:
+                    raise exc.TooManyRows(
+                        limit=limit,
+                        ctx=ctx,
+                    )
 
         # check that every function used has been allowlisted
         for fn in facets.functions:
             if not self.can_use_function(fn):
-                raise exc.IllegalFunction(function=fn)
+                raise exc.IllegalFunction(
+                    function=fn,
+                    ctx=ctx,
+                )

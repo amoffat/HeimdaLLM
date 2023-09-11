@@ -1,8 +1,10 @@
 from typing import Generator, Iterable, cast
 
-from lark import Discard, Token
-from lark import Transformer as _Transformer
-from lark import Tree
+from lark import Discard, Token, Tree, v_args
+from lark.visitors import Transformer as _Transformer
+
+from heimdallm.bifrosts.sql.utils.context import has_subquery, in_subquery
+from heimdallm.context import TraverseContext
 
 from . import exc
 from .common import FqColumn
@@ -87,6 +89,7 @@ def qualify_column(fq_column: FqColumn) -> Tree:
     return tree
 
 
+@v_args(tree=True)
 class ReconstructTransformer(_Transformer):
     """makes some alterations to a query if it does not meet some basic validation
     constraints, but could with those alterations. currently, these are just the
@@ -96,99 +99,143 @@ class ReconstructTransformer(_Transformer):
         - removing illegal selected columns
     """
 
-    def __init__(self, validator: ConstraintValidator, reserved_keywords: set[str]):
+    def __init__(
+        self,
+        *,
+        validator: ConstraintValidator,
+        reserved_keywords: set[str],
+        ctx: TraverseContext
+    ):
         self._validator = validator
-        self._collector = AliasCollector(reserved_keywords=reserved_keywords)
+        self._collector = AliasCollector(reserved_keywords=reserved_keywords, ctx=ctx)
         self._last_discarded_column: FqColumn | None = None
         self._reserved_keywords = reserved_keywords
+        self._ctx = ctx
         super().__init__()
 
     def transform(self, tree):
         self._collector.visit(tree)
         return super().transform(tree)
 
-    def select_statement(self, children):
+    def _copy_tree(self, tree: Tree) -> Tree:
+        return Tree(tree.data, tree.children, tree.meta)
+
+    def select_statement(self, tree: Tree):
         """checks if a limit needs to be added or adjusted"""
-        max_limit = self._validator.max_limit()
+        if not in_subquery(tree):
+            max_limit = self._validator.max_limit()
 
-        if max_limit is not None:
-            for child in children:
-                if not isinstance(child, Tree):
-                    continue
+            if max_limit is not None:
+                for child in tree.children:
+                    if not isinstance(child, Tree):
+                        continue
 
-                if child.data == "limit_placeholder":
-                    add_limit(child, max_limit)
-                    break
+                    if child.data == "limit_placeholder":
+                        add_limit(child, max_limit)
+                        break
 
-        return Tree("select_statement", children)
+        return self._copy_tree(tree)
 
-    def selected_columns(self, children):
+    def selected_columns(self, tree: Tree):
         # if there's no children, it means we discarded every column selected, meaning
         # that they were all illegal columns. since we can't proceed without a column,
         # go ahead and raise an exception about illegal column.
-        if not children:
-            raise exc.IllegalSelectedColumn(column=self._last_discarded_column.name)
-        return Tree("selected_columns", children)
+        if not tree.children:
+            raise exc.IllegalSelectedColumn(
+                column=cast(FqColumn, self._last_discarded_column).name,
+                ctx=self._ctx,
+            )
+        return self._copy_tree(tree)
 
-    def column_alias(self, children: list[Tree | Token]):
-        alias_name = get_identifier(children[0], self._reserved_keywords)
+    def column_alias(self, tree: Tree):
+        """Called for columns in a condition. Despite the name, it may not be an actual
+        alias, but rather a column name."""
+        alias_name = get_identifier(
+            self._ctx,
+            tree.children[0],
+            self._reserved_keywords,
+        )
 
         # if we can't find the actual table where this column alias comes from, assume
         # the selected table.
-        fq_columns = self._collector._aliased_columns[alias_name]
+        aliases = self._collector.alias_scope(tree)
+        fq_columns = aliases.columns.get(alias_name, set())
 
         # None means the alias is not based on any column (it's an expression of some
         # kind), so we leave this node alone
         if fq_columns is None:
-            tree = Tree("column_alias", children)
+            tree = self._copy_tree(tree)
 
         # if we haven't found any columns associated with this alias, it means that the
         # query is implicitly using the selected table, so we can fully qualify it based
         # on that information.
+        # FIXME, but what if there was a JOIN? TEST THIS
         elif len(fq_columns) == 0:
-            tree = qualify_column(
-                FqColumn(
-                    table=cast(str, self._collector._selected_table),
-                    column=alias_name,
+            if alias_name in self._collector.derived_table_aliases:
+                tree = self._copy_tree(tree)
+
+            else:
+                old_meta = tree.meta
+                tree = qualify_column(
+                    FqColumn(
+                        table=cast(str, aliases.selected_table),
+                        column=alias_name,
+                    )
                 )
-            )
+                tree._meta = old_meta
 
         # if there's only one fq column associated with this alias, then we know it's
         # not a composite alias, so we can fully qualify it.
         elif len(fq_columns) == 1:
+            old_meta = tree.meta
             tree = qualify_column(next(iter(fq_columns)))
+            tree._meta = old_meta
 
         # if it's a composite alias, we can't fully qualify it, so we leave it alone.
         elif len(fq_columns) > 1:
-            tree = Tree("column_alias", children)
+            tree = self._copy_tree(tree)
 
         else:
             assert False, "Unreachable"
 
         return tree
 
-    def selected_column(self, children: list[Tree | Token]):
-        """ensures that every selected column is allowed"""
-        selected = children[0]
+    def selected_column(self, tree: Tree):
+        """Drops disallowed columns from the query, rather than have them fail at
+        constraint validation."""
+        selected = tree.children[0]
         if is_count_function(selected):
+            pass
+
+        # if the column we're selecting is a derived table, then it doesn't make sense
+        # to drop it, because it can't fail ``select_column_allowed`` validation.
+        elif has_subquery(selected):
             pass
 
         elif isinstance(selected, Tree):
             for fq_column_node in selected.find_data("fq_column"):
                 table_node, column_node = fq_column_node.children
 
-                maybe_table_alias = get_identifier(table_node, self._reserved_keywords)
-                column_name = get_identifier(column_node, self._reserved_keywords)
-
-                table_name = self._collector._aliased_tables.get(
-                    maybe_table_alias, maybe_table_alias
+                maybe_table_alias = get_identifier(
+                    self._ctx,
+                    table_node,
+                    self._reserved_keywords,
                 )
-                column = FqColumn(table=table_name, column=column_name)
-                if not self._validator.select_column_allowed(column):
-                    self._last_discarded_column = column
-                    return Discard
+                column_name = get_identifier(
+                    self._ctx,
+                    column_node,
+                    self._reserved_keywords,
+                )
 
-        return Tree("selected_column", children)
+                table_name = self._collector.resolve_table(maybe_table_alias)
+                if table_name is not None:
+                    column = FqColumn(table=table_name, column=column_name)
+
+                    if not self._validator.select_column_allowed(column):
+                        self._last_discarded_column = column
+                        return Discard
+
+        return self._copy_tree(tree)
 
 
 PostProcToken = Token | str
