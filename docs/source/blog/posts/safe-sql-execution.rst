@@ -388,8 +388,8 @@ degree of flexibility in the valid queries that an LLM may generate.
 The risks of these frameworks are in the grammar and parsing. SQL is a complex spec and
 each database type has its own quirks. Accounting for every way that a query can be
 exploited is a tedious and complicated task, and so 0-days may exist that very dedicated
-attackers will find and exploit. However, each bug and regression can be added to
-automated testing to help converge on a robust solution.
+attackers will find. However, each bug and regression can be added to automated testing
+to help converge on a robust solution.
 
 +-----------------------+--------+-----------------------------------------------------------+
 | Attribute             | Rank   | Rationale                                                 |
