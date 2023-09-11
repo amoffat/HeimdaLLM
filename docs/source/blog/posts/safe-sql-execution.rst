@@ -150,12 +150,12 @@ solution:
 
 The first obvious solution to limiting dangerous SQL queries is to create a read-only
 database user. By using this RO user, untrusted queries cannot mutate your database or
-your data. However, RO users can still see all of the data in the database, making them
-very unsafe for data security.
+your data. However, a RO user can still see all of the data in the database, making it
+useless for data security.
 
-It's a high-impact, low cost solution that eliminates one class of problems with very
-little effort or maintenance. This solution is generally recommended *in addition* to
-other solutions, but it is not a viable solution on its own.
+It's a low cost solution that eliminates one class of problems with very little effort
+or maintenance. This solution is generally recommended *in addition* to other solutions,
+but it is not a viable solution on its own.
 
 +----------------------+-------+--------------------------------------------------------------------------+
 | Property             | Rank  | Rationale                                                                |
@@ -304,6 +304,8 @@ ineffective at guarding information or enforcing constraints.
 | Cost                   | ❌      | SaaS solutions are not free.                                   |
 +------------------------+---------+----------------------------------------------------------------+
 | Portability            | ✅      | Can hypothetically process any SQL dialect.                    |
++------------------------+---------+----------------------------------------------------------------+
+| Failure probability    | ❌      | Trivial to trick.                                              |
 +------------------------+---------+----------------------------------------------------------------+
 | Theoretically complete | ❌      | Will always be a cat-and-mouse game with attackers.            |
 +------------------------+---------+----------------------------------------------------------------+
