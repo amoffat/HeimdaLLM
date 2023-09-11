@@ -3,7 +3,8 @@ __pycache__/
 /.venv
 /.env
 /test_grammar.py
+/test_transform.py
 /dist
 /.coverage
-/TODO.md
+TODO.md
 /docs/build

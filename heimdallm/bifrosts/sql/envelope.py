@@ -122,8 +122,8 @@ class PromptEnvelope(_BasePromptEnvelope):
 
 class TestSQLPromptEnvelope(PromptEnvelope):
     """
-    A test envelope specifically for :meth:`Bifrost.mocked
-    <heimdallm.bifrosts.sql.bifrost.Bifrost.mocked>`
+    A test envelope specifically for :meth:`Bifrost.validation_only
+    <heimdallm.bifrosts.sql.bifrost.Bifrost.validation_only>`
 
     :param llm: The LLM integration being sent the human input. This can be used to
         tweak the :meth:`wrap` and :meth:`unwrap() <PromptEnvelope.unwrap>` methods to

@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.0 - 9/11/23
+
+- Subquery support
+- CTE (Common Table Expressions) support
+- PostgreSQL support
+- Renamed constraint method `required_constraints` to `parameterized_constraints`
+- Renamed Bifrost method `mocked` to `validation_only`
+- All exceptions include a `ctx` property for debugging
+- Mysql `INTERVAL` syntax support
+
 ## 0.3.0 - 7/15/23
 
 - Autofix non-qualified column names

@@ -2,38 +2,50 @@ from typing import TYPE_CHECKING, Optional
 
 import lark
 
+from heimdallm.context import TraverseContext
 from heimdallm.support.github import make_ambiguous_parse_issue
 
+from .common import JoinCondition, ParameterizedConstraint
+
 if TYPE_CHECKING:
-    from .common import FqColumn, JoinCondition, RequiredConstraint
+    from .common import FqColumn
 
 
 class BaseException(Exception):
     """This is a convenience base class for all HeimdaLLM SQL exceptions to them easier
     to catch.
 
+    :param ctx: The context of the Bifrost traversal.
+
     :meta private:
     """
 
-
-class GeneralParseError(BaseException):
-    """
-    Thrown from our grammar parser for anything that we want to bubble up as an
-    InvalidQuery exception, but we don't have access to the raw input from within the
-    parser
-    """
+    def __init__(self, msg: str, *, ctx: TraverseContext):
+        self.ctx = ctx
+        super().__init__(msg)
 
 
 class InvalidQuery(BaseException):
     """
     Thrown when our grammar cannot parse the unwrapped LLM output.
 
-    :param query: The query that was attempted to be parsed.
+    :param ctx: The context of the Bifrost traversal.
     """
 
-    def __init__(self, *, query: str):
-        super().__init__(f"\n\n{query}\n")
-        self.query = query
+    def __init__(self, *, ctx: TraverseContext):
+        super().__init__("Query is not valid", ctx=ctx)
+
+
+class UnsupportedQuery(BaseException):
+    """
+    A query may be valid, but not yet supported by our parser.
+
+    :param msg: The reason why it is unsupported.
+    :param ctx: The context of the Bifrost traversal.
+    """
+
+    def __init__(self, *, msg: str, ctx: TraverseContext):
+        super().__init__(f"Query is not supported. Reason: {msg}", ctx=ctx)
 
 
 class ReservedKeyword(BaseException):
@@ -42,10 +54,11 @@ class ReservedKeyword(BaseException):
     for a table or column.
 
     :param keyword: The reserved keyword that was used as an alias.
+    :param ctx: The context of the Bifrost traversal.
     """
 
-    def __init__(self, *, keyword: str):
-        super().__init__(f"Alias `{keyword}` is a reserved keyword")
+    def __init__(self, *, keyword: str, ctx: TraverseContext):
+        super().__init__(f"Alias `{keyword}` is a reserved keyword", ctx=ctx)
         self.keyword = keyword
 
 
@@ -57,19 +70,20 @@ class AmbiguousParse(BaseException):
 
     :param trees: The list of parse trees that were generated from parsing the query.
     :param query: The query that was attempted to be parsed.
+    :param ctx: The context of the Bifrost traversal.
     :ivar issue_link: A link to the GitHub issue that should be opened to report this.
     """
 
-    def __init__(self, *, trees: list[lark.ParseTree], query: str):
-        self.issue_link = make_ambiguous_parse_issue(query, trees)
+    def __init__(self, *, trees: list[lark.ParseTree], ctx: TraverseContext):
+        self.issue_link = make_ambiguous_parse_issue(ctx, trees)
 
         super().__init__(
             f"Query resulted in {len(trees)} ambiguous parse trees. "
             "Please report this query to the HeimdaLLM maintainer using "
-            f"the following link:\n{self.issue_link}"
+            f"the following link:\n{self.issue_link}",
+            ctx=ctx,
         )
         self.trees = trees
-        self.query = query
 
 
 class UnqualifiedColumn(BaseException):
@@ -77,14 +91,15 @@ class UnqualifiedColumn(BaseException):
     Thrown when a column isn't fully qualified in the form ``table.column``.
 
     :param column: The column that was not fully qualified.
+    :param ctx: The context of the Bifrost traversal.
     """
 
-    def __init__(self, column: str):
+    def __init__(self, *, column: str, ctx: TraverseContext):
         message = "Fully-qualified column name needs to be in the form 'table.column'"
         if column is not None:
             message += f" (got {column!r})"
 
-        super().__init__(message)
+        super().__init__(message, ctx=ctx)
         self.column = column
 
 
@@ -96,11 +111,12 @@ class IllegalSelectedColumn(BaseException):
     :param column: The column that was selected. This is not a :class:`FqColumn
         <heimdallm.bifrosts.sql.common.FqColumn>` because we may not always have a table
         name.
+    :param ctx: The context of the Bifrost traversal.
     """
 
-    def __init__(self, *, column: str):
+    def __init__(self, *, column: str, ctx: TraverseContext):
         message = f"Column `{column}` is not allowed in SELECT"
-        super().__init__(message)
+        super().__init__(message, ctx=ctx)
         self.column = column
 
 
@@ -110,26 +126,47 @@ class IllegalConditionColumn(BaseException):
     is not allowed by the constraint validator.
 
     :param column: The column that was used in the condition.
+    :param ctx: The context of the Bifrost traversal.
     """
 
-    def __init__(self, *, column: "FqColumn"):
+    def __init__(self, *, column: "FqColumn", ctx: TraverseContext):
         message = f"Column `{column}` is not allowed in WHERE"
-        super().__init__(message)
+        super().__init__(message, ctx=ctx)
         self.column = column
 
 
-class MissingRequiredConstraint(BaseException):
-    def __init__(self, *, column: "FqColumn", placeholder: str):
+class MissingParameterizedConstraint(BaseException):
+    """
+    Thrown when a parameterized constraint is missing from the query.
+
+    :param column: The column that is missing the constraint.
+    :param placeholder: The name of the parameter placeholder for the constraint.
+    :param ctx: The context of the Bifrost traversal.
+    """
+
+    def __init__(self, *, column: "FqColumn", placeholder: str, ctx: TraverseContext):
         message = f"Missing required constraint `{column}`=:{placeholder}"
-        super().__init__(message)
+        super().__init__(message, ctx=ctx)
         self.column = column
         self.placeholder = placeholder
 
 
 class MissingRequiredIdentity(BaseException):
-    def __init__(self, *, identities: set["RequiredConstraint"]):
+    """
+    Thrown when a query is missing a required requester identity.
+
+    :param identities: The set of identities that are missing.
+    :param ctx: The context of the Bifrost traversal.
+    """
+
+    def __init__(
+        self,
+        *,
+        identities: set[ParameterizedConstraint],
+        ctx: TraverseContext,
+    ):
         message = f"Missing one required identities: {identities!r}"
-        super().__init__(message)
+        super().__init__(message, ctx=ctx)
         self.identities = identities
 
 
@@ -138,11 +175,12 @@ class IllegalJoinTable(BaseException):
     Thrown when a join spec is not allowed by the constraint validator.
 
     :param join: The join spec that was not allowed.
+    :param ctx: The context of the Bifrost traversal.
     """
 
-    def __init__(self, *, join: "JoinCondition"):
+    def __init__(self, *, join: JoinCondition, ctx: TraverseContext):
         message = f"Join condition {join} is not allowed"
-        super().__init__(message)
+        super().__init__(message, ctx=ctx)
         self.join = join
 
 
@@ -152,11 +190,12 @@ class IllegalJoinType(BaseException):
 
     :param join_type: The type of JOIN that was found. This name comes directly from the
         grammar rule that captured it.
+    :param ctx: The context of the Bifrost traversal.
     """
 
-    def __init__(self, *, join_type: str):
+    def __init__(self, *, join_type: str, ctx: TraverseContext):
         message = f"JOIN type `{join_type}` is not allowed"
-        super().__init__(message)
+        super().__init__(message, ctx=ctx)
         self.join_type = join_type
 
 
@@ -166,11 +205,12 @@ class DisconnectedTable(BaseException):
     to any of those joins.
 
     :param table: The table that is not connected to a join.
+    :param ctx: The context of the Bifrost traversal.
     """
 
-    def __init__(self, *, table: str):
+    def __init__(self, *, table: str, ctx: TraverseContext):
         message = f"Table `{table}` is not connected to the query"
-        super().__init__(message)
+        super().__init__(message, ctx=ctx)
         self.table = table
 
 
@@ -179,11 +219,12 @@ class BogusJoinedTable(BaseException):
     Thrown when a table's join condition does not include the table itself.
 
     :param table: The table that is not referenced in its own join condition.
+    :param ctx: The context of the Bifrost traversal.
     """
 
-    def __init__(self, *, table: str):
+    def __init__(self, *, table: str, ctx: TraverseContext):
         message = f"Join condition for `{table}` does not reference the table"
-        super().__init__(message)
+        super().__init__(message, ctx=ctx)
         self.table = table
 
 
@@ -193,12 +234,13 @@ class TooManyRows(BaseException):
 
     :param limit: The number of rows that the query wants to return. Nullable if no
         limit is specified.
+    :param ctx: The context of the Bifrost traversal.
     """
 
-    def __init__(self, *, limit: Optional[int]):
+    def __init__(self, *, limit: Optional[int], ctx: TraverseContext):
         nice_limit = limit if limit is not None else "unlimited"
         message = f"Attempting to return too many rows ({nice_limit})"
-        super().__init__(message)
+        super().__init__(message, ctx=ctx)
         self.limit = limit
 
 
@@ -207,9 +249,24 @@ class IllegalFunction(BaseException):
     Thrown when a disallowed SQL function has been used in the query.
 
     :param function: The lowercase name of the disallowed function.
+    :param ctx: The context of the Bifrost traversal.
     """
 
-    def __init__(self, *, function):
+    def __init__(self, *, function, ctx: TraverseContext):
         message = f"Function `{function}` is not allowed"
-        super().__init__(message)
+        super().__init__(message, ctx=ctx)
         self.function = function
+
+
+class AliasConflict(BaseException):
+    """
+    Thrown when an alias shadows a table name or another alias name.
+
+    :param alias: The alias that conflicts with another name.
+    :param ctx: The context of the Bifrost traversal.
+    """
+
+    def __init__(self, *, alias: str, ctx: TraverseContext):
+        message = f"Alias `{alias}` conflicts with a table name or another alias"
+        super().__init__(message, ctx=ctx)
+        self.alias = alias

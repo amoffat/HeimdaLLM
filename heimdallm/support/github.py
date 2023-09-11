@@ -1,5 +1,9 @@
 from urllib.parse import quote
 
+import lark
+
+from heimdallm.context import TraverseContext
+
 
 def _dict_to_qs(params):
     """Converts a dict to a query string, with values url-encoded"""
@@ -20,7 +24,7 @@ def make_issue_link(*, title: str, body: str, labels: list[str] = []) -> str:
     return f"{url}?{_dict_to_qs(params)}"
 
 
-def make_ambiguous_parse_issue(query, trees):
+def make_ambiguous_parse_issue(ctx: TraverseContext, trees: list[lark.ParseTree]):
     """Makes a GH issue for an ambiguous parse"""
 
     def fmt_tree(i, tree):
@@ -33,7 +37,7 @@ def make_ambiguous_parse_issue(query, trees):
     body = f"""# Query
 
 ```sql
-{query}
+{ctx.untrusted_llm_output}
 ```
 
 # Parse trees

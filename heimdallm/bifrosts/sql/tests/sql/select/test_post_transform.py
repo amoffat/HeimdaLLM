@@ -7,8 +7,8 @@ from .utils import PermissiveConstraints
 
 
 @dialects()
-def test_required_constraint(dialect: str, Bifrost: Type[Bifrost]):
-    bifrost = Bifrost.mocked(PermissiveConstraints())
+def test_parameterized_constraint(dialect: str, Bifrost: Type[Bifrost]):
+    bifrost = Bifrost.validation_only(PermissiveConstraints())
 
     query = """
     select t1.col from t1 where t1.id=:id

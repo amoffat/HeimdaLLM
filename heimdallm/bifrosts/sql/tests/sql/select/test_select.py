@@ -3,7 +3,11 @@ from typing import Sequence, Type
 import pytest
 
 from heimdallm.bifrosts.sql import exc
-from heimdallm.bifrosts.sql.common import FqColumn, JoinCondition, RequiredConstraint
+from heimdallm.bifrosts.sql.common import (
+    FqColumn,
+    JoinCondition,
+    ParameterizedConstraint,
+)
 from heimdallm.bifrosts.sql.sqlite.select.bifrost import Bifrost
 
 from ..utils import dialects
@@ -20,17 +24,20 @@ def test_aliased_select_column(dialect: str, Bifrost: Type[Bifrost]):
     """
 
     class MyConstraints(PermissiveConstraints):
+        def condition_column_allowed(self, column: FqColumn) -> bool:
+            return True
+
         def select_column_allowed(self, column: FqColumn) -> bool:
             return column.name in {"t2.col"}
 
-    bifrost = Bifrost.mocked(MyConstraints())
+    bifrost = Bifrost.validation_only(MyConstraints())
     bifrost.traverse(query)
 
 
 def test_unqualified_columns():
     query = "select col from t1"
 
-    bifrost = Bifrost.mocked(PermissiveConstraints())
+    bifrost = Bifrost.validation_only(PermissiveConstraints())
     with pytest.raises(exc.UnqualifiedColumn) as e:
         bifrost.traverse(query, autofix=False)
     assert e.value.column == "col"
@@ -48,7 +55,7 @@ ORDER BY payment_date DESC
 LIMIT 5;
     """
 
-    bifrost = Bifrost.mocked(PermissiveConstraints())
+    bifrost = Bifrost.validation_only(PermissiveConstraints())
     with pytest.raises(exc.UnqualifiedColumn) as e:
         bifrost.traverse(query, autofix=False)
     assert e.value.column == "customer_id"
@@ -72,7 +79,7 @@ def test_escapes(dialect: str, Bifrost: Type[Bifrost], query):
         def condition_column_allowed(self, column: FqColumn) -> bool:
             return column.name in {"t1.id", "t2.jid", "t1.jid"}
 
-    bifrost = Bifrost.mocked(MyConstraints())
+    bifrost = Bifrost.validation_only(MyConstraints())
     bifrost.traverse(query)
 
 
@@ -90,10 +97,10 @@ def test_disallowed_select_column(dialect: str, Bifrost: Type[Bifrost]):
         def select_column_allowed(self, fq_column: FqColumn) -> bool:
             return fq_column.name in {"t2.col"}
 
-    bifrost = Bifrost.mocked(AllowColumnConstraints())
+    bifrost = Bifrost.validation_only(AllowColumnConstraints())
     bifrost.traverse(query)
 
-    bifrost = Bifrost.mocked(DenyColumnConstraints())
+    bifrost = Bifrost.validation_only(DenyColumnConstraints())
     with pytest.raises(exc.IllegalSelectedColumn) as excinfo:
         bifrost.traverse(query)
 
@@ -102,23 +109,23 @@ def test_disallowed_select_column(dialect: str, Bifrost: Type[Bifrost]):
 
 
 @dialects()
-def test_required_constraint(dialect: str, Bifrost: Type[Bifrost]):
-    """tests that our required constraint restricts the query correctly"""
+def test_parameterized_constraints(dialect: str, Bifrost: Type[Bifrost]):
+    """tests that our parameterized constraint restricts the query correctly"""
 
     # missing constraint
     query = "select t1.col from t1"
 
     class RequiredConstraints(PermissiveConstraints):
-        def required_constraints(self):
+        def parameterized_constraints(self):
             return [
-                RequiredConstraint(
+                ParameterizedConstraint(
                     column="t1.id",
                     placeholder="id",
                 )
             ]
 
-    bifrost = Bifrost.mocked(RequiredConstraints())
-    with pytest.raises(exc.MissingRequiredConstraint) as excinfo:
+    bifrost = Bifrost.validation_only(RequiredConstraints())
+    with pytest.raises(exc.MissingParameterizedConstraint) as excinfo:
         bifrost.traverse(query)
 
     e = excinfo.value
@@ -151,7 +158,7 @@ def test_required_constraint(dialect: str, Bifrost: Type[Bifrost]):
 def test_broken_query(dialect: str, Bifrost: Type[Bifrost], query):
     """tests that we raise an exception when we cannot parse the query"""
 
-    bifrost = Bifrost.mocked(PermissiveConstraints())
+    bifrost = Bifrost.validation_only(PermissiveConstraints())
     with pytest.raises(exc.InvalidQuery):
         bifrost.traverse(query)
 
@@ -159,7 +166,7 @@ def test_broken_query(dialect: str, Bifrost: Type[Bifrost], query):
 @dialects()
 def test_select_column_arith(dialect: str, Bifrost: Type[Bifrost]):
     query = "select t1.col + 1 as plus_one from t1"
-    bifrost = Bifrost.mocked(PermissiveConstraints())
+    bifrost = Bifrost.validation_only(PermissiveConstraints())
     bifrost.traverse(query)
 
 
@@ -173,7 +180,7 @@ def test_select_column_arith(dialect: str, Bifrost: Type[Bifrost]):
 )
 def test_select_expr(dialect: str, Bifrost: Type[Bifrost], query):
     """select a non-column expression"""
-    bifrost = Bifrost.mocked(PermissiveConstraints())
+    bifrost = Bifrost.validation_only(PermissiveConstraints())
     bifrost.traverse(query)
 
 
@@ -188,7 +195,7 @@ def test_conflicting_validation(dialect: str, Bifrost: Type[Bifrost]):
         def allowed_joins(self) -> Sequence[JoinCondition]:
             return []
 
-    bifrost = Bifrost.mocked(MyConstraints())
+    bifrost = Bifrost.validation_only(MyConstraints())
     bifrost.traverse(query)
 
 
@@ -200,7 +207,7 @@ def test_count_disallowed_column(dialect: str, Bifrost: Type[Bifrost]):
         def select_column_allowed(self, fq_column: FqColumn) -> bool:
             return fq_column.name != "film_actor.film_id"
 
-    bifrost = Bifrost.mocked(GeneralConstraints())
+    bifrost = Bifrost.validation_only(GeneralConstraints())
 
     # a query that uses the disallowed column in a count is allowed
     query = """

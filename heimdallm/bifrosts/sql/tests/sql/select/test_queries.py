@@ -75,7 +75,7 @@ def test_query(conn: sqlite3.Connection, sql_name: str):
 
     # now we're going to reconstruct the query, execute it, and confirm that the results
     # are the same.
-    bifrost = Bifrost.mocked(PermissiveConstraints())
+    bifrost = Bifrost.validation_only(PermissiveConstraints())
     reconstructed_query = bifrost.traverse(query, autofix=True)
     reconstructed_res = _execute(conn, reconstructed_query)
     reconstructed_hash = _calc_res_hash(reconstructed_res)

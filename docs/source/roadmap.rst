@@ -19,8 +19,6 @@ More databases
 
 I will be adding support for more SQL-based databases:
 
-* MySQL
-* PostgreSQL
 * SQL Server
 * Oracle
 * Snowflake
@@ -48,10 +46,18 @@ Could produce a validated SQL query:
     INSERT INTO calendar (title, when, user_id)
     VALUES ('Dinner at 7 on friday', '2023-07-01 19:00:00', 123)
 
+Generalized constraint spec
+***************************
+
+The current implementation requires a Python application to use HeimdaLLM, because
+constraint validators are defined by subclassing a Python class. A future implementation
+could be language agnostic by providing an api and a JSON or YAML spec for constraining
+LLM output.
+
 More Bifrosts
 *************
 
-Bifrosts are not limited to converting human input to trusted SQL statements.
-HeimdaLLM's has been deliberately designed to be general enough to support many kinds
-of structured output. I intend to develop more powerful Bifrosts that supercharge your
-ability to provide natural language interaction with your application. Stay tuned!
+Bifrosts are not limited to converting human input to trusted SQL statements. HeimdaLLM
+is generalized enough to support many kinds of structured output. I intend to develop
+more Bifrosts that facilitate natural language interactions with your application.
+Stay tuned!

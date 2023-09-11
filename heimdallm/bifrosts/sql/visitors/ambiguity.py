@@ -1,5 +1,7 @@
 from lark import Transformer
 
+from heimdallm.context import TraverseContext
+
 from .. import exc
 from ..utils.identifier import get_identifier
 
@@ -10,9 +12,9 @@ class AmbiguityResolver(Transformer):
     difficult to embed in the grammar itself.
     """
 
-    def __init__(self, query: str, reserved_keywords: set[str]):
+    def __init__(self, ctx: TraverseContext, reserved_keywords: set[str]) -> None:
         self.reserved_keywords = reserved_keywords
-        self.query = query
+        self.ctx = ctx
         super().__init__()
 
     def test_alias(self, i, tree, trees) -> bool:
@@ -31,20 +33,20 @@ class AmbiguityResolver(Transformer):
         """
         for alias_node in tree.find_data("generic_alias"):
             try:
-                get_identifier(alias_node, self.reserved_keywords)
+                get_identifier(self.ctx, alias_node, self.reserved_keywords)
             except exc.ReservedKeyword:
                 return False
         return True
 
     def test_req_comparisons(self, i, tree, trees) -> bool:
         """in a where_condition rule, the children can include
-        `relational_comparison` and `required_comparison` rules, which are
-        ambiguous, because required comparisons are a subset of relational
-        comparisons. we always prefer to interpret the ambiguity as a required
+        `relational_comparison` and `parameterized_comparison` rules, which are
+        ambiguous, because parameterized comparisons are a subset of relational
+        comparisons. we always prefer to interpret the ambiguity as a parameterized
         comparison though, because it is more strict, and it satisfies our
-        required comparison validator constraints"""
+        parameterized comparison validator constraints"""
         if tree.data in ("where_condition", "join_condition"):
-            return tree.children[0].data == "required_comparison"
+            return tree.children[0].data == "parameterized_comparison"
         return True
 
     def test_arith_expr(self, i, tree, trees) -> bool:
@@ -65,8 +67,8 @@ class AmbiguityResolver(Transformer):
         pruned_trees = [tree for i, tree in enumerate(trees) if test_tree(i, tree)]
 
         if len(pruned_trees) == 0:
-            raise exc.InvalidQuery(query=self.query)
+            raise exc.InvalidQuery(ctx=self.ctx)
         elif len(pruned_trees) == 1:
             return pruned_trees[0]
         else:
-            raise exc.AmbiguousParse(trees=pruned_trees, query=self.query)
+            raise exc.AmbiguousParse(trees=pruned_trees, ctx=self.ctx)

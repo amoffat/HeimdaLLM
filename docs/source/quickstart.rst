@@ -23,7 +23,7 @@ First let's set up our imports.
     from heimdallm.bifrosts.sql.sqlite.select.bifrost import Bifrost
     from heimdallm.bifrosts.sql.sqlite.select.envelope import PromptEnvelope
     from heimdallm.bifrosts.sql.sqlite.select.validator import ConstraintValidator 
-    from heimdallm.bifrosts.sql.common import FqColumn, JoinCondition, RequiredConstraint
+    from heimdallm.bifrosts.sql.common import FqColumn, JoinCondition, ParameterizedConstraint
     from heimdallm.llm_providers import openai
 
     logging.basicConfig(level=logging.ERROR)
@@ -76,15 +76,15 @@ the methods that you can override in the derived class, look :doc:`here.
 .. code-block:: python
 
     class CustomerConstraintValidator(SQLConstraintValidator):
-        def requester_identities(self) -> Sequence[RequiredConstraint]:
+        def requester_identities(self) -> Sequence[ParameterizedConstraint]:
             return [
-                RequiredConstraint(
+                ParameterizedConstraint(
                     column="customer.customer_id",
                     placeholder="customer_id",
                 ),
             ]
 
-        def required_constraints(self) -> Sequence[RequiredConstraint]:
+        def parameterized_constraints(self) -> Sequence[ParameterizedConstraint]:
             return []
 
         def select_column_allowed(self, column: FqColumn) -> bool:

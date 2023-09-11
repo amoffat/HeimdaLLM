@@ -3,6 +3,8 @@ from typing import TYPE_CHECKING, Callable, Sequence
 import structlog
 from lark import Lark, ParseTree
 
+from heimdallm.context import TraverseContext
+
 if TYPE_CHECKING:
     import heimdallm.constraints
     import heimdallm.envelope
@@ -45,6 +47,7 @@ class Bifrost:
         self.grammar = grammar
         self.tree_producer = tree_producer
         self.constraint_validators = constraint_validators
+        self.ctx = TraverseContext()
 
     def traverse(
         self,
@@ -64,7 +67,9 @@ class Bifrost:
         :return: The trusted LLM output.
         """
 
-        log = LOG.bind(input=untrusted_human_input, autofix=autofix)
+        self.ctx.untrusted_human_input = untrusted_human_input
+
+        log = LOG.bind(autofix=autofix)
         log.info("Traversing untrusted input")
 
         # wrap the untrusted input in our prompt
@@ -75,7 +80,7 @@ class Bifrost:
         # talk to our LLM
         log.info("Sending envelope to LLM")
         untrusted_llm_output: str = self.llm.complete(untrusted_llm_input)
-        log = log.bind(llm_output=untrusted_llm_output)
+        self.ctx.untrusted_llm_output = untrusted_llm_output
         log.info("Received raw result from LLM")
 
         # trim any cruft off of the LLM output
@@ -85,7 +90,7 @@ class Bifrost:
         except Exception as e:
             log.exception("Unwrap failed")
             raise e
-        log = log.bind(unwrapped=untrusted_llm_output)
+        self.ctx.untrusted_llm_output = untrusted_llm_output
         log.info("Unwrap succeeded")
 
         # throws a parse error
@@ -106,11 +111,12 @@ class Bifrost:
             )
             try:
                 trusted_llm_output, tree = self._try_validator(
-                    log,
-                    validator,
-                    autofix,
-                    untrusted_llm_output,
-                    tree,
+                    log=log,
+                    validator=validator,
+                    untrusted_llm_output=untrusted_llm_output,
+                    autofix=autofix,
+                    ctx=self.ctx,
+                    tree=tree,
                 )
             except Exception as e:
                 validation_exc = e
@@ -128,19 +134,20 @@ class Bifrost:
                 log.exception("Validation failed")
                 raise e
 
-        log = log.bind(trusted=untrusted_llm_output)
         log.info("Validation succeeded")
-
         trusted_llm_output = self.post_transform(trusted_llm_output, tree)
+        self.ctx.trusted_llm_output = trusted_llm_output
 
         return trusted_llm_output
 
     def _try_validator(
         self,
+        *,
         log: structlog.BoundLogger,
         validator: "heimdallm.constraints.ConstraintValidator",
         autofix: bool,
         untrusted_llm_output: str,
+        ctx: TraverseContext,
         tree: ParseTree,
     ) -> tuple[str, ParseTree]:
         """Attempt validation with an individual constraint validator."""
@@ -148,7 +155,12 @@ class Bifrost:
         if autofix:
             log.info("Autofixing parse tree and reconstructing the input")
             try:
-                untrusted_llm_output = validator.fix(self, self.grammar, tree)
+                untrusted_llm_output = validator.fix(
+                    bifrost=self,
+                    grammar=self.grammar,
+                    tree=tree,
+                    ctx=ctx,
+                )
             except Exception as e:
                 log.exception("Autofix failed")
                 raise e
@@ -162,7 +174,11 @@ class Bifrost:
 
         # throws a bifrost-specific exception
         log.info("Validating parse tree")
-        validator.validate(self, untrusted_llm_output, tree)
+        validator.validate(
+            bifrost=self,
+            tree=tree,
+            ctx=ctx,
+        )
         log.info("Validation succeeded")
 
         return untrusted_llm_output, tree

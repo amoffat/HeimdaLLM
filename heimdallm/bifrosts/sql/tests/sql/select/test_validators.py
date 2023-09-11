@@ -32,7 +32,7 @@ class Succeed2(PermissiveConstraints):
 
 @dialects()
 def test_all_fail(dialect: str, Bifrost: Type[Bifrost]):
-    bifrost = Bifrost.mocked([Fail1(), Fail2()])
+    bifrost = Bifrost.validation_only([Fail1(), Fail2()])
 
     query = """
     select t1.col from t1
@@ -47,7 +47,7 @@ def test_all_fail(dialect: str, Bifrost: Type[Bifrost]):
 @dialects()
 def test_all_fail_order(dialect: str, Bifrost: Type[Bifrost]):
     """we always raise the last error, switching the validators proves this."""
-    bifrost = Bifrost.mocked([Fail2(), Fail1()])
+    bifrost = Bifrost.validation_only([Fail2(), Fail1()])
 
     query = """
     select t1.col from t1
@@ -61,7 +61,7 @@ def test_all_fail_order(dialect: str, Bifrost: Type[Bifrost]):
 
 @dialects()
 def test_one_succeed(dialect: str, Bifrost: Type[Bifrost]):
-    bifrost = Bifrost.mocked([Fail1(), Succeed1()])
+    bifrost = Bifrost.validation_only([Fail1(), Succeed1()])
 
     query = """
     select t1.col from t1
@@ -73,7 +73,7 @@ def test_one_succeed(dialect: str, Bifrost: Type[Bifrost]):
 
 @dialects()
 def test_both_succeed(dialect: str, Bifrost: Type[Bifrost]):
-    bifrost = Bifrost.mocked([Succeed1(), Succeed2()])
+    bifrost = Bifrost.validation_only([Succeed1(), Succeed2()])
 
     query = """
     select t1.col from t1

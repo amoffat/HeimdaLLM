@@ -129,7 +129,7 @@ Optional conditions
 
 When required conditions are defined, either as a :meth:`requester identity
 <validator.ConstraintValidator.requester_identities>`, or as some other
-:meth:`required constraint <validator.ConstraintValidator.required_constraints>`, an
+:meth:`parameterized constraint <validator.ConstraintValidator.parameterized_constraints>`, an
 attacker may attempt to bypass the condition by coaxing the LLM to produce a query that
 includes the condition as part of an ``OR`` clause. For example:
 

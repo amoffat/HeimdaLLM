@@ -26,7 +26,9 @@ Only respond with the SQL query. Delimit the query in the response with "```"
 {%- endblock %}
 
 {% block general_constraints -%}
-Use fully-qualified column names in the form table.column, even if selecting from a single table. Avoid using subqueries.
+Use fully-qualified column names in the form table.column, even if selecting from a single table.
+Do not select all columns from a table; only select the minimum columns relevant to the question asked.
+Do not use outer joins.
 {%- endblock %}
 
 {% block quirks -%}

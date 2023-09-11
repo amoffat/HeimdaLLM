@@ -16,7 +16,7 @@ def test_where_alias(dialect: str, Bifrost: Type[Bifrost]):
         def condition_column_allowed(self, column: FqColumn) -> bool:
             return column.name == "t1.col"
 
-    bifrost = Bifrost.mocked(MyConstraints())
+    bifrost = Bifrost.validation_only(MyConstraints())
 
     query = """
     select t1.col as thing from t1
@@ -40,7 +40,7 @@ def test_order_alias(dialect: str, Bifrost: Type[Bifrost]):
         def condition_column_allowed(self, column: FqColumn) -> bool:
             return column.name == "t1.col"
 
-    bifrost = Bifrost.mocked(MyConstraints())
+    bifrost = Bifrost.validation_only(MyConstraints())
 
     query = """
     select t1.col as thing from t1
@@ -60,7 +60,7 @@ def test_order_alias(dialect: str, Bifrost: Type[Bifrost]):
 
 @dialects()
 def test_select_function_alias(dialect: str, Bifrost: Type[Bifrost]):
-    bifrost = Bifrost.mocked(PermissiveConstraints())
+    bifrost = Bifrost.validation_only(PermissiveConstraints())
 
     query = """
     select whatever(col) from t1
@@ -73,7 +73,7 @@ def test_select_function_alias(dialect: str, Bifrost: Type[Bifrost]):
 
 @dialects()
 def test_group_by_alias(dialect: str, Bifrost: Type[Bifrost]):
-    bifrost = Bifrost.mocked(PermissiveConstraints())
+    bifrost = Bifrost.validation_only(PermissiveConstraints())
 
     query = """
     SELECT COUNT(*) num_rented_movies,
@@ -89,7 +89,7 @@ def test_group_by_alias(dialect: str, Bifrost: Type[Bifrost]):
 
 @dialects()
 def test_count_star_alias(dialect: str, Bifrost: Type[Bifrost]):
-    bifrost = Bifrost.mocked(PermissiveConstraints())
+    bifrost = Bifrost.validation_only(PermissiveConstraints())
 
     query = """
 SELECT f.title AS movie_title, COUNT(*) AS rental_days
@@ -111,7 +111,7 @@ def test_count_disallowed_column_alias(dialect: str, Bifrost: Type[Bifrost]):
         def select_column_allowed(self, fq_column: FqColumn) -> bool:
             return fq_column.name != "film_actor.film_id"
 
-    bifrost = Bifrost.mocked(GeneralConstraints())
+    bifrost = Bifrost.validation_only(GeneralConstraints())
 
     query = """
 SELECT
@@ -129,3 +129,67 @@ ORDER BY film_count DESC
     # prove that the column isn't stripped by the reconstructor
     fixed = bifrost.traverse(query, autofix=True)
     assert "film_actor.film_id" in fixed
+
+
+@dialects()
+def test_subquery_alias_bleed(dialect: str, Bifrost: Type[Bifrost]):
+    """An inner subquery alias should not mask an outer alias."""
+
+    class GeneralConstraints(PermissiveConstraints):
+        def condition_column_allowed(self, fq_column: FqColumn) -> bool:
+            return fq_column.name not in {"t1.secret"}
+
+    bifrost = Bifrost.validation_only(GeneralConstraints())
+
+    query = """
+    select
+        t1.col as outer_alias,
+        t1.secret as inner_alias
+    from t1
+    where outer_alias=(
+        select t2.col as inner_alias from t2
+        where inner_alias=42
+    ) and inner_alias=42
+    """
+    with pytest.raises(exc.AliasConflict) as e:
+        bifrost.traverse(query)
+    assert e.value.alias == "inner_alias"
+
+
+@dialects()
+def test_subquery_as_alias(dialect: str, Bifrost: Type[Bifrost]):
+    """A subquery can be selected as an alias, but all of the columns it references are
+    going to be bound to the outer alias."""
+    bifrost = Bifrost.validation_only(PermissiveConstraints())
+
+    query = """
+    select (select t1.col from t1 where t1.secret='a') as thing
+    from t1
+    where thing=42
+    """
+
+    bifrost.traverse(query)
+
+    class MyConstraints(PermissiveConstraints):
+        def select_column_allowed(self, column: FqColumn) -> bool:
+            return column.name == "t1.col"
+
+    bifrost = Bifrost.validation_only(MyConstraints())
+    with pytest.raises(exc.IllegalConditionColumn) as e:
+        bifrost.traverse(query)
+    assert e.value.column.name == "t1.secret"
+
+
+@dialects()
+def test_selected_table_alias(dialect: str, Bifrost: Type[Bifrost]):
+    """If the selected table is aliased and the query is reconstructed to have
+    authoritative column names, use the authoritative selected table name."""
+    bifrost = Bifrost.validation_only(PermissiveConstraints())
+
+    query = """
+    select col
+    from t1 as table_alias
+    """
+
+    fixed = bifrost.traverse(query)
+    assert "t1.col" in fixed
