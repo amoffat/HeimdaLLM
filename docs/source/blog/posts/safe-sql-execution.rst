@@ -176,7 +176,7 @@ but it is not a viable solution on its own.
 +----------------------+-------+--------------------------------------------------------------------------+
 | Failure probability  | ✅    | Would require a bug in the database.                                     |
 +----------------------+-------+--------------------------------------------------------------------------+
-| Theoretically        | ❌    | It can never protect the contents of your data.                          |
+| Theoretically        | ❌    | It can never protect the contents of your database.                      |
 | complete             |       |                                                                          |
 +----------------------+-------+--------------------------------------------------------------------------+
 
@@ -269,13 +269,13 @@ constraints across many tables.
 
 .. figure:: /images/bridge-of-death.jpg
 
-    "What do you mean? An African or European swallow?"
+    "An African or European swallow?"
 
-An AI guard is a system of additional AI post-processing that happens on untrusted
-queries. The purpose is to constrain the untrusted query to stay within some boundaries,
-or to ensure that the query does not reveal some information. Think of it as an
-assistant that looks at a query and attempts to determine if it is being tricked into
-doing something that it has been instructed not to do. `See a live demo.
+An AI guard is a system of prompt augmentation and AI post-processing on untrusted
+input. The purpose is to constrain the untrusted input to stay within some boundaries,
+or to ensure that the input does not attempt to reveal some information. Think of it as
+an assistant that looks at input skeptically to see if it is being tricked into doing
+something that it has been instructed not to do. `See a live demo.
 <https://gandalf.lakera.ai/>`_
 
 In the context of SQL safety, an AI guard may be instructed to not allow certain tables
@@ -331,13 +331,13 @@ the cloned database only contains data that is theirs, a user may issue any quer
 against it, and there is no risk to data security. And if a malicious user was able to
 issue a DDL statement, it would only affect their cloned database.
 
-To make this architecture work, each user needs their own processed view of the data
-that they're allowed to access. Schema changes to the primary database will need to
-propagate downwards to all user databases, and some system will need to determine when
-to regenerate a user's database when their rows change. User-owned data, like id
-columns, would also need to be obfuscated during this generation step, because the LLM
-will need these columns for JOINs, but you probably don't want your users knowing the
-record's authoritative id.
+To make this system work, each user needs their own processed view of the data that
+they're allowed to access. Schema changes to the primary database will need to propagate
+downwards to all user databases, and some system will need to determine when to
+regenerate a user's database when their rows change. User-owned data, like id columns,
+would also need to be obfuscated during this generation step, because the LLM may need
+these columns for JOINs, but you probably don't want your users knowing the record's
+authoritative id.
 
 +-----------------------+---------+---------------------------------------------------------------------------+
 | Property              | Rank    | Rationale                                                                 |
@@ -373,18 +373,17 @@ record's authoritative id.
 
 Constraint validation uses a real grammar to parse SQL queries into an AST. Static
 analysis can then be performed on this parse tree to determine which tables and columns
-are being used, how they're being used, if required WHERE conditions are present, and a
-range of other features.
+are being used, how they're being used, if required conditions are present, and a range
+of other features.
 
-Additionally, as is the case with HeimdaLLM, these frameworks may automatically add
-nodes or replace nodes on the AST to help ensure the SQL query conforms to constraint
-validation. In other words, the query may be automatically edited to be compliant.
-Examples of this are to ensure a correct ``LIMIT`` on the query, or remove a forbidden
-column from the ``SELECT``.
+Additionally, these frameworks may automatically add nodes or replace nodes on the AST
+to help ensure the SQL query conforms to constraint validation. In other words, the
+query may be automatically edited to be compliant. Examples of this are to ensure a
+correct ``LIMIT`` on the query, or remove a forbidden column from the ``SELECT``.
 
-These systems are denylists by design. You mark which tables, columns, functions, and
-joins that are explicitly not allowed and everything else is fair game. This allows for
-a higher degree of flexibility in the valid queries that an LLM may generate.
+These frameworks can be treated as denylists or allowlists. You can list which tables,
+columns, joins, and functions are allowed, or which are denied. This allows for a higher
+degree of flexibility in the valid queries that an LLM may generate.
 
 The risks of these frameworks are in the grammar and parsing. SQL is a complex spec and
 each database type has its own quirks. Accounting for every way that a query can be
@@ -418,8 +417,7 @@ automated testing to help converge on a robust solution.
 Examples
 ^^^^^^^^
 
-* `HeimdaLLM <https://github.com/amoffat/HeimdaLLM>`_ - Full constraint validation
-* `Guardrails <https://github.com/ShreyaR/guardrails>`_ - Syntax checking only
+* `HeimdaLLM <https://github.com/amoffat/HeimdaLLM>`_
 
 🤔 Conclusion
 *************
@@ -432,7 +430,8 @@ bridge the gap to make them safer.
 The most promising solutions are cloned databases and constraint validators, because
 they are theoretically complete solutions that can offer the highest levels of security.
 They vary primarily in their complexity and flexibility: cloned databases views are a
-high-complexity allowlist, while constraint validators are a low-complexity denylist.
+high-complexity allowlist, while constraint validators are a low-complexity allowlist or
+denylist.
 
 Other, non-complete solutions should not be considered if you value the safety of your
 data.

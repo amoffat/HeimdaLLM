@@ -94,6 +94,7 @@ browse the navigation on the left.
    :maxdepth: 5
 
    quickstart
+   blog/index
    bifrost
    api/index
    reconstruction
@@ -103,7 +104,6 @@ browse the navigation on the left.
    glossary
    roadmap
    faq
-   blog/index
 
 .. |CodespacesLink| image:: https://img.shields.io/badge/Open%20in-Codespaces-purple.svg
 .. _CodespacesLink: https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=656570421
