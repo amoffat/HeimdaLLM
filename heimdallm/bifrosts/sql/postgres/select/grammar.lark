@@ -124,11 +124,14 @@ fts_comparison : value "@@" value
     | NUMBER_PREFIX? placeholder
     | NUMBER_PREFIX? column_alias
     | NUMBER_PREFIX? wrapped_value) SUFFIX_CAST?
+    | interval_expr
+    | DT_CONSTANT
 subquery : "(" full_query ")"
 derived_table : subquery as table_alias
 wrapped_value : LPAREN value RPAREN
 ?value_expr : function | arith_expr
 ?arith_expr : value BINARY_OP value (BINARY_OP value)*
+?interval_expr : INTERVAL _WS string
 
 // a function with any number of arguments
 function : FUNCTION_NAME "(" (AGG_FN_MODIFIER _WS)? (value ("," value)*)? ")"
@@ -162,6 +165,12 @@ OFFSET : "offset"i
 GROUP_BY : "group"i _WS "by"i
 HAVING : "having"i
 WITH : "with"i
+INTERVAL : "interval"i
+
+DT_CONSTANT : CURRENT_DATE | CURRENT_TIME | CURRENT_TIMESTAMP
+CURRENT_DATE : "current_date"i
+CURRENT_TIME : "current_time"i
+CURRENT_TIMESTAMP : "current_timestamp"i
 
 // this is the only way that a query can have a "*" column spec, because it
 // doesn't reveal any information that would be restricted.

@@ -121,11 +121,13 @@ between_comparison : value (_WS NOT)? _WS BETWEEN _WS value _WS AND _WS value
     | NUMBER_PREFIX? placeholder
     | NUMBER_PREFIX? column_alias
     | NUMBER_PREFIX? wrapped_value
+    | interval_expr
 subquery : "(" full_query ")"
 derived_table : subquery as table_alias
 wrapped_value : LPAREN value RPAREN
 ?value_expr : function | arith_expr
 ?arith_expr : value ARITH_OP value (ARITH_OP value)*
+?interval_expr : INTERVAL _WS value _WS INTERVAL_UNIT
 
 // a function with any number of arguments
 function : FUNCTION_NAME "(" \
@@ -153,6 +155,7 @@ LIMIT : "limit"i
 OFFSET : "offset"i
 GROUP_BY : "group"i _WS "by"i
 HAVING : "having"i
+INTERVAL : "interval"i
 
 // this is the only way that a query can have a "*" column spec, because it
 // doesn't reveal any information that would be restricted.
@@ -164,6 +167,15 @@ CROSS_JOIN : "cross"i _WS "join"i
 NATURAL_JOIN : "natural"i _WS (("left"i | "right"i | "full"i | "inner"i) _WS)? "join"i
 OUTER_JOIN : ("left"i | "right"i | "full"i) _WS ("outer"i _WS)? "join"i
 NATURAL_OUTER_JOIN : "natural"i _WS (("left"i | "right"i | "full"i) _WS)? "outer"i _WS "join"i
+
+INTERVAL_UNIT : \
+    "year"i \
+    | "month"i \
+    | "day"i \
+    | "hour"i \
+    | "minute"i \
+    | "second"i \
+    | "microsecond"i
 
 ASC : "asc"i
 DESC : "desc"i
