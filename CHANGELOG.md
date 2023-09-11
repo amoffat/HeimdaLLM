@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.0 - 9/8/23
+## 1.0.0 - 9/11/23
 
 - Subquery support
 - CTE (Common Table Expressions) support
