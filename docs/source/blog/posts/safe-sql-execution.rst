@@ -75,7 +75,7 @@ read/write access to your database, then ask yourself: are these risks worth it?
 🌄 The rewards
 **************
 
-While the stakes are high, so are the rewards. Tech workers spend a staggering number of
+While the risks are high, so are the rewards. Tech workers spend a staggering number of
 design & development hours making complex, custom UIs & API endpoints that serve
 primarily as elaborate frontends to a database. These bespoke components often carry
 enormous complexity, both in their ever-changing dependencies, and in the management of
