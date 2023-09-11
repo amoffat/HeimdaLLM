@@ -50,8 +50,8 @@ class Facets:
 
 
 class FacetCollector(Visitor):
-    """collects all of the facets of the query that we care about. this will
-    feed directly into the constraint validator"""
+    """Collects all of the facets of the query that we care about. This will
+    feed directly into the constraint validator."""
 
     def __init__(
         self,
@@ -67,6 +67,8 @@ class FacetCollector(Visitor):
         self._ctx = ctx
 
     def _resolve_column(self, node: Tree) -> set[FqColumn] | None:
+        """Resolves a column alias to the underlying fully-qualified columns."""
+
         if node.data == "column_alias":
             maybe_alias = get_identifier(self._ctx, node, self._reserved_keywords)
             aliases = self._collector.alias_scope(node)
@@ -77,6 +79,8 @@ class FacetCollector(Visitor):
         raise RuntimeError(f"unknown column reference type: {type(node)}")
 
     def _resolve_table(self, table_ref: Tree | Token) -> str | None:
+        """Resolves a table reference to the underlying table name."""
+
         if isinstance(table_ref, Tree):
             # it's clearly an aliased table, so we know the table name from this node
             if table_ref.data == "aliased_table":

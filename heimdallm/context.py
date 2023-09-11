@@ -4,6 +4,9 @@ class TraverseContext:
     different stages. This is used for logging and exceptions."""
 
     def __init__(self) -> None:
+        # the input as submitted by the user
         self.untrusted_human_input: str | None = None
+        # the output as returned by the LLM
         self.untrusted_llm_output: str | None = None
+        # the output from the LLM, validated
         self.trusted_llm_output: str | None = None
