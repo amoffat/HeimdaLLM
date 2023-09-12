@@ -44,7 +44,8 @@ Consider the following natural-language database query:
 
    how much have i spent renting movies, broken down by month?
 
-From this query, an LLM can produce the following SQL query:
+From this query (and a little bit of context), an LLM can produce the following SQL
+query:
 
 .. code-block:: sql
 
@@ -58,7 +59,8 @@ From this query, an LLM can produce the following SQL query:
    GROUP BY month
    LIMIT 10;
 
-But how can you ensure that its safe and that it only accesses authorized data?
+But how can you ensure the LLM-generated query is safe and that it only accesses
+authorized data?
 
 HeimdaLLM performs static analysis on the generated SQL to ensure that only certain
 columns, tables, and functions are used. It also automatically edits the query to add a
