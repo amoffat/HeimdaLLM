@@ -6,9 +6,8 @@
     autofixing
         An alias for :term:`reconstruction`.
 
-    :doc:`Bifrost </bifrost>`
-        An object that can traverse untrusted human input into untrusted
-        machine-readable input.
+    :doc:`Bifrost </architecture/bifrost>`
+        An object that can convert untrusted input into trusted output.
 
     :doc:`constraint validator </api/abc/validator>`
         An object that is capable of analyzing an LLM's structured output to determine

@@ -9,7 +9,7 @@ intended for direct use.
     bifrost
     envelope
     validator
-    llm_integration
+    llm-integration
     context
 
     sql/index

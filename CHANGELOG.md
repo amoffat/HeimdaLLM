@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.1 - 9/12/23
+
+- Simplify docs
+- Add missing Postgres api docs
+- Generalizing `validation_only` to the `Bifrost` superclass
+
 ## 1.0.0 - 9/11/23
 
 - Subquery support
