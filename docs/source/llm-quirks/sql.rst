@@ -23,9 +23,7 @@ Arbitrary limits
 ****************
 
 An LLM will sometimes include a ``LIMIT`` on a query, and other times it won't. This can
-have performance impacts and is generally undesirable. Originally, we attempted to coax
-the LLM into including a ``LIMIT`` on every query, by using the :ref:`prompt envelope
-<bifrost-prompt-envelope>`, but this proved to be unreliable.
+have performance impacts and is generally undesirable.
 
 Instead, our constraint validator is capable of rebuilding the query to include a
 ``LIMIT`` if one is not present, or to adjust an existing ``LIMIT``, if the current one

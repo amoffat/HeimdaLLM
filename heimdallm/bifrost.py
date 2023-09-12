@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Callable, Sequence
+from typing import TYPE_CHECKING, Any, Callable, Sequence, Union
 
 import structlog
 from lark import Lark, ParseTree
@@ -48,6 +48,20 @@ class Bifrost:
         self.tree_producer = tree_producer
         self.constraint_validators = constraint_validators
         self.ctx = TraverseContext()
+
+    @classmethod
+    def validation_only(
+        cls,
+        constraint_validators: Union[Any, Sequence[Any]],
+    ):
+        """A convenience method for doing just static analysis. This creates a
+        Bifrost that assumes its untrusted input was already produced by an LLM, so we
+        only need to parse and validate it.
+
+        :param constraint_validators: A constraint validator or sequence of constraint
+            validators to run on the untrusted input.
+        """
+        raise NotImplementedError
 
     def traverse(
         self,

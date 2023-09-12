@@ -25,10 +25,18 @@ What databases are supported?
 
 * Sqlite
 * MySQL
+* Postgres
 
 There is rapid development for the other top relational SQL databases. To help us
 prioritize, please `vote here <https://github.com/amoffat/HeimdaLLM/discussions/2>`_ on
 which database you would like to see supported:
+
+Do HeimdaLLM use an LLM?
+************************
+
+For static analysis, no it does not. It uses good old fashioned grammars and parsers.
+However, we do include a lightweight framework to build a complete
+natural-language-to-safe-SQL workflow. See :doc:`this quickstart </quickstart/llm>`.
 
 Do I need to purchase a commercial license?
 *******************************************
