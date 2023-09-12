@@ -3,7 +3,7 @@
 
 A Bifrost is capable of reconstructing the structured output from an LLM, to help ensure
 that it will pass validation. In the code and docs, this is called "reconstruction" or
-"autofixing." Alghtough reconstruction is a general HeimdaLLM concept, This page will
+"autofixing." Although reconstruction is a general HeimdaLLM concept, This page will
 explain it concretely in the context of the :class:`SQL SELECT Bifrost.
 <heimdallm.bifrosts.sql.sqlite.select.bifrost.Bifrost>`
 

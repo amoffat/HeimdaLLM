@@ -1,14 +1,17 @@
-🚀 Quickstart
-=============
+LLM integration
+===============
 
-This quickstart will walk you through setting up a SQL Bifrost with OpenAI's LLM. The
+This quickstart will walk you through setting up HeimdaLLM with OpenAI's LLM. The
 end result is a function that takes natural language input and returns a trusted SQL
 ``SELECT`` query, constrained to your requirements.
+
+If you wish to also use HeimdaLLM only for validating an existing SQL query,
+see :doc:`this quickstart <validation>`.
 
 .. TIP::
 
     You can also find this quickstart code in a Jupyter Notebook `here.
-    <https://github.com/amoffat/HeimdaLLM/blob/dev/notebooks/quickstart.ipynb>`_
+    <https://github.com/amoffat/HeimdaLLM/blob/dev/notebooks/quickstart/llm.ipynb>`_
 
 
 First let's set up our imports.
@@ -110,7 +113,7 @@ that the LLM is guided to produce a correct response.
         validators=[validator],
     )
 
-Now we can bring everything together into a :doc:`/bifrost`
+Now we can bring everything together into a :doc:`/architecture/bifrost`
 
 .. code-block:: python
 

@@ -1,6 +1,11 @@
 🌈 Bifrost
 ==========
 
+.. DANGER::
+
+    Constructing Bifrosts manually is an advanced topic. Most of the time, you want to
+    use :meth:`Bifrost.validation_only <heimdallm.bifrost.Bifrost.validation_only>`.
+
 The Bifrost is the key technology that enables the translation of untrusted human input
 into trusted machine-readable input. It is composed of 4 parts:
 
@@ -42,7 +47,7 @@ out the structured data from the delimiters that you instructed the LLM to use.
 **********************
 
 The :term:`LLM <LLM>` itself is the brains of the Bifrost. We view it as a black box
-with a :doc:`well-defined interface </api/abc/llm_integration>`. Because of this,
+with a :doc:`well-defined interface </api/abc/llm-integration>`. Because of this,
 HeimdaLLM aims to make it easy to swap out LLMs in your Bifrost, so that as LLM
 capabilities and prices change, your system can adapt to use them with minimal effort.
 
@@ -51,7 +56,7 @@ Current LLM integrations:
 .. toctree::
     :maxdepth: 2
 
-    api/llm_providers/index
+    /api/llm-providers/index
 
 📜 The grammar
 **************

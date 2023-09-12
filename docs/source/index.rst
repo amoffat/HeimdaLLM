@@ -1,8 +1,14 @@
 HeimdaLLM
 =========
 
-   Heimdall, the watchman of the gods, dwelt at its entrance, where he guarded Bifrost,
-   the shimmering path connecting the realms.
+.. role:: phonetic
+
+Pronounced :phonetic:`[ˈhaɪm.dɔl.əm]` or HEIM-dall-em
+
+HeimdaLLM is a robust static analysis framework for validating that LLM-generated
+structured output is safe. It currently supports SQL.
+
+In simple terms, it helps makes sure that AI won't wreck your systems.
 
 .. image:: https://raw.githubusercontent.com/amoffat/HeimdaLLM/main/docs/source/images/heimdall.png
    :target: https://github.com/amoffat/HeimdaLLM
@@ -32,78 +38,86 @@ HeimdaLLM
    :target: https://github.com/amoffat/HeimdaLLM
    :alt: GitHub Repo stars
 
-.. ATTENTION::
+Consider the following natural-language database query:
 
-   These docs are under active development. See an issue? Report it `here.
-   <https://github.com/amoffat/HeimdaLLM/issues/new?title=Documentation%20fix&labels=documentation>`__
-   Want to make sure something is included? Please request it `here.
-   <https://github.com/amoffat/HeimdaLLM/discussions/3>`__
+.. code-block:: text
 
-Welcome to the HeimdaLLM documentation!
+   how much have i spent renting movies, broken down by month?
 
-HeimdaLLM safely bridges the gap between untrusted human input and trusted
-machine-readable output by augmenting :term:`LLMs <LLM>` with a robust validation
-framework. This enables you to :term:`externalize <externalizing>` LLM technology to
-your users, so that you can do things like execute trusted SQL queries from their
-untrusted input.
+From this query, an LLM can produce the following SQL query:
 
-Imagine giving your users natural language access to their data in your database,
-without having to worry about dangerous queries.
+.. code-block:: sql
 
-.. code-block:: python
+   SELECT
+      strftime('%Y-%m', payment.payment_date) AS month,
+      SUM(payment.amount) AS total_amount
+   FROM payment
+   JOIN rental ON payment.rental_id=rental.rental_id
+   JOIN customer ON payment.customer_id=customer.customer_id
+   WHERE customer.customer_id=:customer_id
+   GROUP BY month
+   LIMIT 10;
 
-   traverse("Show me the movies I rented the longest, and the number of days I had them for.")
+But how can you ensure that its safe and that it only accesses authorized data?
+
+HeimdaLLM performs static analysis on the generated SQL to ensure that only certain
+columns, tables, and functions are used. It also automatically edits the query to add a
+``LIMIT`` and to remove forbidden columns. Lastly, it ensures that there is a column
+constraint that would restrict the results to only the user's data.
+
+It does all of this locally, without AI, using good ol' fashioned grammars and parsers:
 
 .. code-block:: text
 
    ✅ Ensuring SELECT statement...
    ✅ Resolving column and table aliases... 
    ✅ Allowlisting selectable columns...
-      ✅ Removing 4 forbidden columns...
+      ✅ Removing 2 forbidden columns...
    ✅ Ensuring correct row LIMIT exists...
-      ✅ Lowering row LIMIT to 5...
+      ✅ Lowering row LIMIT to 10...
    ✅ Checking JOINed tables and conditions...
    ✅ Checking required WHERE conditions...
    ✅ Ensuring query is constrained to requester's identity...
    ✅ Allowlisting SQL functions...
+      ✅ strftime
+      ✅ SUM
 
-+-----------------+------------------------+------------------------+--------------+
-| Title           | Rental Date            | Return Date            | Rental Days  |
-+=================+========================+========================+==============+
-| OUTLAW HANKY    | 2005-08-19 05:48:12.000| 2005-08-28 10:10:12.000| 9.181944     |
-+-----------------+------------------------+------------------------+--------------+
-| BOULEVARD MOB   | 2005-08-19 07:06:51.000| 2005-08-28 10:35:51.000| 9.145139     |
-+-----------------+------------------------+------------------------+--------------+
-| MINDS TRUMAN    | 2005-08-02 17:42:49.000| 2005-08-11 18:14:49.000| 9.022222     |
-+-----------------+------------------------+------------------------+--------------+
-| AMERICAN CIRCUS | 2005-07-12 16:37:55.000| 2005-07-21 16:04:55.000| 8.977083     |
-+-----------------+------------------------+------------------------+--------------+
-| LADY STAGE      | 2005-07-28 10:07:04.000| 2005-08-06 08:16:04.000| 8.922917     |
-+-----------------+------------------------+------------------------+--------------+
+The validated query can then be executed:
 
-.. TIP::
++---------+--------------+
+|  month  | total_amount |
++---------+--------------+
+| 2005-05 | 4.99         |
++---------+--------------+
+| 2005-06 | 22.95        |
++---------+--------------+
+| 2005-07 | 100.78       |
++---------+--------------+
+| 2005-08 | 87.82        |
++---------+--------------+
 
-   Run this example safely in Github Codespaces |CodespacesLink|_
-
-Interested in getting started quickly? Check out the :doc:`quickstart`. Otherwise,
-browse the navigation on the left.
+Want to get started quickly? :doc:`quickstart/index`.
 
 .. toctree::
    :hidden:
    :glob:
    :maxdepth: 5
 
-   quickstart
+   quickstart/index
    blog/index
-   bifrost
    api/index
    reconstruction
-   attack_surface
-   tutorials
-   llm_quirks
+   attack-surface/index
+   tutorials/index
+   llm-quirks/index
    glossary
    roadmap
+   architecture/index
    faq
 
-.. |CodespacesLink| image:: https://img.shields.io/badge/Open%20in-Codespaces-purple.svg
-.. _CodespacesLink: https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=656570421
+.. ATTENTION::
+
+   These docs are under active development. See an issue? Report it `here.
+   <https://github.com/amoffat/HeimdaLLM/issues/new?title=Documentation%20fix&labels=documentation>`__
+   Want to make sure something is included? Please request it `here.
+   <https://github.com/amoffat/HeimdaLLM/discussions/3>`__

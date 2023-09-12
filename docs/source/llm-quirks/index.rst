@@ -7,4 +7,4 @@ quirks discovered while building Bifrosts.
 .. toctree::
     :glob:
 
-    llm_quirks/*
+    sql

@@ -7,5 +7,5 @@
     :maxdepth: 4
 
     bifrosts/index
-    llm_providers/index
+    llm-providers/index
     abc/index

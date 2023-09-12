@@ -8,26 +8,6 @@ Below is a very high-level roadmap for HeimdaLLM.
     Want to know when these features get implemented? Add your email to `this form
     <https://forms.gle/r3HjMPXBYwNjxANp7>`_ and I will contact you.
 
-More LLM integrations
-*********************
-
-Currently we support OpenAI, but I intend to add support for all major LLM API services,
-and private LLMs, as they become more capable.
-
-More databases
-**************
-
-I will be adding support for more SQL-based databases:
-
-* SQL Server
-* Oracle
-* Snowflake
-
-.. NOTE::
-
-    Want us to prioritize a specific database? Let us know by `voting here.
-    <https://github.com/amoffat/HeimdaLLM/discussions/2>`_
-
 
 More SQL statement types
 ************************
@@ -53,6 +33,28 @@ The current implementation requires a Python application to use HeimdaLLM, becau
 constraint validators are defined by subclassing a Python class. A future implementation
 could be language agnostic by providing an api and a JSON or YAML spec for constraining
 LLM output.
+
+
+More LLM integrations
+*********************
+
+Currently we support OpenAI, but I intend to add support for all major LLM API services,
+and private LLMs, as they become more capable.
+
+More databases
+**************
+
+I will be adding support for more SQL-based databases:
+
+* SQL Server
+* Oracle
+* Snowflake
+
+.. NOTE::
+
+    Want us to prioritize a specific database? Let us know by `voting here.
+    <https://github.com/amoffat/HeimdaLLM/discussions/2>`_
+
 
 More Bifrosts
 *************

@@ -359,23 +359,23 @@ authoritative id.
 
 
 
-🧠 Constraint validation
-------------------------
+🧠 Static analysis
+------------------
 
 .. figure:: /images/smiley.jpg
 
-    "Where did it come from? What's the access?"
+    "What's the access?"
 
 
-Constraint validation uses a real grammar to parse SQL queries into an AST. Static
-analysis can then be performed on this parse tree to determine which tables and columns
-are being used, how they're being used, if required conditions are present, and a range
-of other features.
+Static analysis uses a real grammar to parse SQL queries into an AST, which can then be
+analyzed to determine which tables and columns are being used, how they're being used,
+if required conditions are present, and a range of other features.
 
-Additionally, these frameworks may automatically add nodes or replace nodes on the AST
-to help ensure the SQL query conforms to constraint validation. In other words, the
-query may be automatically edited to be compliant. Examples of this are to ensure a
-correct ``LIMIT`` on the query, or remove a forbidden column from the ``SELECT``.
+Additionally, these static analysis frameworks may automatically add nodes or replace
+nodes on the AST to help ensure the SQL query conforms to constraints. In
+other words, the query may be automatically edited to be compliant. Examples of this are
+to ensure a correct ``LIMIT`` on the query, or remove a forbidden column from the
+``SELECT``.
 
 These frameworks can be treated as denylists or allowlists. You can list which tables,
 columns, joins, and functions are allowed, or which are denied. This allows for a higher
@@ -423,10 +423,10 @@ are playing an increasing role in the future of UI and UX, and relational databa
 not going away any time soon. For them to work together effectively, tooling needs to
 bridge the gap to make them safer.
 
-The most promising solutions are cloned databases and constraint validators, because
-they are theoretically complete solutions that can offer the highest levels of security.
-They vary primarily in their complexity and flexibility: cloned databases views are a
-high-complexity allowlist, while constraint validators are a low-complexity allowlist or
+The most promising solutions are cloned databases and static analysis, because they are
+theoretically complete solutions that can offer the highest levels of security. They
+vary primarily in their complexity and flexibility: cloned databases views are a
+high-complexity allowlist, while static analysis is a low-complexity allowlist or
 denylist.
 
 Other, non-complete solutions should not be considered if you value the safety of your

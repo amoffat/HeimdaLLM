@@ -41,7 +41,7 @@ class Bifrost(_BaseBifrost, ABC):
             Sequence["heimdallm.bifrosts.sql.validator.ConstraintValidator"],
         ],
     ):
-        """A convenience method for doing just constraint validation. This creates a
+        """A convenience method for doing just static analysis. This creates a
         Bifrost that assumes its untrusted input is a SQL query already, so it does not
         need to communicate with the LLM, only parse and validate it.
 
