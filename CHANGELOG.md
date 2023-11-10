@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.2 - 11/10/23
+
+- Resolving Dependabot suggestions
+
 ## 1.0.1 - 9/12/23
 
 - Simplify docs
