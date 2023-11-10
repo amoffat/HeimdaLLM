@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "heimdallm"
-version = "1.0.1"
+version = "1.0.2"
 description = "Construct trusted SQL queries from untrusted input"
 homepage = "https://github.com/amoffat/HeimdaLLM"
 repository = "https://github.com/amoffat/HeimdaLLM"
