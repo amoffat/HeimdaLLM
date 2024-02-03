@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.3 - 2/3/24
+
+- Bugfix where elided tree from a boolean token triggered ambiguity resolver
+
 ## 1.0.2 - 11/10/23
 
 - Resolving Dependabot suggestions

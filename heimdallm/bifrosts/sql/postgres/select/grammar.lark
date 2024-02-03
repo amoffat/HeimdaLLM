@@ -117,7 +117,7 @@ fts_comparison : value "@@" value
 // are declared, so we cannot use this there
 ?value : PREFIX_CAST? (NUMBER
     | string
-    | boolean
+    | BOOLEAN
     | NULL
     | NUMBER_PREFIX? value_expr
     | NUMBER_PREFIX? fq_column
@@ -143,7 +143,7 @@ SUBSTRING_FN_NAME : "substring"i
 EXTRACT_FN_NAME : "extract"i
 CAST_FN_NAME : "cast"i
 
-?boolean : TRUE | FALSE
+BOOLEAN : TRUE | FALSE
 ?string : ESCAPE_PREFIX? ESCAPED_STRING
 
 // a placeholder for a value passed in as a parameter at query execution time

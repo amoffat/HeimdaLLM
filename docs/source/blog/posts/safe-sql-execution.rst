@@ -1,11 +1,6 @@
 🛡️ Safely executing LLM-generated SQL
 =====================================
 
-.. image:: https://img.shields.io/badge/Upvote%20on%20HN-ff6600.svg?logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAABhWlDQ1BJQ0MgcHJvZmlsZQAAKJF9kT1Iw0AYht+2SlUqCu0g4pChOlkRFXHUKhShQqgVWnUwufQPmjQkKS6OgmvBwZ/FqoOLs64OroIg+APi6uKk6CIlfpcUWsR4x3EP733vy913gL9eZqrZMQ6ommWkEnEhk10Vgq/ophnGGPolZupzopiE5/i6h4/vdzGe5V335+hVciYDfALxLNMNi3iDeHrT0jnvE0dYUVKIz4lHDbog8SPXZZffOBcc9vPMiJFOzRNHiIVCG8ttzIqGSjxFHFVUjfL9GZcVzluc1XKVNe/JXxjKaSvLXKc1hAQWsQQRAmRUUUIZFmK0a6SYSNF53MM/6PhFcsnkKoGRYwEVqJAcP/gf/O6tmZ+ccJNCcaDzxbY/hoHgLtCo2fb3sW03ToDAM3CltfyVOjDzSXqtpUWPgL5t4OK6pcl7wOUOMPCkS4bkSAFa/nweeD+jb8oC4VugZ83tW/Mcpw9AmnqVvAEODoGRAmWve7y7q71v/9Y0+/cDaTFyo01kSV8AAAAGYktHRAD/AP8A/6C9p5MAAAAJcEhZcwAALiMAAC4jAXilP3YAAAAHdElNRQfnCQkUMwK2x6PRAAAAGXRFWHRDb21tZW50AENyZWF0ZWQgd2l0aCBHSU1QV4EOFwAAALxJREFUOMtj/P///38GKgIWBgYGBoY6deqY1nQTaiADAwPDy1uUGcYrxsDAwMDAxEBlQEcD4+czMBTvZ2AQVkCICStAxOLnk2Hg7YMMDGoODAyW8Qgxy3iI2PGFZBh4bAEDw9sHDAxWCQhX+jZAxG4dIJBscIEFiRAvIrtyQSIR6RAXuHUA4lKYK28dwOs64mJ5SyPRriPsQgYGSJgh48GTDgeLgSxEqSIiMkgzkIjIoIOXoeUZpYCR2lUAAM9jNTfnrPBaAAAAAElFTkSuQmCC
-    :target: https://news.ycombinator.com/item?id=38518256
-    :alt: Hackernews post
-
-
 LLMs are surprisingly good at generating SQL from natural-language prompts. When given
 the schema of a database and a few guiding instructions, LLMs can construct
 reasonably-complex SQL queries that answer natural language questions about the data in
@@ -431,7 +426,3 @@ denylist.
 
 Other, non-complete solutions should not be considered if you value the safety of your
 data.
-
-.. image:: https://img.shields.io/badge/Upvote%20on%20HN-ff6600.svg?logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAABhWlDQ1BJQ0MgcHJvZmlsZQAAKJF9kT1Iw0AYht+2SlUqCu0g4pChOlkRFXHUKhShQqgVWnUwufQPmjQkKS6OgmvBwZ/FqoOLs64OroIg+APi6uKk6CIlfpcUWsR4x3EP733vy913gL9eZqrZMQ6ommWkEnEhk10Vgq/ophnGGPolZupzopiE5/i6h4/vdzGe5V335+hVciYDfALxLNMNi3iDeHrT0jnvE0dYUVKIz4lHDbog8SPXZZffOBcc9vPMiJFOzRNHiIVCG8ttzIqGSjxFHFVUjfL9GZcVzluc1XKVNe/JXxjKaSvLXKc1hAQWsQQRAmRUUUIZFmK0a6SYSNF53MM/6PhFcsnkKoGRYwEVqJAcP/gf/O6tmZ+ccJNCcaDzxbY/hoHgLtCo2fb3sW03ToDAM3CltfyVOjDzSXqtpUWPgL5t4OK6pcl7wOUOMPCkS4bkSAFa/nweeD+jb8oC4VugZ83tW/Mcpw9AmnqVvAEODoGRAmWve7y7q71v/9Y0+/cDaTFyo01kSV8AAAAGYktHRAD/AP8A/6C9p5MAAAAJcEhZcwAALiMAAC4jAXilP3YAAAAHdElNRQfnCQkUMwK2x6PRAAAAGXRFWHRDb21tZW50AENyZWF0ZWQgd2l0aCBHSU1QV4EOFwAAALxJREFUOMtj/P///38GKgIWBgYGBoY6deqY1nQTaiADAwPDy1uUGcYrxsDAwMDAxEBlQEcD4+czMBTvZ2AQVkCICStAxOLnk2Hg7YMMDGoODAyW8Qgxy3iI2PGFZBh4bAEDw9sHDAxWCQhX+jZAxG4dIJBscIEFiRAvIrtyQSIR6RAXuHUA4lKYK28dwOs64mJ5SyPRriPsQgYGSJgh48GTDgeLgSxEqSIiMkgzkIjIoIOXoeUZpYCR2lUAAM9jNTfnrPBaAAAAAElFTkSuQmCC
-   :target: https://news.ycombinator.com/item?id=38518256
-   :alt: Hackernews post
