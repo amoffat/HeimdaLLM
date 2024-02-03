@@ -24,3 +24,20 @@ WHERE
     """
 
     bifrost.traverse(query)
+
+
+@dialects()
+def test_ambiguous_bool(dialect: str, Bifrost: Type[Bifrost]):
+    """A regression test to ensure that boolean tokens do not trigger the ambiguity
+    resolver"""
+    bifrost = Bifrost.validation_only(PermissiveConstraints())
+
+    query = """
+SELECT
+    col
+FROM
+     postings AS p
+WHERE
+     p.is_hired = true
+     """
+    bifrost.traverse(query)

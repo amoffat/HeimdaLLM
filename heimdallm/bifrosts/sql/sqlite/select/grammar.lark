@@ -117,7 +117,7 @@ between_comparison : value (_WS NOT)? _WS BETWEEN _WS value _WS AND _WS value
 // are declared, so we cannot use this there
 ?value : NUMBER
     | string
-    | boolean
+    | BOOLEAN
     | NULL
     | NUMBER_PREFIX? value_expr
     | NUMBER_PREFIX? fq_column
@@ -136,7 +136,7 @@ function : FUNCTION_NAME "(" \
     ")"
 FUNCTION_NAME : /[a-zA-Z_]+/
 
-?boolean : TRUE | FALSE
+BOOLEAN : TRUE | FALSE
 ?string : ESCAPED_STRING
 
 // a placeholder for a value passed in as a parameter at query execution time
