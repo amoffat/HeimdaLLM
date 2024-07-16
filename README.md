@@ -7,9 +7,9 @@ structured output is safe. It currently supports SQL.
 
 In simple terms, it helps makes sure that AI won't wreck your systems.
 
-[![Heimdall](https://raw.githubusercontent.com/amoffat/HeimdaLLM/main/docs/source/images/heimdall.png)](https://heimdallm.ai)
+[![Heimdall](https://raw.githubusercontent.com/amoffat/HeimdaLLM/main/docs/source/images/heimdall.png)](https://heimdallm.rtfd.io)
 [![Build status](https://github.com/amoffat/HeimdaLLM/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/amoffat/HeimdaLLM/actions)
-[![Docs](https://img.shields.io/badge/Documentation-purple.svg)](https://docs.heimdallm.ai)
+[![Docs](https://img.shields.io/badge/Documentation-purple.svg)](https://heimdallm.rtfd.io/)
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/amoffat)](https://github.com/sponsors/amoffat)
 [![PyPI](https://img.shields.io/pypi/v/heimdallm)](https://pypi.org/project/heimdallm/)
 [![License: Commercial](https://img.shields.io/badge/License-Commercial-blue.svg)](https://forms.gle/frEPeeJx81Cmwva78)
@@ -72,7 +72,7 @@ The validated query can then be executed:
 | 2005-08 | 87.82        |
 
 Want to get started quickly? Go
-[here](https://docs.heimdallm.ai/en/latest/quickstart/index.html).
+[here](https://heimdallm.rtfd.io/en/latest/quickstart/index.html).
 
 # 🥽 Safety
 
@@ -84,7 +84,7 @@ me](https://github.com/sponsors/amoffat) or [inquire about interest in a commerc
 license](https://forms.gle/frEPeeJx81Cmwva78).
 
 To understand some of the potential vulnerabilities, take a look at the [attack
-surface](https://docs.heimdallm.ai/en/latest/attack-surface.html) to see the risks and
+surface](https://heimdallm.rtfd.io/en/latest/attack-surface.html) to see the risks and
 the mitigations.
 
 # 📚 Database support
